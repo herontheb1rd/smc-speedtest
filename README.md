@@ -1,4 +1,6 @@
-(23/7/11) Forgot this existed, so here's some unfinished/in progress stuff that I'm working on:
+# Updates
+(23/7/11): 
+Forgot this existed, so here's some unfinished/in progress stuff that I'm working on:
 -The actual Speedtest thing: found a library by taganaka that uses C++. Been tinkering with this for the past month, just need to figure out how to add CURL, OpenSSL, and LibXML. Hopefully it works.
 -Server side stuff: Uses PHP and MySQL. Pretty barebones, but it works I guess.
 
