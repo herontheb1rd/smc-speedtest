@@ -51,7 +51,7 @@ public class runTestFragment extends Fragment {
                         .addOnSuccessListener(
                                 barcode -> {
                                     String rawValue = barcode.getRawValue();
-                                    runTestB.setText(rawValue);
+                                    speedtestJava speedtest = new speedtestJava(rawValue);
                                 });
             }
         });
