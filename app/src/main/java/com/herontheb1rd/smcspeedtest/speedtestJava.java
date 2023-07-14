@@ -1,8 +1,10 @@
 package com.herontheb1rd.smcspeedtest;
 
+import android.os.Build;
+
 public class speedtestJava {
     //information that will be added to the db but not shown to the user
-    private String phone_model;
+    private String phone_brand;
     private String test_location;
     private String network_provider;
     private int rssi;
@@ -12,40 +14,47 @@ public class speedtestJava {
     double ulspeed;
     long latency;
 
-
     public speedtestJava(String rawLocationValue) {
         //test location is passed from qr code scan
-        //edit after doing fancy intent things with qr code
+        //TODO: write function that edits raw value
+        //after doing fancy intent things with qr code
         //or not, if you change your mind
         test_location = rawLocationValue;
     }
 
-    /**
-     * Runs taganaka's SpeedTest code through JNI
-     */
-    public void runSpeedtest(){
+    public void storeResults(){
+        //run speedtest from JNI first
+        runSpeedtest();
 
+        //store results from speedtest
+        dlspeed = getDLSpeed();
+        ulspeed = getULSpeed();
+        latency = getLatency();
+        network_provider = getNetworkProvider();
+
+        //no need for a function since its just one line
+        phone_brand = Build.MANUFACTURER;
+
+        //get RSSI from function
+        rssi = getRssi();
     }
 
-    /**
-     * Gets phone brand
-     */
-    public void getPhoneInfo(){
 
+    public int getRssi(){
+        int rssi;
+
+        //TODO: write function that gets the RSSI
+        rssi = 10;
+
+        return rssi;
     }
 
-    /**
-     * Get current RSSI (received signal strength indicator) in dbm
-     */
-    public void getRSSI(){
-
-    }
-
-    /**
-     * Add results to MySQL db
-     * Uses Volley
-     */
-    public void addResults(){
-
-    }
+    public native void runSpeedtest();
+    //its easier to just have separate functions for each than to mess with an object array
+    //and i can check beforehand if the values are empty
+    //plus its neater to look at
+    public native double getDLSpeed();
+    public native double getULSpeed();
+    public native long getLatency();
+    public native String getNetworkProvider();
 }

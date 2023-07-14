@@ -15,12 +15,12 @@ import com.google.android.material.navigation.NavigationView;
 import com.herontheb1rd.smcspeedtest.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
+    private ActivityMainBinding binding;
 
-    // Used to load the 'smcspeedtest' library on application startup.
+    // Used to load the 'smcspeedtest' library
     static {
         System.loadLibrary("smcspeedtest");
     }
-    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +34,4 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
         NavigationUI.setupWithNavController(bottomNav, navController);
     }
-
-    public native String stringFromJNI();
 }
