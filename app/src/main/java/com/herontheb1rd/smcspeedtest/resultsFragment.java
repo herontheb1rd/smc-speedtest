@@ -2,8 +2,12 @@ package com.herontheb1rd.smcspeedtest;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +45,19 @@ public class resultsFragment extends Fragment {
             mUlspeedStr = getArguments().getString(ARG_ULSPEED);
             mLatencyStr = getArguments().getString(ARG_LATENCY);
         }
+
+        getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
+                String rawLocation = bundle.getString("bundleKey");
+
+                speedtestJava speedtest = new speedtestJava(rawLocation);
+                speedtest.getResults();
+
+                //we can access the dlspeed, ulspeed, and latency through the speedtest class (e.g. speedtest.dlspeed);
+            }
+        });
+
     }
 
     @Override
@@ -52,6 +69,7 @@ public class resultsFragment extends Fragment {
         //display results from speedtest
         //the important ones, anyway
         //can be expanded further to fit more
+        /*
         TextView downloadResultTV = (TextView) view.findViewById(R.id.downloadResultTV);
         downloadResultTV.setText(mDlspeedStr);
 
@@ -60,7 +78,9 @@ public class resultsFragment extends Fragment {
 
         TextView latencyResultTV = (TextView) view.findViewById(R.id.latencyResultTV);
         downloadResultTV.setText(mLatencyStr);
-
+            */
         return view;
     }
+
+
 }

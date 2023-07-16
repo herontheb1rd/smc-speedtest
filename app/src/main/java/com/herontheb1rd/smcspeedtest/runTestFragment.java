@@ -2,9 +2,13 @@ package com.herontheb1rd.smcspeedtest;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
+import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +22,7 @@ import com.google.mlkit.vision.barcode.common.Barcode;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
+
 
 public class runTestFragment extends Fragment {
     public runTestFragment() {
@@ -66,18 +71,14 @@ public class runTestFragment extends Fragment {
                         .addOnSuccessListener(
                                 barcode -> {
                                     String rawValue = barcode.getRawValue();
-                                    speedtestJava speedtest = new speedtestJava(rawValue);
-                                    speedtest.storeResults();
-
-                                    //store results in strings
-                                    String dlspeedStr, ulspeedStr, latencyStr;
-                                    dlspeedStr = Double.toString(speedtest.dlspeed);
-                                    ulspeedStr = Double.toString(speedtest.ulspeed);
-                                    latencyStr = Long.toString(speedtest.latency);
+                                    Bundle result = new Bundle();
+                                    result.putString("bundleKey", "result");
+                                    getParentFragmentManager().setFragmentResult("requestKey", result);
                                 });
+
+
             }
         });
-
 
         return view;
     }

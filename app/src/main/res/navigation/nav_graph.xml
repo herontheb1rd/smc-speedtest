@@ -5,11 +5,14 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/runTestFragment">
 
+
+
     <fragment
         android:id="@+id/runTestFragment"
         android:name="com.herontheb1rd.smcspeedtest.runTestFragment"
         android:label="fragment_run_test"
-        tools:layout="@layout/fragment_run_test" >
+        tools:layout="@layout/fragment_run_test">
+
         <action
             android:id="@+id/action_runTestFragment_to_resultsFragment"
             app:destination="@id/resultsFragment" />
@@ -19,16 +22,11 @@
         android:name="com.herontheb1rd.smcspeedtest.resultsFragment"
         android:label="fragment_results"
         tools:layout="@layout/fragment_results" >
-        <argument android:name="dlspeedStr"
-            app:argType="string" />
-        <argument android:name="ulspeedStr"
-            app:argType="string" />
-        <argument android:name="latencyStr"
-            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/predictionsFragment"
         android:name="com.herontheb1rd.smcspeedtest.predictionsFragment"
         android:label="fragment_predictions"
         tools:layout="@layout/fragment_predictions" />
+
 </navigation>
