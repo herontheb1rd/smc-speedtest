@@ -25,8 +25,12 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
 
 public class runTestFragment extends Fragment {
+
+    static boolean justScannedQR;
+
     public runTestFragment() {
         // Required empty public constructor
+        justScannedQR = false;
     }
     public static runTestFragment newInstance() {
         runTestFragment fragment = new runTestFragment();
@@ -74,13 +78,27 @@ public class runTestFragment extends Fragment {
                                     Bundle result = new Bundle();
                                     result.putString("bundleKey", "result");
                                     getParentFragmentManager().setFragmentResult("requestKey", result);
+
+                                    justScannedQR = true;
                                 });
-
-
             }
         });
 
         return view;
+    }
+
+    //okay so basically
+    //this waits until AFTER i scanned a qr code to transition
+    //which is completely 100% pointless other than the fact
+    //it looks weird if i dont since i can see it transition BEFORE the qr
+    @Override
+    public void onResume(){
+        super.onResume();
+
+        if(justScannedQR){
+            Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
+            justScannedQR = false;
+        }
     }
 }
 

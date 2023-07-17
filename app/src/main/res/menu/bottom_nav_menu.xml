@@ -5,10 +5,6 @@
         android:enabled="true"
         android:title="Run Test"/>
     <item
-        android:id="@+id/resultsFragment"
-        android:enabled="true"
-        android:title="Results"/>
-    <item
         android:id="@+id/predictionsFragment"
         android:enabled="true"
         android:title="Predictions"/>

@@ -45,19 +45,6 @@ public class resultsFragment extends Fragment {
             mUlspeedStr = getArguments().getString(ARG_ULSPEED);
             mLatencyStr = getArguments().getString(ARG_LATENCY);
         }
-
-        getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
-            @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                String rawLocation = bundle.getString("bundleKey");
-
-                speedtestJava speedtest = new speedtestJava(rawLocation);
-                speedtest.getResults();
-
-                //we can access the dlspeed, ulspeed, and latency through the speedtest class (e.g. speedtest.dlspeed);
-            }
-        });
-
     }
 
     @Override
@@ -66,19 +53,35 @@ public class resultsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
 
-        //display results from speedtest
-        //the important ones, anyway
-        //can be expanded further to fit more
-        /*
         TextView downloadResultTV = (TextView) view.findViewById(R.id.downloadResultTV);
-        downloadResultTV.setText(mDlspeedStr);
-
         TextView uploadResultTV = (TextView) view.findViewById(R.id.uploadResultTV);
-        downloadResultTV.setText(mUlspeedStr);
-
         TextView latencyResultTV = (TextView) view.findViewById(R.id.latencyResultTV);
-        downloadResultTV.setText(mLatencyStr);
-            */
+
+        //this is probably not intended but whatever
+        //when it receives the results from runTestFragment, display values
+        //calling setText() within onFragmentResult() makes it so values arent empty
+        //weird, but it doesnt automatically get the values when the screen does the griddy
+        getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
+                String rawLocation = bundle.getString("resultKey");
+
+                speedtestJava speedtest = new speedtestJava(rawLocation);
+                speedtest.getResults();
+
+                //we can access the dlspeed, ulspeed, and latency through the speedtest class and convert them to string
+                //also stores it so we can do the goofy saved instance state thing
+                mDlspeedStr = Double.toString(speedtest.dlspeed);
+                mUlspeedStr = Double.toString(speedtest.ulspeed);
+                mLatencyStr = Long.toString(speedtest.latency);
+
+                //and we display then here
+                downloadResultTV.setText(mDlspeedStr);
+                uploadResultTV.setText(mUlspeedStr);
+                latencyResultTV.setText(mLatencyStr);
+            }
+        });
+
         return view;
     }
 
