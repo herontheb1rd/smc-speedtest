@@ -16,3 +16,13 @@ Heron
 
 (P.S. This is the 4th fucking time I'm editing this. I swear to god I should type this shit in lowercase so I won't get too fussy)  
 (P.P.S It took me 2 fucking hours to not have a master branch and all I had to do was rename it in Android Studio fml)
+
+(23/7/19) Shit I've done:  
+-Replaced MySQL/PHP with Firebase as it's much simpler AND doesn't require a credit card (literally did it in one day, lol)
+-Basic functionality is done  
+
+Important stuff:  
+-Adding the actual Speedtest thing. I can hopefully figure it out in 2 weeks (unlike last time)  
+
+
+

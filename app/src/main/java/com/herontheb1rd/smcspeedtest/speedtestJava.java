@@ -3,49 +3,57 @@ package com.herontheb1rd.smcspeedtest;
 import android.os.Build;
 import android.util.Log;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Calendar;
+
 public class speedtestJava {
     //information that will be added to the db but not shown to the user
+    private long date_time;
     private String phone_brand;
     private String test_location;
     private String network_provider;
     private int rssi;
 
     //information that will be shown to the user
-    double dlspeed;
-    double ulspeed;
-    long latency;
+    //store them in runTestAddResults() and resultsFragment just uses an object to run function and access variables
+    public double dlspeed;
+    public double ulspeed;
+    public long latency;
 
-    public speedtestJava(String initRawLocation) {
-        //test location is passed from qr code scan
-        //TODO: write function that edits raw value
-        //after doing fancy intent things with qr code
-        //or not, if you change your mind
-        test_location = initRawLocation;
+    private DatabaseReference mDatabase;
+
+    public speedtestJava() {
+        mDatabase = FirebaseDatabase.getInstance(
+                "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
+                ).getReference();
     }
 
-    public void getResults(){
+    public void runTestAddResults(String initRawLocation){
         //run speedtest from JNI first
         runSpeedtest();
 
         //store results from speedtest
+        //lol this reads weird but the first instance of getTime() returns a Date and the second converts it to long
+        date_time = Calendar.getInstance().getTime().getTime();
+        phone_brand = Build.MANUFACTURER;
+        test_location = initRawLocation;
+        network_provider = getNetworkProvider();
         dlspeed = getDLSpeed();
         ulspeed = getULSpeed();
         latency = getLatency();
-        network_provider = getNetworkProvider();
-
-        //no need for a function since its just one line
-        phone_brand = Build.MANUFACTURER;
-
-        //get RSSI from function
         rssi = getRssi();
+
+        //firebase code
+        Results results = new Results(date_time, phone_brand, test_location, network_provider, dlspeed, ulspeed, latency, rssi);
+        mDatabase.child("results").push().setValue(results);
     }
 
 
     private int getRssi(){
-        int rssi;
-
         //TODO: write function that gets the RSSI
-        rssi = 10;
+        int rssi = 10;
 
         return rssi;
     }

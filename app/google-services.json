@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "516587999969",
+    "project_id": "smc-speedtest",
+    "storage_bucket": "smc-speedtest.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:516587999969:android:6b364b1c71e9fa2bc1dda0",
+        "android_client_info": {
+          "package_name": "com.herontheb1rd.smcspeedtest"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "516587999969-r7rtpeb5l77tfl62emt93s08q9a6qpp7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVeCnJpYulNATOSGTqzwJAFzly2gRaWPg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "516587999969-r7rtpeb5l77tfl62emt93s08q9a6qpp7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

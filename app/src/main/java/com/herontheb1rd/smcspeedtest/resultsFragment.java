@@ -64,13 +64,13 @@ public class resultsFragment extends Fragment {
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                String rawLocation = bundle.getString("resultKey");
+                String rawLocation = bundle.getString("requestKey");
 
-                speedtestJava speedtest = new speedtestJava(rawLocation);
-                speedtest.getResults();
+                //run test and add results to firebase db
+                speedtestJava speedtest = new speedtestJava();
+                speedtest.runTestAddResults(rawLocation);
 
                 //we can access the dlspeed, ulspeed, and latency through the speedtest class and convert them to string
-                //also stores it so we can do the goofy saved instance state thing
                 mDlspeedStr = Double.toString(speedtest.dlspeed);
                 mUlspeedStr = Double.toString(speedtest.ulspeed);
                 mLatencyStr = Long.toString(speedtest.latency);
