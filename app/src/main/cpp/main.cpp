@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <string>
+#include "curl/curl.h"
 
 //setting initial values to be impossible
 //so we can check if they are empty later

@@ -1,5 +1,5 @@
 # Updates
-(23/7/11) Forgot this existed, so here's some unfinished/in progress stuff that I'm working on:  
+## (23/7/11) Forgot this existed, so here's some unfinished/in progress stuff that I'm working on:  
 -The actual Speedtest thing: found a library by taganaka that uses C++. Been tinkering with this for the past month, just need to figure out how to add CURL, OpenSSL, and LibXML. Hopefully it works.   
 -Server side stuff: Uses PHP and MySQL. Pretty barebones, but it works I guess.  
 
@@ -17,8 +17,8 @@ Heron
 (P.S. This is the 4th fucking time I'm editing this. I swear to god I should type this shit in lowercase so I won't get too fussy)  
 (P.P.S It took me 2 fucking hours to not have a master branch and all I had to do was rename it in Android Studio fml)
 
-(23/7/19) Shit I've done:  
--Replaced MySQL/PHP with Firebase as it's much simpler AND doesn't require a credit card (literally did it in one day, lol)
+## (23/7/19) Shit I've done:  
+-Replaced MySQL/PHP with Firebase as it's much simpler AND doesn't require a credit card (literally did it in one day, lol)  
 -Basic functionality is done  
 
 Important stuff:  
