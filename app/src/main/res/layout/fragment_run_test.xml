@@ -4,29 +4,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".runTestFragment">
+    tools:context=".RunTestFragment">
 
     <Button
         android:id="@+id/runTestB"
+        style="@style/RunTestButtonStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Run Test"
+        android:paddingLeft="32dp"
+        android:paddingTop="18dp"
+        android:paddingRight="32dp"
+        android:paddingBottom="18dp"
+        android:text="run test"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="32sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.499" />
 
-    <TextView
-        android:id="@+id/runTestReminderTV"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Make sure your mobile data is turned on."
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/runTestB"
-        app:layout_constraintVertical_bias="0.025" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

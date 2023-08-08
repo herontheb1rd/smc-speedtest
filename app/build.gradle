@@ -18,7 +18,8 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_STL=c++_shared"
+                arguments "-DANDROID_STL=c++_shared", '-DANDROID_PLATFORM=android-21'
+                cppFlags "-std=gnu++11"
             }
         }
     }
@@ -77,4 +78,9 @@ dependencies {
 
     implementation 'com.android.ndk.thirdparty:curl:7.85.0-beta-1'
     implementation 'com.android.ndk.thirdparty:openssl:1.1.1q-beta-1'
+
+    def work_version = "2.8.1"
+    implementation "androidx.work:work-runtime:$work_version"
+
+    implementation "androidx.drawerlayout:drawerlayout:1.2.0"
 }

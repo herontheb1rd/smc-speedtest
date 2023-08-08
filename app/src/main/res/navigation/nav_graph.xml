@@ -9,24 +9,33 @@
 
     <fragment
         android:id="@+id/runTestFragment"
-        android:name="com.herontheb1rd.smcspeedtest.runTestFragment"
+        android:name="com.herontheb1rd.smcspeedtest.RunTestFragment"
         android:label="fragment_run_test"
         tools:layout="@layout/fragment_run_test">
 
         <action
-            android:id="@+id/action_runTestFragment_to_resultsFragment"
-            app:destination="@id/resultsFragment" />
+            android:id="@+id/action_runTestFragment_to_testLoader"
+            app:destination="@id/testLoader" />
     </fragment>
     <fragment
         android:id="@+id/resultsFragment"
-        android:name="com.herontheb1rd.smcspeedtest.resultsFragment"
+        android:name="com.herontheb1rd.smcspeedtest.ResultsFragment"
         android:label="fragment_results"
         tools:layout="@layout/fragment_results" >
     </fragment>
     <fragment
         android:id="@+id/predictionsFragment"
-        android:name="com.herontheb1rd.smcspeedtest.predictionsFragment"
+        android:name="com.herontheb1rd.smcspeedtest.PredictionsFragment"
         android:label="fragment_predictions"
         tools:layout="@layout/fragment_predictions" />
+    <fragment
+        android:id="@+id/testLoader"
+        android:name="com.herontheb1rd.smcspeedtest.TestLoaderFragment"
+        android:label="fragment_test_loader"
+        tools:layout="@layout/fragment_test_loader" >
+        <action
+            android:id="@+id/action_testLoader_to_resultsFragment"
+            app:destination="@id/resultsFragment" />
+    </fragment>
 
 </navigation>

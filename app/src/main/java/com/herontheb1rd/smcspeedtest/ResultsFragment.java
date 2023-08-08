@@ -1,0 +1,102 @@
+package com.herontheb1rd.smcspeedtest;
+
+import android.os.Bundle;
+
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
+
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+
+public class ResultsFragment extends Fragment {
+
+    // Used to load the 'smcspeedtest' library
+    static {
+        System.loadLibrary("smcspeedtest");
+    }
+    
+    private static final String ARG_DLSPEED = "param1";
+    private static final String ARG_ULSPEED = "param2";
+    private static final String ARG_LATENCY = "param3";
+
+    private String mDlspeedStr;
+    private String mUlspeedStr;
+    private String mLatencyStr;
+
+    public ResultsFragment() {
+        // Required empty public constructor
+    }
+
+    public static ResultsFragment newInstance(String mDlspeedStr, String mUlspeedStr, String mLatencyStr) {
+        ResultsFragment fragment = new ResultsFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_DLSPEED, mDlspeedStr);
+        args.putString(ARG_ULSPEED, mUlspeedStr);
+        args.putString(ARG_LATENCY, mLatencyStr);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            mDlspeedStr = getArguments().getString(ARG_DLSPEED);
+            mUlspeedStr = getArguments().getString(ARG_ULSPEED);
+            mLatencyStr = getArguments().getString(ARG_LATENCY);
+        }
+    }
+
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_results, container, false);
+
+        TextView downloadResultTV = (TextView) view.findViewById(R.id.downloadResultTV);
+        TextView uploadResultTV = (TextView) view.findViewById(R.id.uploadResultTV);
+        TextView latencyResultTV = (TextView) view.findViewById(R.id.latencyResultTV);
+
+        //this is probably not intended but whatever
+        //when it receives the results from RunTestFragment, display values
+        //calling setText() within onFragmentResult() makes it so values arent empty
+        //weird, but it doesnt automatically get the values when the screen does the griddy
+        getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
+                String rawLocation = bundle.getString("requestKey");
+
+                new Thread(
+                        new Runnable(){
+                            @Override
+                            public void run(){
+                                Log.i("HERON", "STARTING TEST");
+                                runSpeedtest();
+                                Log.i("HERON", Double.toString(getDLSpeed()));
+                                Log.i("HERON", Double.toString(getULSpeed()));
+                                Log.i("HERON", Long.toString(getLatency()));
+                                Log.i("HERON", "ENDING TEST");
+                            }
+                        }
+                ).start();
+            }
+
+        });
+
+        return view;
+    }
+
+    private native void runSpeedtest();
+    //its easier to just have separate functions for each than to mess with an object array
+    //and i can check beforehand if the values are empty
+    //plus its neater to look at
+    private native double getDLSpeed();
+    private native double getULSpeed();
+    private native long getLatency();
+    private native String getNetworkProvider();
+}
