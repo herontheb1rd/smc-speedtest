@@ -42,15 +42,6 @@ add_library(smcspeedtest
 include_directories("${PROJECT_BINARY_DIR}")
 INCLUDE (CheckIncludeFiles)
 
-
-add_library(LIBXML2
-        STATIC
-        IMPORTED)
-set_target_properties(LIBXML2
-        PROPERTIES
-        IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/libxml2/${ANDROID_ABI}/lib/libxml2.a)
-target_include_directories(smcspeedtest PUBLIC ${CMAKE_SOURCE_DIR}/libxml2/${ANDROID_ABI}/include/libxml2)
-
 find_package(curl REQUIRED CONFIG)
 
-target_link_libraries(smcspeedtest curl::curl LIBXML2)
+target_link_libraries(smcspeedtest curl::curl)
