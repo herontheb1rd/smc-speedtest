@@ -1,5 +1,8 @@
 package com.herontheb1rd.smcspeedtest;
 
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.*;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +20,8 @@ import com.herontheb1rd.smcspeedtest.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
+    AppBarConfiguration appBarConfiguration;
+
 
     // Used to load the 'smcspeedtest' library
     static {
@@ -30,14 +35,27 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+
         NavHostFragment navHostFragment = (NavHostFragment)getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         NavController navController = navHostFragment.getNavController();
-        BottomNavigationView bottomNav = findViewById(R.id.nav_view);
-        NavigationUI.setupWithNavController(bottomNav, navController);
-
-
-        AppBarConfiguration appBarConfiguration =
+        appBarConfiguration =
                 new AppBarConfiguration.Builder(navController.getGraph())
+                        .setOpenableLayout(drawerLayout)
                         .build();
+
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+
+        NavigationView navView = findViewById(R.id.nav_view);
+        NavigationUI.setupWithNavController(
+                navView, navController);
     }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        return NavigationUI.navigateUp(navController, appBarConfiguration)
+                || super.onSupportNavigateUp();
+    }
+
 }

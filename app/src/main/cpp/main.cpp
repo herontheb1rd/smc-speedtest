@@ -86,9 +86,6 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
         resultsObj = env->NewObjectArray( 1, env->FindClass("java/lang/String"), env->NewStringUTF(""));
         //for debugging
         env->SetObjectArrayElement(resultsObj, 0, env->NewStringUTF(failMessage.c_str()));
-
-        //for not debugging
-        //env->SetObjectArrayElement(resultsObj, 0, env->NewStringUTF("Test failed to run. Did you turn off your mobile data?"));
     }
 
     return resultsObj;

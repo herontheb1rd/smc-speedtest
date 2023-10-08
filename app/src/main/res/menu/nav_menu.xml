@@ -4,8 +4,4 @@
         android:id="@+id/runTestFragment"
         android:enabled="true"
         android:title="Run Test"/>
-    <item
-        android:id="@+id/resultsFragment"
-        android:enabled="true"
-        android:title="Results"/>
 </menu>

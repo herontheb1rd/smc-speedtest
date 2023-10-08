@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/runTestFragment"
         android:name="com.herontheb1rd.smcspeedtest.RunTestFragment"
-        android:label="fragment_run_test"
+        android:label="Run Test"
         tools:layout="@layout/fragment_run_test">
         <action
             android:id="@+id/action_runTestFragment_to_resultsFragment"
@@ -17,13 +17,13 @@
     <fragment
         android:id="@+id/resultsFragment"
         android:name="com.herontheb1rd.smcspeedtest.ResultsFragment"
-        android:label="fragment_results"
+        android:label="Results"
         tools:layout="@layout/fragment_results" >
     </fragment>
     <fragment
         android:id="@+id/predictionsFragment"
         android:name="com.herontheb1rd.smcspeedtest.PredictionsFragment"
-        android:label="fragment_predictions"
+        android:label="Predictions"
         tools:layout="@layout/fragment_predictions" />
 
 </navigation>

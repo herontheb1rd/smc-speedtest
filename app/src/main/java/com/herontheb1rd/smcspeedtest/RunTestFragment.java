@@ -2,13 +2,12 @@ package com.herontheb1rd.smcspeedtest;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,17 +28,7 @@ public class RunTestFragment extends Fragment {
     static boolean justScannedQR;
 
     public RunTestFragment() {
-        // Required empty public constructor
         justScannedQR = false;
-    }
-    public static RunTestFragment newInstance() {
-        RunTestFragment fragment = new RunTestFragment();
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
     }
 
     @Override
@@ -79,15 +68,15 @@ public class RunTestFragment extends Fragment {
                                     barcode -> {
                                         String rawValue = barcode.getRawValue();
                                         Bundle result = new Bundle();
-                                        result.putString("bundleKey", "result");
+                                        result.putString("bundleKey", rawValue);
                                         getParentFragmentManager().setFragmentResult("requestKey", result);
 
                                         justScannedQR = true;
                                     });
                 }else{
+                    //toast
                     CharSequence message = "You must have an internet connection to run the test";
                     int duration = Toast.LENGTH_SHORT;
-
                     Toast toast = Toast.makeText(getActivity(), message, duration);
                     toast.show();
                 }
