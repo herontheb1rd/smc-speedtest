@@ -23,6 +23,8 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
+//fragment that runs the test
+//test is not run here, but is run in the results fragment
 
 public class RunTestFragment extends Fragment {
     static boolean justScannedQR;
@@ -57,27 +59,23 @@ public class RunTestFragment extends Fragment {
                 if(connectivityManager.getActiveNetworkInfo() != null){
                     //scan QR code with Google Code Scanner
                     GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
-                            .setBarcodeFormats(
-                                    Barcode.FORMAT_QR_CODE)
-                            .build();
-                    GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(view.getContext(), options);
-                    scanner
-                            .startScan()
-                            //if successful, pass value of qr code to results panel
-                            .addOnSuccessListener(
-                                    barcode -> {
-                                        String rawValue = barcode.getRawValue();
-                                        Bundle result = new Bundle();
-                                        result.putString("bundleKey", rawValue);
-                                        getParentFragmentManager().setFragmentResult("requestKey", result);
+                        .setBarcodeFormats(
+                                Barcode.FORMAT_QR_CODE)
+                        .build();
 
-                                        justScannedQR = true;
-                                    });
+                    //if successful, pass value of qr code to results panel
+                    GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(view.getContext(), options);
+                    scanner.startScan().addOnSuccessListener(
+                        barcode -> {
+                            String rawValue = barcode.getRawValue();
+                            Bundle result = new Bundle();
+                            result.putString("bundleKey", rawValue);
+                            getParentFragmentManager().setFragmentResult("requestKey", result);
+
+                            justScannedQR = true;
+                        });
                 }else{
-                    //toast
-                    CharSequence message = "You must have an internet connection to run the test";
-                    int duration = Toast.LENGTH_SHORT;
-                    Toast toast = Toast.makeText(getActivity(), message, duration);
+                    Toast toast = Toast.makeText(getActivity(), "You must have an internet connection to run the test", Toast.LENGTH_SHORT);
                     toast.show();
                 }
             }

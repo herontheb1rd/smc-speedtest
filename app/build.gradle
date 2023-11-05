@@ -58,23 +58,13 @@ dependencies {
     implementation 'androidx.navigation:navigation-ui-ktx:2.3.5'
 
     implementation 'com.google.android.gms:play-services-code-scanner:16.0.0'
-
     implementation 'com.google.android.gms:play-services-base:18.2.0'
     implementation 'com.google.android.gms:play-services-tflite-java:16.1.0'
-
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.8.0"))
-
-    def lifecycle_version = "2.6.1"
-    def arch_version = "2.2.0"
-    implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-livedata:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-runtime:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycle_version"
-    annotationProcessor "androidx.lifecycle:lifecycle-compiler:$lifecycle_version"
 
     implementation platform('com.google.firebase:firebase-bom:32.2.0')
     implementation 'com.google.firebase:firebase-analytics'
     implementation("com.google.firebase:firebase-database")
+    implementation("com.google.firebase:firebase-auth")
 
     implementation 'com.android.ndk.thirdparty:curl:7.85.0-beta-1'
     implementation 'com.android.ndk.thirdparty:openssl:1.1.1q-beta-1'
@@ -83,4 +73,7 @@ dependencies {
     implementation "androidx.work:work-runtime:$work_version"
 
     implementation "androidx.drawerlayout:drawerlayout:1.2.0"
+    implementation 'androidx.preference:preference:1.2.0'
+
+
 }

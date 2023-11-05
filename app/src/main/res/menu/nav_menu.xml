@@ -4,4 +4,8 @@
         android:id="@+id/runTestFragment"
         android:enabled="true"
         android:title="Run Test"/>
+    <item
+        android:id="@+id/HeatMapFragment"
+        android:enabled="true"
+        android:title="Heat Map"/>
 </menu>

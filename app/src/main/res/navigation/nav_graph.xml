@@ -20,10 +20,5 @@
         android:label="Results"
         tools:layout="@layout/fragment_results" >
     </fragment>
-    <fragment
-        android:id="@+id/predictionsFragment"
-        android:name="com.herontheb1rd.smcspeedtest.PredictionsFragment"
-        android:label="Predictions"
-        tools:layout="@layout/fragment_predictions" />
 
 </navigation>

@@ -18,7 +18,20 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.25" />
+        app:layout_constraintVertical_bias="0.3" />
+
+    <TextView
+        android:id="@+id/downloadResultTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text=""
+        android:textColor="?attr/colorPrimary"
+        android:textSize="36sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/guideline"
+        app:layout_constraintTop_toBottomOf="@+id/resultsHeaderTV"
+        app:layout_constraintVertical_bias="0.015" />
 
     <TextView
         android:id="@+id/downloadLabelTV"
@@ -29,28 +42,6 @@
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toBottomOf="@+id/downloadResultTV" />
-
-    <TextView
-        android:id="@+id/downloadResultTV"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textColor="?attr/colorPrimary"
-        android:textSize="36sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.35" />
-
-    <TextView
-        android:id="@+id/uploadLabelTV"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Upload Speed (Mbps)"
-        android:textColor="?attr/colorPrimary"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/uploadResultTV" />
 
     <TextView
         android:id="@+id/uploadResultTV"
@@ -64,14 +55,14 @@
         app:layout_constraintTop_toBottomOf="@+id/downloadLabelTV" />
 
     <TextView
-        android:id="@+id/latencyLabelTV"
+        android:id="@+id/uploadLabelTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Latency (ms)"
+        android:text="Upload Speed (Mbps)"
         android:textColor="?attr/colorPrimary"
         android:textSize="20sp"
         app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/latencyResultTV" />
+        app:layout_constraintTop_toBottomOf="@+id/uploadResultTV" />
 
     <TextView
         android:id="@+id/latencyResultTV"
@@ -83,6 +74,18 @@
         android:textSize="36sp"
         app:layout_constraintStart_toStartOf="@+id/guideline"
         app:layout_constraintTop_toBottomOf="@+id/uploadLabelTV" />
+
+    <TextView
+        android:id="@+id/latencyLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Latency (ms)"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toStartOf="@+id/guideline"
+        app:layout_constraintTop_toBottomOf="@+id/latencyResultTV" />
+
+
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline"
@@ -96,7 +99,7 @@
         android:id="@+id/preResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Measuring internet performance.\nThis may take a while."
+        android:text="Starting internet performance test"
         android:textAlignment="center"
         android:textColor="?attr/colorPrimary"
         android:textSize="20sp"
@@ -104,7 +107,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:visibility="invisible"/>
+        android:visibility="visible"/>
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/resultsGroup"

@@ -11,11 +11,12 @@
 #include <string>
 
 
+
 //returns a string array of the results
 //we can convert them back later when uploading to the database
 extern "C"
 JNIEXPORT jobjectArray JNICALL
-Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, jobject thiz) {
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, jobject thiz, jobject jPreResultTV) {
     double dlspeed, ulspeed;
     long latency;
     std::string networkProvider;
@@ -24,6 +25,10 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     bool isTestSuccessful = true;
     std::string failMessage;
 
+    //for setting the text
+    jclass clazz = env->FindClass("android/widget/TextView");
+    jmethodID setText = env->GetMethodID(clazz, "setText", "(Ljava/lang/CharSequence;)V");
+
     signal(SIGPIPE, SIG_IGN);
 
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
@@ -31,6 +36,7 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     ServerInfo serverInfo;
     ServerInfo serverQualityInfo;
 
+    env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Acquiring network provider info"));
     if (!sp.ipInfo(info)){
         isTestSuccessful = false;
         failMessage = "Failed getting ISP info";
@@ -38,12 +44,13 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
         //get isp
         networkProvider = info.isp;
         auto serverList = sp.serverList();
+        env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Confiscating server list"));
         if (serverList.empty()){
             isTestSuccessful = false;
             failMessage = "Failed getting server info/latency";
         }else{
+            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Procuring latency"));
             serverInfo = sp.bestServer(10, [](bool success) {});
-
             //get latency
             latency = sp.latency();
 
@@ -54,12 +61,14 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
             TestConfig downloadConfig;
             testConfigSelector(preSpeed, uploadConfig, downloadConfig);
 
+            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Pilfering download speed"));
             //get upload and download speed
             if(!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success){})){
                 isTestSuccessful = false;
                 failMessage = "Failed getting download speed";
             }
 
+            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Liberating upload speed"));
             if(!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success){})){
                 isTestSuccessful = false;
                 failMessage = "Failed getting upload speed";
