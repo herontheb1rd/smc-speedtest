@@ -2,6 +2,8 @@ package com.herontheb1rd.smcspeedtest;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -23,9 +25,6 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
-//fragment that runs the test
-//test is not run here, but is run in the results fragment
-
 public class RunTestFragment extends Fragment {
     static boolean justScannedQR;
 
@@ -36,7 +35,6 @@ public class RunTestFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_run_test, container, false);
 
         //module install apis fix for google code scanner
@@ -48,22 +46,35 @@ public class RunTestFragment extends Fragment {
                         .build();
         moduleInstallClient.installModules(moduleInstallRequest);
 
-        //run QR code scanner on button press
         Button runTestB = (Button) view.findViewById(R.id.runTestB);
         runTestB.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                //check if user is using mobile data first
-                //if not, show toast
-                ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-                if(connectivityManager.getActiveNetworkInfo() != null){
-                    //scan QR code with Google Code Scanner
+                boolean isConnected = false;
+
+                //getActiveNetworkInfo is deprecated after version 29
+                if (android.os.Build.VERSION.SDK_INT >= 29) {
+                    ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(ConnectivityManager.class);
+                    Network currentNetwork = connectivityManager.getActiveNetwork();
+                    NetworkCapabilities caps = connectivityManager.getNetworkCapabilities(currentNetwork);
+
+                    if(caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)){
+                        isConnected = true;
+                    }
+                }else{
+                    ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+                    if(connectivityManager.getActiveNetworkInfo() != null){
+                        isConnected = true;
+                    }
+                }
+
+                if(isConnected){
                     GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
                         .setBarcodeFormats(
                                 Barcode.FORMAT_QR_CODE)
                         .build();
 
-                    //if successful, pass value of qr code to results panel
                     GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(view.getContext(), options);
                     scanner.startScan().addOnSuccessListener(
                         barcode -> {
@@ -84,7 +95,6 @@ public class RunTestFragment extends Fragment {
         return view;
     }
 
-    //waits until successful resume from qr code before going to results panel
     @Override
     public void onResume(){
         super.onResume();

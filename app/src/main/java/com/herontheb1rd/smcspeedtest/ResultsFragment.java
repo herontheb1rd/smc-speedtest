@@ -1,6 +1,8 @@
 package com.herontheb1rd.smcspeedtest;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -8,10 +10,16 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.Group;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
 
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellSignalStrengthGsm;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,8 +32,7 @@ import com.google.firebase.database.DatabaseReference;
 
 import java.util.Calendar;
 
-//runs the test, and uploads the results
-public class ResultsFragment extends Fragment {
+    public class ResultsFragment extends Fragment {
 
 
     // Used to load the 'smcspeedtest' library
@@ -34,6 +41,7 @@ public class ResultsFragment extends Fragment {
     }
 
     private DatabaseReference mDatabase;
+
     public ResultsFragment() {
         mDatabase = FirebaseDatabase.getInstance(
                 "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -59,46 +67,75 @@ public class ResultsFragment extends Fragment {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 //running this in a separate thread because this will block main thread and cause app to crash
                 new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    //run the speedtest
-                    String speedtestResults[] = runSpeedtest(preResultTV);
+                    @Override
+                    public void run() {
+                        //TODO: make this code neater and divided up more
+                        //run the speedtest
+                        String speedtestResults[] = runSpeedtest(preResultTV);
 
-                    //if the test completed successfully, the returned array would be length 4 containing the measured values
-                    //if it didn't, the returned array would be length 1 with a fail message
-                    if(speedtestResults.length != 1){
-                        //store the resulting strings to the class variables
-                        String dlspeedStr = speedtestResults[0];
-                        String ulspeedStr = speedtestResults[1];
-                        String latencyStr = speedtestResults[2];
+                        //if the test completed successfully, the returned array would be length 4 containing the measured values
+                        //if it didn't, the returned array would be length 1 with a fail message
+                        if (speedtestResults.length != 1) {
+                            //store the resulting strings to the class variables
+                            String dlspeedStr = speedtestResults[0];
+                            String ulspeedStr = speedtestResults[1];
+                            String latencyStr = speedtestResults[2];
 
-                        //convert result strings to double/long
-                        double dlspeed = Double.parseDouble(dlspeedStr);
-                        double ulspeed = Double.parseDouble(ulspeedStr);
-                        long latency = Long.parseLong(latencyStr);
+                            //convert result strings to double/long
+                            double dlspeed = Double.parseDouble(dlspeedStr);
+                            double ulspeed = Double.parseDouble(ulspeedStr);
+                            long latency = Long.parseLong(latencyStr);
+                            int rssi, rsrq, rsrp;
 
-                        //get the other information: rssi, time, location, network_provider, and the phone brand
-                        long time = Calendar.getInstance().getTime().getTime();
-                        String location = bundle.getString("bundleKey");
-                        String network_provider = speedtestResults[3];
-                        String phone_brand = Build.MANUFACTURER;
+                            TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+                            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_DENIED) {
+                                //TODO: handle permissions
+                            }else{
+                                CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+                                CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                                    rssi = cellSignalStrengthLte.getRssi();
+                                }else {
+                                    //uses wifimanager to get rssi
+                                    WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+                                    rssi = wifiManager.getConnectionInfo().getRssi();
+                                }
 
-                        //upload results to firebase
-                        //Results results = new Results(dlspeed, ulspeed, latency, time, location, network_provider, phone_brand);
-                        //mDatabase.child("results").push().setValue(results);
-
-                        //show results
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                preResultTV.setVisibility(View.INVISIBLE);
-                                resultsGroup.setVisibility(View.VISIBLE);
-                                //yes theres dlspeedStr and latencyStr, but this formats them to 1 decimal place
-                                downloadResultTV.setText(String.format("%.1f", dlspeed));
-                                uploadResultTV.setText(String.format("%.1f", ulspeed));
-                                latencyResultTV.setText(latencyStr);
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    rsrp = cellSignalStrengthLte.getRsrp();
+                                    rsrq = cellSignalStrengthLte.getRsrq();
+                                }else{
+                                    rsrp = cellSignalStrengthLte.getDbm();
+                                    //invalid number, as rsrq has to be negative
+                                    //older phones dont have another function for this
+                                    //we can just filter this value later
+                                    rsrq = 1;
+                                }
                             }
-                        });
+
+                            long time = Calendar.getInstance().getTime().getTime();
+                            String location = bundle.getString("bundleKey");
+                            String network_provider = speedtestResults[3];
+                            String phone_brand = Build.MANUFACTURER;
+
+                            //TODO: get longitude and latitude
+
+                            //upload results to firebase
+                            //Results results = new Results(dlspeed, ulspeed, latency, time, location, network_provider, phone_brand);
+                            //mDatabase.child("results").push().setValue(results);
+
+                            //show results
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    preResultTV.setVisibility(View.INVISIBLE);
+                                    resultsGroup.setVisibility(View.VISIBLE);
+                                    //yes theres dlspeedStr and latencyStr, but this formats them to 1 decimal place
+                                    downloadResultTV.setText(String.format("%.1f", dlspeed));
+                                    uploadResultTV.setText(String.format("%.1f", ulspeed));
+                                    latencyResultTV.setText(latencyStr);
+                                }
+                            });
                     }else{
                         preResultTV.setText(speedtestResults[0] + ", please try again");
 
