@@ -76,32 +76,4 @@ public class HeatMapFragment extends Fragment {
 
     }
 
-    //TODO: make this return a WeightedLatLng
-    public void readResults(String metricName){
-        for(Results r : curResults){
-            double lat = r.latitude;
-            double lng = r.longitude;
-            double metric;
-            switch(metricName){
-                case "dlspeed":
-                    metric = r.dlspeed;
-                    break;
-                case "ulspeed":
-                    metric = r.ulspeed;
-                    break;
-                case "latency":
-                    metric = (double) r.latency;
-                    break;
-                case "rssi":
-                    metric = r.rssi;
-                    break;
-                case "rsrq":
-                    metric = r.rsrq;
-                    break;
-                case "rsrp":
-                    metric = r.rsrp;
-                    break;
-            }
-        }
-    }
 }
