@@ -13,6 +13,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -30,8 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 //TODO: add Google Maps SDK
-public class HeatMapFragment extends Fragment {
-
+public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener{
     private DatabaseReference mDatabase;
     private ArrayList<Results> curResults = new ArrayList<Results>();
 
@@ -52,7 +54,17 @@ public class HeatMapFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_heat_map, container, false);
 
+        //initialize spinner
+        Spinner spinner = (Spinner)view.findViewById(R.id.metric_spinner);
+        String[] metricOptions = {"Download Speed", "Upload Speed", "Latency"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
+                android.R.layout.simple_spinner_item,
+                metricOptions);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
 
+        //get results from database
         long before24hours = new Date().getTime() - (24 * 3600 * 1000);
         Query timeQuery = mDatabase.child("results").orderByChild("date_time")
                 .startAt(before24hours);
@@ -72,7 +84,21 @@ public class HeatMapFragment extends Fragment {
         return view;
     }
 
-    public void updateHeatMap(String metricName){
+
+    public void onItemSelected(AdapterView<?> parent, View view,
+                               int pos, long id) {
+        updateHeatMap(pos);
+    }
+
+    public void onNothingSelected(AdapterView<?> parent){
+        resetHeatMap();
+    }
+
+    public void updateHeatMap(int metric){
+
+    }
+
+    public void resetHeatMap(){
 
     }
 
