@@ -60,7 +60,6 @@ public class ResultsFragment extends Fragment {
 
         TextView preResultTV = (TextView) view.findViewById(R.id.preResultTV);
 
-        Group resultsGroup = (Group) view.findViewById(R.id.resultsGroup);
         TextView downloadResultTV = (TextView) view.findViewById(R.id.downloadResultTV);
         TextView uploadResultTV = (TextView) view.findViewById(R.id.uploadResultTV);
         TextView latencyResultTV = (TextView) view.findViewById(R.id.latencyResultTV);
@@ -154,7 +153,6 @@ public class ResultsFragment extends Fragment {
                                 @Override
                                 public void run() {
                                     preResultTV.setVisibility(View.INVISIBLE);
-                                    resultsGroup.setVisibility(View.VISIBLE);
                                     //yes theres dlspeedStr and latencyStr, but this formats them to 1 decimal place
                                     downloadResultTV.setText(String.format("%.1f", dlspeed));
                                     uploadResultTV.setText(String.format("%.1f", ulspeed));

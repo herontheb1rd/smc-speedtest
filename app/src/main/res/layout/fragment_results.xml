@@ -8,91 +8,221 @@
 
 
     <TextView
-        android:id="@+id/resultsHeaderTV"
-        style="@style/BoldTextViewStyle"
+        android:id="@+id/downloadLabelTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Results"
+        android:text="Download "
         android:textColor="?attr/colorPrimary"
-        android:textSize="48sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3" />
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/downloadResultTV"
+        app:layout_constraintStart_toStartOf="@+id/downloadResultTV" />
 
     <TextView
         android:id="@+id/downloadResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text=""
+        android:text="100"
+        android:textAlignment="textStart"
         android:textColor="?attr/colorPrimary"
-        android:textSize="36sp"
+        android:textSize="48sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/resultsHeaderTV"
-        app:layout_constraintVertical_bias="0.015" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.15"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.40" />
 
     <TextView
-        android:id="@+id/downloadLabelTV"
+        android:id="@+id/downloadUnitTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Download Speed (Mbps)"
+        android:layout_marginStart="5dp"
+        android:text="Mbps"
         android:textColor="?attr/colorPrimary"
         android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/downloadResultTV" />
+        app:layout_constraintStart_toEndOf="@+id/downloadResultTV"
+        app:layout_constraintTop_toTopOf="@+id/downloadResultTV" />
 
-    <TextView
-        android:id="@+id/uploadResultTV"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:text=""
-        android:textColor="?attr/colorPrimary"
-        android:textSize="36sp"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/downloadLabelTV" />
 
     <TextView
         android:id="@+id/uploadLabelTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Upload Speed (Mbps)"
+        android:text="Upload  "
         android:textColor="?attr/colorPrimary"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/uploadResultTV" />
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/uploadResultTV"
+        app:layout_constraintStart_toStartOf="@+id/uploadResultTV" />
+
 
     <TextView
-        android:id="@+id/latencyResultTV"
+        android:id="@+id/uploadResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
-        android:text=""
+        android:layout_marginTop="64dp"
+        android:text="100"
         android:textColor="?attr/colorPrimary"
-        android:textSize="36sp"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/uploadLabelTV" />
+        android:textSize="48sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.15"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/downloadResultTV" />
+
+    <TextView
+        android:id="@+id/uploadUnitTV"
+        android:layout_width="54dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="5dp"
+        android:text="Mbps"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toEndOf="@+id/uploadResultTV"
+        app:layout_constraintTop_toTopOf="@+id/uploadResultTV" />
 
     <TextView
         android:id="@+id/latencyLabelTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Latency (ms)"
+        android:text="Latency "
         android:textColor="?attr/colorPrimary"
-        android:textSize="20sp"
-        app:layout_constraintStart_toStartOf="@+id/guideline"
-        app:layout_constraintTop_toBottomOf="@+id/latencyResultTV" />
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/latencyResultTV"
+        app:layout_constraintStart_toStartOf="@+id/latencyResultTV" />
 
-
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline"
+    <TextView
+        android:id="@+id/latencyResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_begin="50dp" />
+        android:layout_marginTop="64dp"
+        android:text="100"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="48sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.15"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/uploadResultTV" />
+
+    <TextView
+        android:id="@+id/latencyUnitTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:text="ms"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toEndOf="@+id/latencyResultTV"
+        app:layout_constraintTop_toTopOf="@+id/latencyResultTV" />
+
+    <TextView
+        android:id="@+id/rssiLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RSSI"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/rssiResultTV"
+        app:layout_constraintStart_toStartOf="@+id/rssiResultTV" />
+
+    <TextView
+        android:id="@+id/rssiResultTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="100"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="48sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.75"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.40" />
+
+    <TextView
+        android:id="@+id/rssiUnitTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:text="dBm"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toEndOf="@+id/rssiResultTV"
+        app:layout_constraintTop_toTopOf="@+id/rssiResultTV" />
+
+    <TextView
+        android:id="@+id/rsrpLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RSRP"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/rsrpResultTV"
+        app:layout_constraintStart_toStartOf="@+id/rsrpResultTV" />
+
+
+    <TextView
+        android:id="@+id/rsrpResultTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:text="100"
+        android:textAlignment="textStart"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="48sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.75"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rssiResultTV" />
+
+    <TextView
+        android:id="@+id/rsrpUnitTV"
+        android:layout_width="54dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="5dp"
+        android:text="dBm"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toEndOf="@+id/rsrpResultTV"
+        app:layout_constraintTop_toTopOf="@+id/rsrpResultTV" />
+
+    <TextView
+        android:id="@+id/rsrqLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RSRQ"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/rsrqResultTV"
+        app:layout_constraintStart_toStartOf="@+id/rsrqResultTV" />
+
+    <TextView
+        android:id="@+id/rsrqResultTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:text="100"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="48sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.75"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rsrpResultTV" />
+
+    <TextView
+        android:id="@+id/rsrqUnitTV"
+        android:layout_width="54dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="5dp"
+        android:text="dB"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toEndOf="@+id/rsrqResultTV"
+        app:layout_constraintTop_toTopOf="@+id/rsrqResultTV" />
 
 
     <TextView
@@ -100,20 +230,27 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Starting internet performance test"
-        android:textAlignment="center"
+        android:textAlignment="textStart"
         android:textColor="?attr/colorPrimary"
         android:textSize="20sp"
+        android:textStyle="normal"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:visibility="visible"/>
+        app:layout_constraintVertical_bias="0.15" />
 
-    <androidx.constraintlayout.widget.Group
-        android:id="@+id/resultsGroup"
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
-        app:constraint_referenced_ids="resultsHeaderTV, downloadLabelTV, downloadResultTV, uploadLabelTV, uploadResultTV, latencyLabelTV, latencyResultTV" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.20" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -8,7 +8,7 @@
 
     <Button
         android:id="@+id/runTestB"
-        style="@style/RunTestButtonStyle"
+        style="@style/Widget.Material3.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
@@ -25,13 +25,13 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.475" />
+        app:layout_constraintVertical_bias="0.495" />
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Scan a QR Code to begin testing.\nMake sure your mobile data is on."
+        android:text="Scan a QR Code to begin measuring.\nMake sure your mobile data is on."
         android:textAlignment="center"
         android:textColor="?attr/colorPrimary"
         android:textSize="16sp"
