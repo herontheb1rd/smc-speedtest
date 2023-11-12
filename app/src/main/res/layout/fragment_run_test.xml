@@ -16,7 +16,7 @@
         android:paddingTop="12dp"
         android:paddingRight="24dp"
         android:paddingBottom="12dp"
-        android:text="run speedtest"
+        android:text="Run Speed Test"
         android:textAllCaps="false"
         android:textColor="?attr/colorSecondary"
         android:textSize="28sp"

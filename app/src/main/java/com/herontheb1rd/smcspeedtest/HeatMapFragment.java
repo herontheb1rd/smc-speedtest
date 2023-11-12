@@ -21,6 +21,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.android.heatmaps.HeatmapTileProvider;
+import com.google.maps.android.heatmaps.WeightedLatLng;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,11 +38,12 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 //TODO: add Google Maps SDK
-public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener{
+public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener, OnMapReadyCallback {
     private DatabaseReference mDatabase;
-    private ArrayList<Results> curResults = new ArrayList<Results>();
+    private ArrayList<Results> results = new ArrayList<Results>();
 
     public HeatMapFragment() {
         // Required empty public constructor
@@ -47,6 +55,12 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getActivity().setContentView(R.layout.activity_main);
+        SupportMapFragment mapFragment = (SupportMapFragment) getActivity().getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
     }
 
     @Override
@@ -72,7 +86,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
-                    curResults.add(singleSnapshot.getValue(Results.class));
+                    results.add(singleSnapshot.getValue(Results.class));
                 }
             }
             @Override
@@ -84,6 +98,12 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         return view;
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        LatLng pshs = new LatLng(7.082788894235911, 125.50813754841627);
+        googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(pshs));
+    }
 
     public void onItemSelected(AdapterView<?> parent, View view,
                                int pos, long id) {
@@ -95,6 +115,38 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     }
 
     public void updateHeatMap(int metric){
+        List<WeightedLatLng> weightedLatLngs = new ArrayList<>();
+        for(Results curResult : results){
+            double intensity = 0;
+            switch(metric){
+                case 0:
+                    intensity = curResult.getNetPerf().getDlspeed();
+                    break;
+                case 1:
+                    intensity = curResult.getNetPerf().getUlspeed();
+                    break;
+                case 2:
+                    intensity = curResult.getNetPerf().getLatency();
+                    break;
+                case 3:
+                    intensity = curResult.getNetPerf().getRssi();
+                    break;
+                case 4:
+                    intensity = curResult.getNetPerf().getRsrp();
+                    break;
+                case 5:
+                    intensity = curResult.getNetPerf().getRsrq();
+                    break;
+
+            }
+            weightedLatLngs.add(new WeightedLatLng(new LatLng(curResult.getLocation().getLatitude(),
+                    curResult.getLocation().getLongitude()),
+                    intensity));
+        }
+
+        HeatmapTileProvider provider = new HeatmapTileProvider.Builder()
+                .weightedData(weightedLatLngs)
+                .build();
 
     }
 
