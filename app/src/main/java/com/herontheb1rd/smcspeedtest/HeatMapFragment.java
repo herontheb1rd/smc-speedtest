@@ -129,18 +129,18 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                     intensity = curResult.getNetPerf().getLatency();
                     break;
                 case 3:
-                    intensity = curResult.getNetPerf().getRssi();
+                    intensity = curResult.getSignalPerf().getRssi();
                     break;
                 case 4:
-                    intensity = curResult.getNetPerf().getRsrp();
+                    intensity = curResult.getSignalPerf().getRsrp();
                     break;
                 case 5:
-                    intensity = curResult.getNetPerf().getRsrq();
+                    intensity = curResult.getSignalPerf().getRsrq();
                     break;
 
             }
-            weightedLatLngs.add(new WeightedLatLng(new LatLng(curResult.getLocation().getLatitude(),
-                    curResult.getLocation().getLongitude()),
+            weightedLatLngs.add(new WeightedLatLng(new LatLng(curResult.getPlace().getLatitude(),
+                    curResult.getPlace().getLongitude()),
                     intensity));
         }
 

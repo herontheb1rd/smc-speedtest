@@ -44,12 +44,12 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
         //get isp
         networkProvider = info.isp;
         auto serverList = sp.serverList();
-        env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Confiscating server list"));
+        env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Acquiring server list"));
         if (serverList.empty()){
             isTestSuccessful = false;
             failMessage = "Failed getting server info/latency";
         }else{
-            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Procuring latency"));
+            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Computing latency"));
             serverInfo = sp.bestServer(10, [](bool success) {});
             //get latency
             latency = sp.latency();
@@ -61,14 +61,14 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
             TestConfig downloadConfig;
             testConfigSelector(preSpeed, uploadConfig, downloadConfig);
 
-            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Pilfering download speed"));
+            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Computing download speed"));
             //get upload and download speed
             if(!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success){})){
                 isTestSuccessful = false;
                 failMessage = "Failed getting download speed";
             }
 
-            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Liberating upload speed"));
+            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Computing upload speed"));
             if(!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success){})){
                 isTestSuccessful = false;
                 failMessage = "Failed getting upload speed";
