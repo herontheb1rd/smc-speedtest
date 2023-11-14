@@ -1,35 +1,32 @@
 package com.herontheb1rd.smcspeedtest;
 
 public class SignalPerf {
-    public int rssi;
-    public int rsrp;
-    public int rsrq;
+    private int rssi;
+    private int rsrp;
+    private int rsrq;
 
     public int getRssi() {
         return rssi;
     }
 
-    public void setRssi(int rssi) {
-        this.rssi = rssi;
-    }
 
     public int getRsrp() {
         return rsrp;
     }
 
-    public void setRsrp(int rsrp) {
-        this.rsrp = rsrp;
-    }
 
     public int getRsrq() {
         return rsrq;
     }
 
-    public void setRsrq(int rsrq) {
-        this.rsrq = rsrq;
+    public SignalPerf() {
+
     }
 
-    public SignalPerf() {
+    public SignalPerf(int rssi, int rsrp, int rsrq){
+        this.rssi = rssi;
+        this.rsrp = rsrp;
+        this.rsrq = rsrq;
 
     }
 

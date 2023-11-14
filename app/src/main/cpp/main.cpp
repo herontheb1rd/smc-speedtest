@@ -11,19 +11,14 @@
 #include <string>
 
 
-
+//TODO: add error handling if test failed
 //returns a string array of the results
 //we can convert them back later when uploading to the database
 extern "C"
-JNIEXPORT jobjectArray JNICALL
+JNIEXPORT jobject JNICALL
 Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, jobject thiz, jobject jPreResultTV) {
     double dlspeed, ulspeed;
     long latency;
-    std::string networkProvider;
-
-    //used to check if the test failed 
-    bool isTestSuccessful = true;
-    std::string failMessage;
 
     //for setting the text
     jclass clazz = env->FindClass("android/widget/TextView");
@@ -38,17 +33,12 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
 
     env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Acquiring network provider info"));
     if (!sp.ipInfo(info)){
-        isTestSuccessful = false;
-        failMessage = "Failed getting ISP info";
-    }else{
-        //get isp
-        networkProvider = info.isp;
+
+    }else {
         auto serverList = sp.serverList();
         env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Acquiring server list"));
-        if (serverList.empty()){
-            isTestSuccessful = false;
-            failMessage = "Failed getting server info/latency";
-        }else{
+        if (serverList.empty()) {
+        } else {
             env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Computing latency"));
             serverInfo = sp.bestServer(10, [](bool success) {});
             //get latency
@@ -61,41 +51,23 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
             TestConfig downloadConfig;
             testConfigSelector(preSpeed, uploadConfig, downloadConfig);
 
-            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Computing download speed"));
+            env->CallVoidMethod(jPreResultTV, setText,
+                                env->NewStringUTF("Computing download speed"));
             //get upload and download speed
-            if(!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success){})){
-                isTestSuccessful = false;
-                failMessage = "Failed getting download speed";
+            if (!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {})) {
+
             }
 
             env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Computing upload speed"));
-            if(!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success){})){
-                isTestSuccessful = false;
-                failMessage = "Failed getting upload speed";
+            if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
+
             }
         }
     }
 
-    jobjectArray resultsObj;
-
-    //if the test was successful, return all values
-    //if not, return a single value array with a fail message
-    if(isTestSuccessful){
-        std::string resultsStr[] = {std::to_string(dlspeed),
-                                    std::to_string(ulspeed),
-                                    std::to_string(latency),
-                                    networkProvider
-        };
-
-        resultsObj = env->NewObjectArray( 4, env->FindClass("java/lang/String"), env->NewStringUTF(""));
-        for(int i = 0; i < 4; i++){
-            env->SetObjectArrayElement(resultsObj, i, env->NewStringUTF(resultsStr[i].c_str()));
-        }
-    }else{
-        resultsObj = env->NewObjectArray( 1, env->FindClass("java/lang/String"), env->NewStringUTF(""));
-        //for debugging
-        env->SetObjectArrayElement(resultsObj, 0, env->NewStringUTF(failMessage.c_str()));
-    }
+    jclass c = env->FindClass("com/herontheb1rd/smcspeedtest/NetPerf");
+    jmethodID cid = env->GetMethodID(c, "<init>", "(DDI)V");
+    jobject resultsObj = env->NewObject(c, cid, dlspeed, ulspeed, latency);
 
     return resultsObj;
 }

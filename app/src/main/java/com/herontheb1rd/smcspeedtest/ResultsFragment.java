@@ -64,55 +64,23 @@ public class ResultsFragment extends Fragment {
                 new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        //TODO: make this code neater and divided up more
-                        //run the speedtest
-                        String speedtestResults[] = runSpeedtest(preResultTV);
+                        long time = Calendar.getInstance().getTime().getTime();
+                        String networkProvider = "";
+                        String phoneBrand = Build.MANUFACTURER;
+                        Place place = new Place(bundle.getString("bundleKey") , computeLatLng());
+                        NetPerf netPerf = runSpeedtest(preResultTV);
+                        SignalPerf signalPerf = new SignalPerf(computeRssi(), computeRsrp(), computeRsrq());
 
-                        //if the test completed successfully, the returned array would be length 4 containing the measured values
-                        //if it didn't, the returned array would be length 1 with a fail message
-                        if (speedtestResults.length != 1) {
+                        Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
+                        mDatabase.child("results").push().setValue(results);
 
-                            Results results = new Results();
-
-                            long time = Calendar.getInstance().getTime().getTime();
-                            String networkProvider = speedtestResults[3];
-                            String phoneBrand = Build.MANUFACTURER;
-
-                            Place place = new Place();
-                            place.setLatitude(computeLatLng()[0]);
-                            place.setLongitude(computeLatLng()[1]);
-                            place.setPlaceName(speedtestResults[3]);
-
-                            NetPerf netPerf = new NetPerf();
-                            netPerf.setDlspeed(Double.parseDouble(speedtestResults[0]));
-                            netPerf.setUlspeed(Double.parseDouble(speedtestResults[1]));
-                            netPerf.setLatency(Integer.parseInt(speedtestResults[2]));
-
-                            SignalPerf signalPerf = new SignalPerf();
-                            signalPerf.setRssi(computeRssi());
-                            signalPerf.setRsrp(computeRsrp());
-                            signalPerf.setRsrq(computeRsrq());
-
-                            results.setTime(time);
-                            results.setNetworkProvider(networkProvider);
-                            results.setPhoneBrand(phoneBrand);
-                            results.setPlace(place);
-                            results.setNetPerf(netPerf);
-                            results.setSignalPerf(signalPerf);
-
-                            mDatabase.child("results").push().setValue(results);
-
-                            //show results
-                            getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    displayResults(netPerf, signalPerf, view);
-                                }
-                            });
-                        } else {
-                            Toast toast = Toast.makeText(getActivity(), speedtestResults[0], Toast.LENGTH_SHORT);
-                            toast.show();
-                        }
+                        //show results
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                displayResults(netPerf, signalPerf, view);
+                            }
+                        });
                     }
                 }).start();
             }
@@ -152,7 +120,7 @@ public class ResultsFragment extends Fragment {
                 rssi = wifiManager.getConnectionInfo().getRssi();
             }
         }else{
-            //TODO: Handle permissions
+
         }
 
         return rssi;
@@ -171,7 +139,7 @@ public class ResultsFragment extends Fragment {
             }
 
         }else{
-            //TODO: Handle permissions
+
         }
 
         return rsrp;
@@ -186,11 +154,10 @@ public class ResultsFragment extends Fragment {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 rsrq = cellSignalStrengthLte.getRsrp();
             }else{
-                //TODO:
             }
 
         }else{
-            //TODO: Handle permissions
+
         }
 
         return rsrq;
@@ -203,8 +170,15 @@ public class ResultsFragment extends Fragment {
         TextView rssiResultTV = (TextView) view.findViewById(R.id.rssiResultTV);
         TextView rsrpResultTV = (TextView) view.findViewById(R.id.rssiResultTV);
         TextView rsrqResultTV = (TextView) view.findViewById(R.id.rssiResultTV);
+
+        downloadResultTV.setText(Double.toString(netPerf.getDlspeed()));
+        uploadResultTV.setText(Double.toString(netPerf.getUlspeed()));
+        latencyResultTV.setText(Integer.toString(netPerf.getLatency()));
+        rssiResultTV.setText(Integer.toString(signalPerf.getRssi()));
+        rsrpResultTV.setText(Integer.toString(signalPerf.getRsrp()));
+        rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
     }
 
 
-    public native String[] runSpeedtest(TextView preResultTV);
+    public native NetPerf runSpeedtest(TextView preResultTV);
 }
