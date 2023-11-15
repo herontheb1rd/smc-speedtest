@@ -29,10 +29,17 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
 
 import java.util.Calendar;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 
 public class ResultsFragment extends Fragment {
 
@@ -49,7 +56,6 @@ public class ResultsFragment extends Fragment {
         ).getReference();
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -60,29 +66,36 @@ public class ResultsFragment extends Fragment {
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                //running this in a separate thread because this will block main thread and cause app to crash
-                new Thread(new Runnable() {
+                long time = Calendar.getInstance().getTime().getTime();
+                String networkProvider = "";
+                String phoneBrand = Build.MANUFACTURER;
+
+                Place place = new Place(bundle.getString("bundleKey"), computeLatLng());
+                SignalPerf signalPerf = new SignalPerf(computeRssi(), computeRsrp(), computeRsrq());
+
+                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+                ListenableFuture<NetPerf> future = pool.submit(new Callable<NetPerf>(){
                     @Override
-                    public void run() {
-                        long time = Calendar.getInstance().getTime().getTime();
-                        String networkProvider = "";
-                        String phoneBrand = Build.MANUFACTURER;
-                        Place place = new Place(bundle.getString("bundleKey") , computeLatLng());
-                        NetPerf netPerf = runSpeedtest(preResultTV);
-                        SignalPerf signalPerf = new SignalPerf(computeRssi(), computeRsrp(), computeRsrq());
-
-                        Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
-                        mDatabase.child("results").push().setValue(results);
-
-                        //show results
-                        getActivity().runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                displayResults(netPerf, signalPerf, view);
-                            }
-                        });
+                    public NetPerf call(){
+                        return runSpeedtest(preResultTV);
                     }
-                }).start();
+                });
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    Futures.addCallback(
+                        future,
+                        new FutureCallback<NetPerf>() {
+                            public void onSuccess(NetPerf netPerf) {
+                                Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
+                                mDatabase.child("results").push().setValue(results);
+                            }
+
+                            public void onFailure(@NonNull Throwable thrown) {
+                                // handle failure
+                            }
+                        },
+                        getContext().getMainExecutor()
+                    );
+                }
             }
         });
 
@@ -178,7 +191,6 @@ public class ResultsFragment extends Fragment {
         rsrpResultTV.setText(Integer.toString(signalPerf.getRsrp()));
         rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
     }
-
 
     public native NetPerf runSpeedtest(TextView preResultTV);
 }
