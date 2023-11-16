@@ -1,11 +1,16 @@
 package com.herontheb1rd.smcspeedtest;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Bundle;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
@@ -32,6 +37,30 @@ public class RunTestFragment extends Fragment {
         justScannedQR = false;
     }
 
+
+    ActivityResultLauncher<String[]> locationPermissionRequest =
+            registerForActivityResult(new ActivityResultContracts
+                            .RequestMultiplePermissions(), result -> {
+                Boolean fineLocationGranted = null;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    fineLocationGranted = result.getOrDefault(
+                            android.Manifest.permission.ACCESS_FINE_LOCATION, false);
+                }
+                Boolean coarseLocationGranted = null;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                    coarseLocationGranted = result.getOrDefault(
+                                    android.Manifest.permission.ACCESS_COARSE_LOCATION,false);
+                }
+                if (fineLocationGranted != null && fineLocationGranted) {
+                            // Precise location access granted.
+                        } else if (coarseLocationGranted != null && coarseLocationGranted) {
+                            // Only approximate location access granted.
+                        } else {
+                            // No location access granted.
+                        }
+                    }
+            );
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -47,6 +76,18 @@ public class RunTestFragment extends Fragment {
         moduleInstallClient.installModules(moduleInstallRequest);
 
         Button runTestB = (Button) view.findViewById(R.id.runTestB);
+
+        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            Toast toast = Toast.makeText(getActivity(), "Location access granted", Toast.LENGTH_SHORT);
+            toast.show();
+        }else {
+            locationPermissionRequest.launch(new String[] {
+                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+            });
+        }
+
         runTestB.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){

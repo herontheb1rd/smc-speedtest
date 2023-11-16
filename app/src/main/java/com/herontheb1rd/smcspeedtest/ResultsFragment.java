@@ -38,6 +38,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
 
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
@@ -48,12 +50,17 @@ public class ResultsFragment extends Fragment {
         System.loadLibrary("smcspeedtest");
     }
 
+    private final Map<String, Double[]> qrLocations = new HashMap<>();
     private DatabaseReference mDatabase;
+
 
     public ResultsFragment() {
         mDatabase = FirebaseDatabase.getInstance(
                 "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
         ).getReference();
+
+        //TODO: put default locations
+        qrLocations.put("Library", new Double[]{10.0, 10.0});
     }
 
     @Override
@@ -70,8 +77,14 @@ public class ResultsFragment extends Fragment {
                 String networkProvider = "";
                 String phoneBrand = Build.MANUFACTURER;
 
-                Place place = new Place(bundle.getString("bundleKey"), computeLatLng());
-                SignalPerf signalPerf = new SignalPerf(computeRssi(), computeRsrp(), computeRsrq());
+                //if permission not granted, inform user that test results will be affected
+                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    Toast toast = Toast.makeText(getActivity(), "Location access not granted. Some data will be affected", Toast.LENGTH_LONG);
+                    toast.show();
+                }
+                String placeName = bundle.getString("bundleKey");
+                Place place = new Place(placeName, computeLatLng(placeName));
+                SignalPerf signalPerf = computeSignalPerf();
 
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
                 ListenableFuture<NetPerf> future = pool.submit(new Callable<NetPerf>(){
@@ -102,79 +115,54 @@ public class ResultsFragment extends Fragment {
         return view;
     }
 
-    public double[] computeLatLng() {
+    public double[] computeLatLng(String placeName) {
         double[] latlng;
         double latitude = 0;
         double longitude = 0;
 
         LocationManager lm = (LocationManager) getActivity().getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             latitude =  loc.getLatitude();
             longitude = loc.getLongitude();
+        }else{
+            //fallback in case location permission wasnt given
+            latitude = qrLocations.get(placeName)[0];
+            longitude = qrLocations.get(placeName)[1];
         }
 
         latlng = new double[]{latitude, longitude};
         return latlng;
     }
 
-    public int computeRssi() {
-        int rssi = 0;
+    public SignalPerf computeSignalPerf(){
+        int rssi = 1;
+        int rsrp = 1;
+        int rsrq = 1;
 
         TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
             CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 rssi = cellSignalStrengthLte.getRssi();
-            } else {
-                //uses wifimanager to get rssi
+            }else{
                 WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                 rssi = wifiManager.getConnectionInfo().getRssi();
             }
-        }else{
 
-        }
-
-        return rssi;
-    }
-
-    public int computeRsrp(){
-        int rsrp = 0;
-        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
-            CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 rsrp = cellSignalStrengthLte.getRsrp();
+                rsrq = cellSignalStrengthLte.getRsrp();
             } else {
                 rsrp = cellSignalStrengthLte.getDbm();
             }
-
-        }else{
-
         }
 
-        return rsrp;
+        return new SignalPerf(rssi, rsrq, rsrp);
     }
 
-    public int computeRsrq(){
-        int rsrq = 0;
-        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
-            CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                rsrq = cellSignalStrengthLte.getRsrp();
-            }else{
-            }
-
-        }else{
-
-        }
-
-        return rsrq;
-    }
 
     public void displayResults(NetPerf netPerf, SignalPerf signalPerf, View view){
         TextView downloadResultTV = (TextView) view.findViewById(R.id.downloadResultTV);
@@ -187,7 +175,22 @@ public class ResultsFragment extends Fragment {
         downloadResultTV.setText(Double.toString(netPerf.getDlspeed()));
         uploadResultTV.setText(Double.toString(netPerf.getUlspeed()));
         latencyResultTV.setText(Integer.toString(netPerf.getLatency()));
-        rssiResultTV.setText(Integer.toString(signalPerf.getRssi()));
+
+        if(signalPerf.getRssi() != 1)
+            rssiResultTV.setText(Integer.toString(signalPerf.getRssi()));
+        else
+            rssiResultTV.setText("N/A");
+
+        if(signalPerf.getRsrp() != 1)
+            rsrpResultTV.setText(Integer.toString(signalPerf.getRsrp()));
+        else
+            rsrpResultTV.setText("N/A");
+
+        if(signalPerf.getRsrq() != 1)
+            rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
+        else
+            rsrqResultTV.setText("N/A");
+
         rsrpResultTV.setText(Integer.toString(signalPerf.getRsrp()));
         rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
     }
