@@ -127,8 +127,7 @@ public class RunTestFragment extends Fragment {
                             justScannedQR = true;
                         });
                 }else{
-                    Toast toast = Toast.makeText(getActivity(), "You must have an internet connection to run the test", Toast.LENGTH_SHORT);
-                    toast.show();
+                    Toast.makeText(getActivity(), "You must have an internet connection to run the test", Toast.LENGTH_SHORT).show();
                 }
             }
         });

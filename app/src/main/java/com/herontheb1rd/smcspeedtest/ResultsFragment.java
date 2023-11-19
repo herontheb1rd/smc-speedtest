@@ -29,11 +29,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
 
@@ -51,16 +56,39 @@ public class ResultsFragment extends Fragment {
     }
 
     private final Map<String, Double[]> qrLocations = new HashMap<>();
+
     private DatabaseReference mDatabase;
+    private FirebaseAuth mAuth;
 
 
     public ResultsFragment() {
         mDatabase = FirebaseDatabase.getInstance(
                 "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
         ).getReference();
+        mAuth = FirebaseAuth.getInstance();
 
         //TODO: put default locations
         qrLocations.put("Library", new Double[]{10.0, 10.0});
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            // Sign in success, update UI with the signed-in user's information
+                            FirebaseUser user = mAuth.getCurrentUser();
+                        } else {
+                            // If sign in fails, display a message to the user.
+                            Toast.makeText(getActivity(), "Authentication failed.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     @Override
@@ -127,7 +155,7 @@ public class ResultsFragment extends Fragment {
             latitude =  loc.getLatitude();
             longitude = loc.getLongitude();
         }else{
-            //fallback in case location permission wasnt given
+            //fallback in case location permission wasn't given
             latitude = qrLocations.get(placeName)[0];
             longitude = qrLocations.get(placeName)[1];
         }
@@ -137,6 +165,9 @@ public class ResultsFragment extends Fragment {
     }
 
     public SignalPerf computeSignalPerf(){
+        //default values
+        //in case user phone version is too low
+        //can be filtered out later
         int rssi = 1;
         int rsrp = 1;
         int rsrq = 1;

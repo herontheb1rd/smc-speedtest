@@ -100,9 +100,9 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        LatLng pshs = new LatLng(7.082788894235911, 125.50813754841627);
+        final LatLng PSHS = new LatLng(7.082788894235911, 125.50813754841627);
         googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(pshs));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(PSHS));
     }
 
     public void onItemSelected(AdapterView<?> parent, View view,
@@ -130,15 +130,25 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                     break;
                 case 3:
                     intensity = curResult.getSignalPerf().getRssi();
+                    //skips if stored value is invalid
+                    if(intensity == 1){
+                        continue;
+                    }
                     break;
                 case 4:
                     intensity = curResult.getSignalPerf().getRsrp();
+                    if(intensity == 1){
+                        continue;
+                    }
                     break;
                 case 5:
                     intensity = curResult.getSignalPerf().getRsrq();
+                    if(intensity == 1){
+                        continue;
+                    }
                     break;
-
             }
+
             weightedLatLngs.add(new WeightedLatLng(new LatLng(curResult.getPlace().getLatitude(),
                     curResult.getPlace().getLongitude()),
                     intensity));
