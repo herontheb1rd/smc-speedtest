@@ -226,7 +226,7 @@
 
 
     <TextView
-        android:id="@+id/preResultTV"
+        android:id="@+id/progressTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Starting internet performance test"

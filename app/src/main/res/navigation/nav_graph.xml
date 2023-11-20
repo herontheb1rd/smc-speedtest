@@ -19,6 +19,9 @@
         android:name="com.herontheb1rd.smcspeedtest.ResultsFragment"
         android:label="Results"
         tools:layout="@layout/fragment_results" >
+        <action
+            android:id="@+id/action_resultsFragment_to_runTestFragment"
+            app:destination="@id/runTestFragment" />
     </fragment>
 
 </navigation>

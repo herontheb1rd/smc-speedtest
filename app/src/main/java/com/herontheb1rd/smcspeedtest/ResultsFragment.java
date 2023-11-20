@@ -15,6 +15,7 @@ import androidx.constraintlayout.widget.Group;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
+import androidx.navigation.Navigation;
 
 
 import android.telephony.CellInfoGsm;
@@ -80,10 +81,8 @@ public class ResultsFragment extends Fragment {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
                             FirebaseUser user = mAuth.getCurrentUser();
                         } else {
-                            // If sign in fails, display a message to the user.
                             Toast.makeText(getActivity(), "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
                         }
@@ -96,29 +95,25 @@ public class ResultsFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
-        TextView preResultTV = (TextView) view.findViewById(R.id.preResultTV);
 
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
+                Toast.makeText(getActivity(), bundle.getString("bundleKey"),
+                        Toast.LENGTH_SHORT).show();
+                /*
                 long time = Calendar.getInstance().getTime().getTime();
                 String networkProvider = "";
                 String phoneBrand = Build.MANUFACTURER;
-
-                //if permission not granted, inform user that test results will be affected
-                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    Toast toast = Toast.makeText(getActivity(), "Location access not granted. Some data will be affected", Toast.LENGTH_LONG);
-                    toast.show();
-                }
                 String placeName = bundle.getString("bundleKey");
                 Place place = new Place(placeName, computeLatLng(placeName));
                 SignalPerf signalPerf = computeSignalPerf();
-
+                */
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
                 ListenableFuture<NetPerf> future = pool.submit(new Callable<NetPerf>(){
                     @Override
                     public NetPerf call(){
-                        return runSpeedtest(preResultTV);
+                        return runSpeedtest();
                     }
                 });
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -126,21 +121,34 @@ public class ResultsFragment extends Fragment {
                         future,
                         new FutureCallback<NetPerf>() {
                             public void onSuccess(NetPerf netPerf) {
-                                Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
-                                mDatabase.child("results").push().setValue(results);
+                                //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
+                                //mDatabase.child("results").push().setValue(results);
                             }
 
                             public void onFailure(@NonNull Throwable thrown) {
-                                // handle failure
+                                Toast.makeText(getActivity(), "Internet speed test failed. Please retry.",
+                                        Toast.LENGTH_SHORT).show();
+                                Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
                             }
                         },
                         getContext().getMainExecutor()
                     );
                 }
+
             }
         });
 
         return view;
+    }
+
+    public void updateProgress(String progressText){
+        TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
+        progressTV.post(new Runnable(){
+            @Override
+            public void run(){
+                progressTV.setText(progressText);
+            }
+        });
     }
 
     public double[] computeLatLng(String placeName) {
@@ -226,5 +234,5 @@ public class ResultsFragment extends Fragment {
         rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
     }
 
-    public native NetPerf runSpeedtest(TextView preResultTV);
+    public native NetPerf runSpeedtest();
 }

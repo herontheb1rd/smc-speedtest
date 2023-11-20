@@ -77,15 +77,20 @@ public class RunTestFragment extends Fragment {
 
         Button runTestB = (Button) view.findViewById(R.id.runTestB);
 
-        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            Toast toast = Toast.makeText(getActivity(), "Location access granted", Toast.LENGTH_SHORT);
-            toast.show();
-        }else {
+        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             locationPermissionRequest.launch(new String[] {
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
             });
+            if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                    ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+                Toast.makeText(getActivity(), "Location access granted.",
+                        Toast.LENGTH_SHORT).show();
+            }else{
+                Toast.makeText(getActivity(), "Location access not granted. Accuracy may be affected",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
 
         runTestB.setOnClickListener(new View.OnClickListener(){
@@ -127,7 +132,8 @@ public class RunTestFragment extends Fragment {
                             justScannedQR = true;
                         });
                 }else{
-                    Toast.makeText(getActivity(), "You must have an internet connection to run the test", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "You must have an internet connection to run the test.",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
         });

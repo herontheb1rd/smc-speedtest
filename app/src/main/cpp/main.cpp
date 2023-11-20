@@ -16,13 +16,14 @@
 //we can convert them back later when uploading to the database
 extern "C"
 JNIEXPORT jobject JNICALL
-Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, jobject thiz, jobject jPreResultTV) {
-    double dlspeed, ulspeed;
-    long latency;
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, jobject thiz) {
+    double dlspeed = -1;
+    double ulspeed = -1;
+    long latency = -1;
 
     //for setting the text
-    jclass clazz = env->FindClass("android/widget/TextView");
-    jmethodID setText = env->GetMethodID(clazz, "setText", "(Ljava/lang/CharSequence;)V");
+    jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
+    jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;)V");
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -31,15 +32,15 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     ServerInfo serverInfo;
     ServerInfo serverQualityInfo;
 
-    env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Acquiring network provider info"));
+    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Acquiring network provider info"));
     if (!sp.ipInfo(info)){
 
     }else {
         auto serverList = sp.serverList();
-        env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Acquiring server list"));
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Acquiring server list"));
         if (serverList.empty()) {
         } else {
-            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Computing latency"));
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Computing latency"));
             serverInfo = sp.bestServer(10, [](bool success) {});
             //get latency
             latency = sp.latency();
@@ -51,14 +52,13 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
             TestConfig downloadConfig;
             testConfigSelector(preSpeed, uploadConfig, downloadConfig);
 
-            env->CallVoidMethod(jPreResultTV, setText,
-                                env->NewStringUTF("Computing download speed"));
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Computing download speed"));
             //get upload and download speed
             if (!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {})) {
 
             }
 
-            env->CallVoidMethod(jPreResultTV, setText, env->NewStringUTF("Computing upload speed"));
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Computing upload speed"));
             if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
 
             }
