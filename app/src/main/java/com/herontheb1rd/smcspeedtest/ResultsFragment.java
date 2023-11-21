@@ -27,6 +27,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -102,12 +103,7 @@ public class ResultsFragment extends Fragment {
                 Toast.makeText(getActivity(), bundle.getString("bundleKey"),
                         Toast.LENGTH_SHORT).show();
                 /*
-                long time = Calendar.getInstance().getTime().getTime();
-                String networkProvider = "";
-                String phoneBrand = Build.MANUFACTURER;
-                String placeName = bundle.getString("bundleKey");
-                Place place = new Place(placeName, computeLatLng(placeName));
-                SignalPerf signalPerf = computeSignalPerf();
+
                 */
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
                 ListenableFuture<NetPerf> future = pool.submit(new Callable<NetPerf>(){
@@ -121,6 +117,18 @@ public class ResultsFragment extends Fragment {
                         future,
                         new FutureCallback<NetPerf>() {
                             public void onSuccess(NetPerf netPerf) {
+                                SignalPerf signalPerf = computeSignalPerf();
+                                String placeName = bundle.getString("bundleKey");
+                                Place place = new Place(placeName, computeLatLng(placeName));
+                                long time = Calendar.getInstance().getTime().getTime();
+                                String networkProvider = "";
+                                String phoneBrand = Build.MANUFACTURER;
+                                updateProgress("Getting other information", 25);
+
+
+                                updateProgress("Test Complete", 0);
+                                //displayResults(netPerf, signalPerf);
+
                                 //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
                                 //mDatabase.child("results").push().setValue(results);
                             }
@@ -141,14 +149,18 @@ public class ResultsFragment extends Fragment {
         return view;
     }
 
-    public void updateProgress(String progressText){
+    public void updateProgress(String progressText, int progress){
         TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
+        ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
+
         progressTV.post(new Runnable(){
             @Override
             public void run(){
                 progressTV.setText(progressText);
             }
         });
+
+        progressBar.incrementProgressBy(progress);
     }
 
     public double[] computeLatLng(String placeName) {
@@ -169,6 +181,8 @@ public class ResultsFragment extends Fragment {
         }
 
         latlng = new double[]{latitude, longitude};
+
+        updateProgress("Getting location data", 25);
         return latlng;
     }
 
@@ -190,12 +204,17 @@ public class ResultsFragment extends Fragment {
                 WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                 rssi = wifiManager.getConnectionInfo().getRssi();
             }
+            updateProgress("Computing RSSI", 8);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 rsrp = cellSignalStrengthLte.getRsrp();
-                rsrq = cellSignalStrengthLte.getRsrp();
+                updateProgress("Computing RSRP", 8);
+                rsrq = cellSignalStrengthLte.getRsrq();
+                updateProgress("Computing RSRQ", 9);
             } else {
                 rsrp = cellSignalStrengthLte.getDbm();
+                updateProgress("Computing RSRP", 8);
+                updateProgress("Computing RSRQ", 9);
             }
         }
 
@@ -203,13 +222,13 @@ public class ResultsFragment extends Fragment {
     }
 
 
-    public void displayResults(NetPerf netPerf, SignalPerf signalPerf, View view){
-        TextView downloadResultTV = (TextView) view.findViewById(R.id.downloadResultTV);
-        TextView uploadResultTV = (TextView) view.findViewById(R.id.uploadResultTV);
-        TextView latencyResultTV = (TextView) view.findViewById(R.id.latencyResultTV);
-        TextView rssiResultTV = (TextView) view.findViewById(R.id.rssiResultTV);
-        TextView rsrpResultTV = (TextView) view.findViewById(R.id.rssiResultTV);
-        TextView rsrqResultTV = (TextView) view.findViewById(R.id.rssiResultTV);
+    public void displayResults(NetPerf netPerf, SignalPerf signalPerf){
+        TextView downloadResultTV = (TextView) getView().findViewById(R.id.downloadResultTV);
+        TextView uploadResultTV = (TextView) getView().findViewById(R.id.uploadResultTV);
+        TextView latencyResultTV = (TextView) getView().findViewById(R.id.latencyResultTV);
+        TextView rssiResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
+        TextView rsrpResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
+        TextView rsrqResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
 
         downloadResultTV.setText(Double.toString(netPerf.getDlspeed()));
         uploadResultTV.setText(Double.toString(netPerf.getUlspeed()));
