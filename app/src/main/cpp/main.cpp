@@ -32,15 +32,15 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     ServerInfo serverInfo;
     ServerInfo serverQualityInfo;
 
-    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Acquiring network provider info"), 5);
+    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Network info acquired."), 5);
     if (!sp.ipInfo(info)){
 
     }else {
         auto serverList = sp.serverList();
-        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Acquiring server list"), 5);
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Server list acquired"), 5);
         if (serverList.empty()) {
         } else {
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Computing latency"), 5);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Latency computed"), 5);
             serverInfo = sp.bestServer(10, [](bool success) {});
             //get latency
             latency = sp.latency();
@@ -52,13 +52,13 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
             TestConfig downloadConfig;
             testConfigSelector(preSpeed, uploadConfig, downloadConfig);
 
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Computing download speed"), 5);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Download speed computed"), 5);
             //get upload and download speed
             if (!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {})) {
 
             }
 
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Computing upload speed"), 5);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Upload speed computed"), 5);
             if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
 
             }

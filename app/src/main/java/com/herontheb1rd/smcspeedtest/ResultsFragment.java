@@ -18,10 +18,12 @@ import androidx.fragment.app.FragmentResultListener;
 import androidx.navigation.Navigation;
 
 
+import android.provider.Telephony;
 import android.telephony.CellInfoGsm;
 import android.telephony.CellInfoLte;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
+import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -102,9 +104,9 @@ public class ResultsFragment extends Fragment {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 Toast.makeText(getActivity(), bundle.getString("bundleKey"),
                         Toast.LENGTH_SHORT).show();
-                /*
 
-                */
+                computeSignalPerf();
+                /*
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
                 ListenableFuture<NetPerf> future = pool.submit(new Callable<NetPerf>(){
                     @Override
@@ -117,17 +119,16 @@ public class ResultsFragment extends Fragment {
                         future,
                         new FutureCallback<NetPerf>() {
                             public void onSuccess(NetPerf netPerf) {
+
                                 SignalPerf signalPerf = computeSignalPerf();
                                 String placeName = bundle.getString("bundleKey");
                                 Place place = new Place(placeName, computeLatLng(placeName));
                                 long time = Calendar.getInstance().getTime().getTime();
                                 String networkProvider = "";
                                 String phoneBrand = Build.MANUFACTURER;
-                                updateProgress("Getting other information", 25);
+                                updateProgress("Test complete", 25);
 
-
-                                updateProgress("Test Complete", 0);
-                                //displayResults(netPerf, signalPerf);
+                                displayResults(netPerf, signalPerf);
 
                                 //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
                                 //mDatabase.child("results").push().setValue(results);
@@ -142,7 +143,7 @@ public class ResultsFragment extends Fragment {
                         getContext().getMainExecutor()
                     );
                 }
-
+                */
             }
         });
 
@@ -182,7 +183,7 @@ public class ResultsFragment extends Fragment {
 
         latlng = new double[]{latitude, longitude};
 
-        updateProgress("Getting location data", 25);
+        updateProgress("Location data acquired", 25);
         return latlng;
     }
 
@@ -196,26 +197,34 @@ public class ResultsFragment extends Fragment {
 
         TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+
+                }
+            }
+
+            /*
             CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
             CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 rssi = cellSignalStrengthLte.getRssi();
             }else{
                 WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                 rssi = wifiManager.getConnectionInfo().getRssi();
             }
-            updateProgress("Computing RSSI", 8);
+            updateProgress("RSSI computed", 8);
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 rsrp = cellSignalStrengthLte.getRsrp();
-                updateProgress("Computing RSRP", 8);
+                updateProgress("RSRP computed", 8);
                 rsrq = cellSignalStrengthLte.getRsrq();
-                updateProgress("Computing RSRQ", 9);
+                updateProgress("RSRQ computed", 9);
             } else {
                 rsrp = cellSignalStrengthLte.getDbm();
-                updateProgress("Computing RSRP", 8);
-                updateProgress("Computing RSRQ", 9);
-            }
+                updateProgress("RSRP computed", 17);
+            }*/
         }
 
         return new SignalPerf(rssi, rsrq, rsrp);

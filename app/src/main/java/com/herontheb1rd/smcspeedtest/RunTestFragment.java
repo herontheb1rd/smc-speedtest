@@ -52,12 +52,16 @@ public class RunTestFragment extends Fragment {
                                     android.Manifest.permission.ACCESS_COARSE_LOCATION,false);
                 }
                 if (fineLocationGranted != null && fineLocationGranted) {
-                            // Precise location access granted.
-                        } else if (coarseLocationGranted != null && coarseLocationGranted) {
-                            // Only approximate location access granted.
-                        } else {
-                            // No location access granted.
-                        }
+                    Toast.makeText(getActivity(), "Location access granted.",
+                            Toast.LENGTH_SHORT).show();
+                } else if (coarseLocationGranted != null && coarseLocationGranted) {
+                    Toast.makeText(getActivity(), "Approximate location will be used. Accuracy may be affected.",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    // No location access granted.
+                    Toast.makeText(getActivity(), "Location access not granted. Accuracy may be affected.",
+                            Toast.LENGTH_SHORT).show();
+                }
                     }
             );
 
@@ -83,14 +87,6 @@ public class RunTestFragment extends Fragment {
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
             });
-            if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-                Toast.makeText(getActivity(), "Location access granted.",
-                        Toast.LENGTH_SHORT).show();
-            }else{
-                Toast.makeText(getActivity(), "Location access not granted. Accuracy may be affected",
-                        Toast.LENGTH_SHORT).show();
-            }
         }
 
         runTestB.setOnClickListener(new View.OnClickListener(){
