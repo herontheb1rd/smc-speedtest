@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -33,7 +34,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -102,12 +106,11 @@ public class ResultsFragment extends Fragment {
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                Toast.makeText(getActivity(), bundle.getString("bundleKey"),
-                        Toast.LENGTH_SHORT).show();
+                String placeName = bundle.getString("bundleKey");
+                Place place = new Place(placeName, computeLatLng(placeName));
+                updateProgress(Double.toString(place.getLatitude()), 0);
 
-                computeSignalPerf();
-                /*
-                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+                /*ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
                 ListenableFuture<NetPerf> future = pool.submit(new Callable<NetPerf>(){
                     @Override
                     public NetPerf call(){
@@ -164,26 +167,32 @@ public class ResultsFragment extends Fragment {
         progressBar.incrementProgressBy(progress);
     }
 
+
     public double[] computeLatLng(String placeName) {
-        double[] latlng;
-        double latitude = 0;
-        double longitude = 0;
+        double[] latlng = {0, 0};
 
         LocationManager lm = (LocationManager) getActivity().getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            Location loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            latitude =  loc.getLatitude();
-            longitude = loc.getLongitude();
+            FusedLocationProviderClient fusedLocationClient =  LocationServices.getFusedLocationProviderClient(getActivity());
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            if (location != null) {
+                                updateProgress(Double.toString(location.getLatitude()), 0);
+                            }
+                        }
+                    });
         }else{
             //fallback in case location permission wasn't given
-            latitude = qrLocations.get(placeName)[0];
-            longitude = qrLocations.get(placeName)[1];
+            latlng[0] = qrLocations.get(placeName)[0];
+            latlng[1] = qrLocations.get(placeName)[1];
+
         }
 
-        latlng = new double[]{latitude, longitude};
-
         updateProgress("Location data acquired", 25);
+
         return latlng;
     }
 
@@ -197,34 +206,13 @@ public class ResultsFragment extends Fragment {
 
         TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-
-                }
-            }
-
-            /*
-            CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
-            CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                rssi = cellSignalStrengthLte.getRssi();
-            }else{
-                WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                rssi = wifiManager.getConnectionInfo().getRssi();
-            }
+            CellSignalStrengthLte cellSignalStrengthLte = (CellSignalStrengthLte) telephonyManager.getSignalStrength().getCellSignalStrengths().get(0);
+            rssi = cellSignalStrengthLte.getRssi();
             updateProgress("RSSI computed", 8);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                rsrp = cellSignalStrengthLte.getRsrp();
-                updateProgress("RSRP computed", 8);
-                rsrq = cellSignalStrengthLte.getRsrq();
-                updateProgress("RSRQ computed", 9);
-            } else {
-                rsrp = cellSignalStrengthLte.getDbm();
-                updateProgress("RSRP computed", 17);
-            }*/
+            rsrp = cellSignalStrengthLte.getRsrp();
+            updateProgress("RSRP computed", 8);
+            rsrq = cellSignalStrengthLte.getRsrq();
+            updateProgress("RSRQ computed", 9);
         }
 
         return new SignalPerf(rssi, rsrq, rsrp);
