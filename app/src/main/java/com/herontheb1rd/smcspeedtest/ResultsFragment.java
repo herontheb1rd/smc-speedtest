@@ -37,6 +37,7 @@ import android.widget.Toast;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.common.util.concurrent.FutureCallback;
@@ -106,47 +107,65 @@ public class ResultsFragment extends Fragment {
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                String placeName = bundle.getString("bundleKey");
-                Place place = new Place(placeName, computeLatLng(placeName));
-                updateProgress(Double.toString(place.getLatitude()), 0);
-
-                /*ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-                ListenableFuture<NetPerf> future = pool.submit(new Callable<NetPerf>(){
+                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+                ListenableFuture<NetPerf> netperfFuture = pool.submit(new Callable<NetPerf>(){
                     @Override
                     public NetPerf call(){
                         return runSpeedtest();
                     }
                 });
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    Futures.addCallback(
-                        future,
-                        new FutureCallback<NetPerf>() {
-                            public void onSuccess(NetPerf netPerf) {
+                Futures.addCallback(
+                    netperfFuture,
+                    new FutureCallback<NetPerf>() {
+                        public void onSuccess(NetPerf netPerf) {
+                            SignalPerf signalPerf = computeSignalPerf();
 
-                                SignalPerf signalPerf = computeSignalPerf();
-                                String placeName = bundle.getString("bundleKey");
-                                Place place = new Place(placeName, computeLatLng(placeName));
-                                long time = Calendar.getInstance().getTime().getTime();
-                                String networkProvider = "";
-                                String phoneBrand = Build.MANUFACTURER;
-                                updateProgress("Test complete", 25);
+                            long time = Calendar.getInstance().getTime().getTime();
+                            String networkProvider = "";
+                            String phoneBrand = Build.MANUFACTURER;
+                            updateProgress("Getting contextual information", 25);
 
-                                displayResults(netPerf, signalPerf);
-
+                            String placeName = bundle.getString("bundleKey");
+                            LocationManager lm = (LocationManager) getActivity().getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+                            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                                    ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                FusedLocationProviderClient fusedLocationClient =  LocationServices.getFusedLocationProviderClient(getActivity());
+                                fusedLocationClient.getLastLocation()
+                                        .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
+                                            @Override
+                                            public void onSuccess(Location location) {
+                                                Place place = new Place(placeName, new double[]{location.getLatitude(), location.getLongitude()});
+                                                //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
+                                                //mDatabase.child("results").push().setValue(results);
+                                            }
+                                        }).addOnFailureListener(getActivity(), new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Place place = new Place(placeName, new double[]{qrLocations.get(placeName)[0], qrLocations.get(placeName)[1]});
+                                                //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
+                                                //mDatabase.child("results").push().setValue(results);
+                                            }
+                                        });
+                            }else{
+                                Place place = new Place(placeName, new double[]{qrLocations.get(placeName)[0], qrLocations.get(placeName)[1]});
                                 //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
                                 //mDatabase.child("results").push().setValue(results);
                             }
+                            updateProgress("Location data acquired", 25);
 
-                            public void onFailure(@NonNull Throwable thrown) {
-                                Toast.makeText(getActivity(), "Internet speed test failed. Please retry.",
-                                        Toast.LENGTH_SHORT).show();
-                                Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
-                            }
-                        },
-                        getContext().getMainExecutor()
-                    );
-                }
-                */
+                            displayResults(netPerf, signalPerf);
+                        }
+
+                        public void onFailure(@NonNull Throwable thrown) {
+                            Toast.makeText(getActivity(), "Internet speed test failed. Please retry.",
+                                    Toast.LENGTH_SHORT).show();
+                            Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
+                        }
+                    },
+                        Executors.newSingleThreadExecutor()
+                );
+
+
             }
         });
 
@@ -167,35 +186,6 @@ public class ResultsFragment extends Fragment {
         progressBar.incrementProgressBy(progress);
     }
 
-
-    public double[] computeLatLng(String placeName) {
-        double[] latlng = {0, 0};
-
-        LocationManager lm = (LocationManager) getActivity().getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            FusedLocationProviderClient fusedLocationClient =  LocationServices.getFusedLocationProviderClient(getActivity());
-            fusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            if (location != null) {
-                                updateProgress(Double.toString(location.getLatitude()), 0);
-                            }
-                        }
-                    });
-        }else{
-            //fallback in case location permission wasn't given
-            latlng[0] = qrLocations.get(placeName)[0];
-            latlng[1] = qrLocations.get(placeName)[1];
-
-        }
-
-        updateProgress("Location data acquired", 25);
-
-        return latlng;
-    }
-
     public SignalPerf computeSignalPerf(){
         //default values
         //in case user phone version is too low
@@ -206,15 +196,18 @@ public class ResultsFragment extends Fragment {
 
         TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            CellSignalStrengthLte cellSignalStrengthLte = (CellSignalStrengthLte) telephonyManager.getSignalStrength().getCellSignalStrengths().get(0);
-            rssi = cellSignalStrengthLte.getRssi();
-            updateProgress("RSSI computed", 8);
-            rsrp = cellSignalStrengthLte.getRsrp();
-            updateProgress("RSRP computed", 8);
-            rsrq = cellSignalStrengthLte.getRsrq();
-            updateProgress("RSRQ computed", 9);
-        }
+            CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+            CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                rssi = cellSignalStrengthLte.getRssi();
+                updateProgress("RSSI computed", 8);
+                rsrp = cellSignalStrengthLte.getRsrp();
+                updateProgress("RSRP computed", 8);
+                rsrq = cellSignalStrengthLte.getRsrq();
+                updateProgress("RSRQ computed", 9);
+            }
 
+        }
         return new SignalPerf(rssi, rsrq, rsrp);
     }
 
