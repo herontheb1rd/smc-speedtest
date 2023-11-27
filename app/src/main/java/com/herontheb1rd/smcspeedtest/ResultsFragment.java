@@ -107,25 +107,6 @@ public class ResultsFragment extends Fragment {
 
         ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
         ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
-        ListenableFuture<Place> placeFuture = pool.submit(new Callable<Place>() {
-            @Override
-            public Place call() {
-                Place place;
-
-                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    FusedLocationProviderClient fusedLocationClient =  LocationServices.getFusedLocationProviderClient(getActivity());
-                    fusedLocationClient.getLastLocation().getResult();
-
-
-                }else{
-
-
-                }
-
-                return place;
-            }
-        });
 
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
