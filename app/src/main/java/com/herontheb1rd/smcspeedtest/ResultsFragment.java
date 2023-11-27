@@ -104,16 +104,35 @@ public class ResultsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
 
+
+        ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+        ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
+        ListenableFuture<Place> placeFuture = pool.submit(new Callable<Place>() {
+            @Override
+            public Place call() {
+                Place place;
+
+                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                    FusedLocationProviderClient fusedLocationClient =  LocationServices.getFusedLocationProviderClient(getActivity());
+                    fusedLocationClient.getLastLocation().getResult();
+
+
+                }else{
+
+
+                }
+
+                return place;
+            }
+        });
+
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-                ListenableFuture<NetPerf> netperfFuture = pool.submit(new Callable<NetPerf>(){
-                    @Override
-                    public NetPerf call(){
-                        return runSpeedtest();
-                    }
-                });
+                String placeName = bundle.getString("bundleKey");
+
+
                 Futures.addCallback(
                     netperfFuture,
                     new FutureCallback<NetPerf>() {
@@ -125,11 +144,11 @@ public class ResultsFragment extends Fragment {
                             String phoneBrand = Build.MANUFACTURER;
                             updateProgress("Getting contextual information", 25);
 
-                            String placeName = bundle.getString("bundleKey");
                             LocationManager lm = (LocationManager) getActivity().getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
                             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
                                     ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                                 FusedLocationProviderClient fusedLocationClient =  LocationServices.getFusedLocationProviderClient(getActivity());
+                                Location location = fusedLocationClient.getLastLocation().getResult();
                                 fusedLocationClient.getLastLocation()
                                         .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
                                             @Override
