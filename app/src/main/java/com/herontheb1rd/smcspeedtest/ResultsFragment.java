@@ -1,6 +1,7 @@
 package com.herontheb1rd.smcspeedtest;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -40,6 +41,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.common.util.concurrent.AsyncCallable;
+import com.google.common.util.concurrent.Callables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -54,6 +57,7 @@ import com.google.firebase.database.DatabaseReference;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
@@ -64,7 +68,7 @@ public class ResultsFragment extends Fragment {
         System.loadLibrary("smcspeedtest");
     }
 
-    private final Map<String, Double[]> qrLocations = new HashMap<>();
+    private final Map<String, double[]> qrLocations = new HashMap<>();
 
     private DatabaseReference mDatabase;
     private FirebaseAuth mAuth;
@@ -77,7 +81,7 @@ public class ResultsFragment extends Fragment {
         mAuth = FirebaseAuth.getInstance();
 
         //TODO: put default locations
-        qrLocations.put("Library", new Double[]{10.0, 10.0});
+        qrLocations.put("Library", new double[]{10.0, 10.0});
     }
 
     @Override
@@ -104,68 +108,62 @@ public class ResultsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
 
-
         ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
         ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
+
+        AsyncCallable<Location> locationCallable = Callables.asAsyncCallable((Callable<Location>) () -> {
+            FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
+            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                //TODO: handle redundant check
+            }
+            Location location = fusedLocationClient.getLastLocation().getResult();
+            return location;
+        }, pool);
+        ListenableFuture<Location> locationFuture = Futures.submitAsync(locationCallable, pool);
 
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 String placeName = bundle.getString("bundleKey");
 
+                ListenableFuture<Results> resultsTask = Futures.whenAllSucceed(netperfFuture, locationFuture)
+                        .call(() -> {
+                            NetPerf netPerf = Futures.getDone(netperfFuture);
+                            Place place;
+                            if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                                    ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                Location location = Futures.getDone(locationFuture);
+                                place = new Place(placeName, new double[]{location.getLatitude(), location.getLongitude()});
+                            }else{
+                                double[] latlng = qrLocations.get(placeName);
+                                place = new Place(placeName, latlng);
+                            }
 
-                Futures.addCallback(
-                    netperfFuture,
-                    new FutureCallback<NetPerf>() {
-                        public void onSuccess(NetPerf netPerf) {
                             SignalPerf signalPerf = computeSignalPerf();
-
                             long time = Calendar.getInstance().getTime().getTime();
                             String networkProvider = "";
                             String phoneBrand = Build.MANUFACTURER;
-                            updateProgress("Getting contextual information", 25);
 
-                            LocationManager lm = (LocationManager) getActivity().getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
-                            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                                    ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                                FusedLocationProviderClient fusedLocationClient =  LocationServices.getFusedLocationProviderClient(getActivity());
-                                Location location = fusedLocationClient.getLastLocation().getResult();
-                                fusedLocationClient.getLastLocation()
-                                        .addOnSuccessListener(getActivity(), new OnSuccessListener<Location>() {
-                                            @Override
-                                            public void onSuccess(Location location) {
-                                                Place place = new Place(placeName, new double[]{location.getLatitude(), location.getLongitude()});
-                                                //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
-                                                //mDatabase.child("results").push().setValue(results);
-                                            }
-                                        }).addOnFailureListener(getActivity(), new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                Place place = new Place(placeName, new double[]{qrLocations.get(placeName)[0], qrLocations.get(placeName)[1]});
-                                                //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
-                                                //mDatabase.child("results").push().setValue(results);
-                                            }
-                                        });
-                            }else{
-                                Place place = new Place(placeName, new double[]{qrLocations.get(placeName)[0], qrLocations.get(placeName)[1]});
-                                //Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
-                                //mDatabase.child("results").push().setValue(results);
-                            }
-                            updateProgress("Location data acquired", 25);
+                            Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
 
-                            displayResults(netPerf, signalPerf);
-                        }
+                            return results;
+                        }, Executors.newSingleThreadExecutor());
 
-                        public void onFailure(@NonNull Throwable thrown) {
-                            Toast.makeText(getActivity(), "Internet speed test failed. Please retry.",
-                                    Toast.LENGTH_SHORT).show();
-                            Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
-                        }
-                    },
-                        Executors.newSingleThreadExecutor()
-                );
+                Futures.addCallback(resultsTask, new FutureCallback<Results>() {
+                    @Override
+                    public void onSuccess(Results results) {
+                        mDatabase.child("results").push().setValue(results);
+                        displayResults(results.getNetPerf(), results.getSignalPerf());
+                    }
 
-
+                    @Override
+                    public void onFailure(Throwable t) {
+                        Toast.makeText(getActivity(), "Internet speed test failed. Please retry.",
+                                Toast.LENGTH_SHORT).show();
+                        Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
+                    }
+                }, Executors.newSingleThreadExecutor());
             }
         });
 
