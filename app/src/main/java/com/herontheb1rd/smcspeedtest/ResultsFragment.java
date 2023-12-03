@@ -41,6 +41,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.common.util.concurrent.AsyncCallable;
 import com.google.common.util.concurrent.Callables;
 import com.google.common.util.concurrent.FutureCallback;
@@ -59,6 +60,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class ResultsFragment extends Fragment {
@@ -102,72 +105,70 @@ public class ResultsFragment extends Fragment {
                 });
     }
 
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
 
-        ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-        ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
-
-        AsyncCallable<Location> locationCallable = Callables.asAsyncCallable((Callable<Location>) () -> {
-            FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
-            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                    ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                //TODO: handle redundant check
-            }
-            Location location = fusedLocationClient.getLastLocation().getResult();
-            return location;
-        }, pool);
-        ListenableFuture<Location> locationFuture = Futures.submitAsync(locationCallable, pool);
-
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 String placeName = bundle.getString("bundleKey");
 
-                ListenableFuture<Results> resultsTask = Futures.whenAllSucceed(netperfFuture, locationFuture)
-                        .call(() -> {
-                            NetPerf netPerf = Futures.getDone(netperfFuture);
-                            Place place;
-                            if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                                    ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                                Location location = Futures.getDone(locationFuture);
-                                place = new Place(placeName, new double[]{location.getLatitude(), location.getLongitude()});
-                            }else{
-                                double[] latlng = qrLocations.get(placeName);
-                                place = new Place(placeName, latlng);
-                            }
+                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+                ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
 
-                            SignalPerf signalPerf = computeSignalPerf();
-                            long time = Calendar.getInstance().getTime().getTime();
-                            String networkProvider = "";
-                            String phoneBrand = Build.MANUFACTURER;
-
-                            Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
-
-                            return results;
-                        }, Executors.newSingleThreadExecutor());
-
-                Futures.addCallback(resultsTask, new FutureCallback<Results>() {
+                Futures.addCallback(netperfFuture, new FutureCallback<NetPerf>() {
                     @Override
-                    public void onSuccess(Results results) {
-                        mDatabase.child("results").push().setValue(results);
+                    public void onSuccess(NetPerf netPerf) {
+                        Place place = computePlace(placeName);
+                        SignalPerf signalPerf = computeSignalPerf();
+                        long time = Calendar.getInstance().getTime().getTime();
+                        String networkProvider = "";
+                        String phoneBrand = Build.MANUFACTURER;
+
+                        Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
                         displayResults(results.getNetPerf(), results.getSignalPerf());
+                        //mDatabase.child("results").push().setValue(results);
                     }
 
                     @Override
                     public void onFailure(Throwable t) {
-                        Toast.makeText(getActivity(), "Internet speed test failed. Please retry.",
-                                Toast.LENGTH_SHORT).show();
-                        Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
+                        getActivity().runOnUiThread(new Runnable() {
+                            public void run() {
+                                Toast.makeText(getActivity(), "Test failed", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
                     }
                 }, Executors.newSingleThreadExecutor());
             }
         });
 
         return view;
+    }
+
+    public Place computePlace(String placeName){
+        double latitude = qrLocations.get(placeName)[0];
+        double longitude = qrLocations.get(placeName)[1];
+
+        if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
+            try {
+                Location location = Tasks.await(fusedLocationClient.getLastLocation());
+                latitude = location.getLatitude();
+                longitude = location.getLongitude();
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return new Place(placeName, latitude, longitude);
     }
 
     public void updateProgress(String progressText, int progress){
@@ -204,7 +205,6 @@ public class ResultsFragment extends Fragment {
                 rsrq = cellSignalStrengthLte.getRsrq();
                 updateProgress("RSRQ computed", 9);
             }
-
         }
         return new SignalPerf(rssi, rsrq, rsrp);
     }

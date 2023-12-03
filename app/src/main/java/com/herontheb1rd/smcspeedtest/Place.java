@@ -17,13 +17,15 @@ public class Place {
         return longitude;
     }
 
+
+
     public Place(){
 
     }
 
-    public Place(String placeName, double[] latlng) {
+    public Place(String placeName, double latitude, double longitude) {
         this.placeName = placeName;
-        this.latitude = latlng[0];
-        this.longitude = latlng[1];
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 }

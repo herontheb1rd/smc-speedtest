@@ -40,7 +40,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-//TODO: add Google Maps SDK
 public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener, OnMapReadyCallback {
     private DatabaseReference mDatabase;
     private ArrayList<Results> results = new ArrayList<Results>();
