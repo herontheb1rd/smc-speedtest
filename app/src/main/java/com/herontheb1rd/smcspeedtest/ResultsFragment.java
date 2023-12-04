@@ -145,11 +145,7 @@ public class ResultsFragment extends Fragment {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        getActivity().runOnUiThread(new Runnable() {
-                            public void run() {
-                                Toast.makeText(getActivity(), "Test failed", Toast.LENGTH_SHORT).show();
-                            }
-                        });
+                        //TODO: Write failure handling code
                     }
                 }, Executors.newSingleThreadExecutor());
             }
@@ -238,27 +234,25 @@ public class ResultsFragment extends Fragment {
         TextView rsrpResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
         TextView rsrqResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
 
-        downloadResultTV.setText(Double.toString(netPerf.getDlspeed()));
-        uploadResultTV.setText(Double.toString(netPerf.getUlspeed()));
-        latencyResultTV.setText(Integer.toString(netPerf.getLatency()));
 
-        if(signalPerf.getRssi() != 1)
-            rssiResultTV.setText(Integer.toString(signalPerf.getRssi()));
-        else
-            rssiResultTV.setText("N/A");
+        if(netPerf.getDlspeed() != -1) downloadResultTV.setText(Double.toString(netPerf.getDlspeed()));
+        else downloadResultTV.setText("N/A");
 
-        if(signalPerf.getRsrp() != 1)
-            rsrpResultTV.setText(Integer.toString(signalPerf.getRsrp()));
-        else
-            rsrpResultTV.setText("N/A");
+        if(netPerf.getUlspeed() != -1) uploadResultTV.setText(Double.toString(netPerf.getUlspeed()));
+        else uploadResultTV.setText("N/A");
 
-        if(signalPerf.getRsrq() != 1)
-            rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
-        else
-            rsrqResultTV.setText("N/A");
+        if(netPerf.getLatency() != -1) latencyResultTV.setText(Integer.toString(netPerf.getLatency()));
+        else latencyResultTV.setText("N/A");
 
-        rsrpResultTV.setText(Integer.toString(signalPerf.getRsrp()));
-        rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
+        if(signalPerf.getRssi() != 1) rssiResultTV.setText(Integer.toString(signalPerf.getRssi()));
+        else rssiResultTV.setText("N/A");
+
+        if(signalPerf.getRsrp() != 1) rsrpResultTV.setText(Integer.toString(signalPerf.getRsrp()));
+        else rsrpResultTV.setText("N/A");
+
+        if(signalPerf.getRsrq() != 1) rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
+        else rsrqResultTV.setText("N/A");
+
     }
 
     public native NetPerf runSpeedtest();

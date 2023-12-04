@@ -12,8 +12,6 @@
 
 
 //TODO: add error handling if test failed
-//returns a string array of the results
-//we can convert them back later when uploading to the database
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, jobject thiz) {
