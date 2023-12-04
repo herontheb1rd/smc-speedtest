@@ -17,8 +17,6 @@ public class Place {
         return longitude;
     }
 
-
-
     public Place(){
 
     }

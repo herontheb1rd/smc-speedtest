@@ -26,25 +26,26 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
 
     signal(SIGPIPE, SIG_IGN);
-
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
     IPInfo info;
     ServerInfo serverInfo;
     ServerInfo serverQualityInfo;
 
-    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Network info acquired."), 5);
+    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Acquiring network info"), 0);
     if (!sp.ipInfo(info)){
-        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Cannot retrieve network info"), 5);
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Cannot retrieve network info"), 0);
     }else {
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Network info acquired. Checking server list"), 5);
         auto serverList = sp.serverList();
-        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Server list acquired"), 5);
         if (serverList.empty()) {
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Server list is empty"), 5);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Server list is empty"), 0);
         } else {
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Latency computed"), 5);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Choosing best server"), 0);
             serverInfo = sp.bestServer(10, [](bool success) {});
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Best server chosen. Computing latency"), 5);
             //get latency
             latency = sp.latency();
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Latency computed. Computing download speed"), 10);
 
             //skip the pretest, saving a minute or so
             //uses the broadband config found in TestConfigTemplate.h
@@ -53,16 +54,17 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
             TestConfig downloadConfig;
             testConfigSelector(preSpeed, uploadConfig, downloadConfig);
 
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Download speed computed"), 5);
             //get upload and download speed
             if (!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {})) {
-                env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute download speed"), 5);
+                env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute download speed"), 0);
             }
 
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Upload speed computed"), 5);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Download speed computed. Computing upload speed"), 10);
             if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
-                env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute upload speed"), 5);
+                env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute upload speed"), 0);
             }
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Upload speed computed"), 10);
+
         }
     }
 

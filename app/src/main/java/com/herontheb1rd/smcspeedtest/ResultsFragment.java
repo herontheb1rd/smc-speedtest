@@ -118,6 +118,7 @@ public class ResultsFragment extends Fragment {
                 String placeName = bundle.getString("bundleKey");
 
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+                updateProgress("Getting network performance", 0);
                 ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
 
                 //speed test takes longer than other processes and causes program to hang
@@ -126,11 +127,16 @@ public class ResultsFragment extends Fragment {
                 Futures.addCallback(netperfFuture, new FutureCallback<NetPerf>() {
                     @Override
                     public void onSuccess(NetPerf netPerf) {
+                        updateProgress("Getting location data", 0);
                         Place place = computePlace(placeName);
+                        updateProgress("Getting signal performance", 0);
                         SignalPerf signalPerf = computeSignalPerf();
+
+                        updateProgress("Getting miscellaneous data", 0);
                         long time = Calendar.getInstance().getTime().getTime();
                         String networkProvider = getNetworkProvider();
                         String phoneBrand = Build.MANUFACTURER;
+                        updateProgress("Test finished", 10);
 
                         Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
                         displayResults(results.getNetPerf(), results.getSignalPerf());
@@ -144,7 +150,6 @@ public class ResultsFragment extends Fragment {
                                 Toast.makeText(getActivity(), "Test failed", Toast.LENGTH_SHORT).show();
                             }
                         });
-
                     }
                 }, Executors.newSingleThreadExecutor());
             }
@@ -153,7 +158,7 @@ public class ResultsFragment extends Fragment {
         return view;
     }
 
-    public void updateProgress(String progressText, int progress){
+    public void updateProgress(String progressText, int progressIncrement){
         TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
         ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
 
@@ -164,7 +169,7 @@ public class ResultsFragment extends Fragment {
             }
         });
 
-        progressBar.incrementProgressBy(progress);
+        progressBar.incrementProgressBy(progressIncrement);
     }
 
     public String getNetworkProvider(){
@@ -183,11 +188,14 @@ public class ResultsFragment extends Fragment {
                 Location location = Tasks.await(fusedLocationClient.getLastLocation());
                 latitude = location.getLatitude();
                 longitude = location.getLongitude();
+                updateProgress("Location acquired", 20);
             } catch (ExecutionException e) {
                 throw new RuntimeException(e);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }else{
+            updateProgress("Permissions not given for getting location. Skipping", 20);
         }
 
         return new Place(placeName, latitude, longitude);
@@ -207,12 +215,16 @@ public class ResultsFragment extends Fragment {
             CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 rssi = cellSignalStrengthLte.getRssi();
-                updateProgress("RSSI computed", 8);
+                updateProgress("RSSI computed", 10);
                 rsrp = cellSignalStrengthLte.getRsrp();
-                updateProgress("RSRP computed", 8);
+                updateProgress("RSRP computed", 10);
                 rsrq = cellSignalStrengthLte.getRsrq();
-                updateProgress("RSRQ computed", 9);
+                updateProgress("RSRQ computed", 10);
+            }else{
+                updateProgress("Phone cannot compute signal performance. Skipping", 30);
             }
+        }else{
+            updateProgress("Permissions were not given to compute signal performance. Skipping", 30);
         }
         return new SignalPerf(rssi, rsrq, rsrp);
     }
