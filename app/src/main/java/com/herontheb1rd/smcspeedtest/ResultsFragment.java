@@ -98,7 +98,7 @@ public class ResultsFragment extends Fragment {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
                         } else {
-                            Toast.makeText(getActivity(), "Authentication failed.",
+                            Toast.makeText(getActivity(), "Firebase authentication failed. Can't upload results",
                                     Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -120,13 +120,16 @@ public class ResultsFragment extends Fragment {
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
                 ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
 
+                //speed test takes longer than other processes and causes program to hang
+                //running this in the background to prevent it
+                //then running other processes synchronously
                 Futures.addCallback(netperfFuture, new FutureCallback<NetPerf>() {
                     @Override
                     public void onSuccess(NetPerf netPerf) {
                         Place place = computePlace(placeName);
                         SignalPerf signalPerf = computeSignalPerf();
                         long time = Calendar.getInstance().getTime().getTime();
-                        String networkProvider = "";
+                        String networkProvider = getNetworkProvider();
                         String phoneBrand = Build.MANUFACTURER;
 
                         Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
@@ -150,6 +153,25 @@ public class ResultsFragment extends Fragment {
         return view;
     }
 
+    public void updateProgress(String progressText, int progress){
+        TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
+        ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
+
+        progressTV.post(new Runnable(){
+            @Override
+            public void run(){
+                progressTV.setText(progressText);
+            }
+        });
+
+        progressBar.incrementProgressBy(progress);
+    }
+
+    public String getNetworkProvider(){
+        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+
+        return telephonyManager.getNetworkOperatorName();
+    }
     public Place computePlace(String placeName){
         double latitude = qrLocations.get(placeName)[0];
         double longitude = qrLocations.get(placeName)[1];
@@ -169,20 +191,6 @@ public class ResultsFragment extends Fragment {
         }
 
         return new Place(placeName, latitude, longitude);
-    }
-
-    public void updateProgress(String progressText, int progress){
-        TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
-        ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
-
-        progressTV.post(new Runnable(){
-            @Override
-            public void run(){
-                progressTV.setText(progressText);
-            }
-        });
-
-        progressBar.incrementProgressBy(progress);
     }
 
     public SignalPerf computeSignalPerf(){

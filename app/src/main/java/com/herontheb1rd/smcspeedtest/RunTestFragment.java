@@ -31,12 +31,11 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
 public class RunTestFragment extends Fragment {
-    static boolean justScannedQR;
+    private static boolean justScannedQR;
 
     public RunTestFragment() {
         justScannedQR = false;
     }
-
 
     ActivityResultLauncher<String[]> locationPermissionRequest =
             registerForActivityResult(new ActivityResultContracts
