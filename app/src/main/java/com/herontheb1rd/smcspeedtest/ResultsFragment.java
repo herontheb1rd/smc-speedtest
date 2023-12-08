@@ -252,7 +252,6 @@ public class ResultsFragment extends Fragment {
 
         if(signalPerf.getRsrq() != 1) rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
         else rsrqResultTV.setText("N/A");
-
     }
 
     public native NetPerf runSpeedtest();

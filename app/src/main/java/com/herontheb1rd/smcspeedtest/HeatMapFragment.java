@@ -156,7 +156,6 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         HeatmapTileProvider provider = new HeatmapTileProvider.Builder()
                 .weightedData(weightedLatLngs)
                 .build();
-
     }
 
     public void resetHeatMap(){
