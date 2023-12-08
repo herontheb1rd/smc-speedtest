@@ -33,8 +33,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 public class RunTestFragment extends Fragment {
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
 
-    public RunTestFragment() {
-        justScannedQR = false;
+    public RunTestFragment(){
     }
 
     ActivityResultLauncher<String[]> locationPermissionRequest =
