@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -56,9 +57,9 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         super.onCreate(savedInstanceState);
 
         getActivity().setContentView(R.layout.activity_main);
-        SupportMapFragment mapFragment = (SupportMapFragment) getActivity().getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        /*SupportMapFragment mapFragment = (SupportMapFragment) getActivity().getSupportFragmentManager()
+               .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);*/
 
     }
 
@@ -87,6 +88,8 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                 for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                     results.add(singleSnapshot.getValue(Results.class));
                 }
+                TextView dataTV = (TextView) getActivity().findViewById(R.id.dataTV);
+                dataTV.setText(Long.toString(results.get(0).getTime()));
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -120,16 +123,24 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
             switch(metric){
                 case 0:
                     intensity = curResult.getNetPerf().getDlspeed();
+                    if(intensity == -1){
+                        continue;
+                    }
                     break;
                 case 1:
                     intensity = curResult.getNetPerf().getUlspeed();
+                    if(intensity == -1){
+                        continue;
+                    }
                     break;
                 case 2:
                     intensity = curResult.getNetPerf().getLatency();
+                    if(intensity == -1){
+                        continue;
+                    }
                     break;
                 case 3:
                     intensity = curResult.getSignalPerf().getRssi();
-                    //skips if stored value is invalid
                     if(intensity == 1){
                         continue;
                     }
