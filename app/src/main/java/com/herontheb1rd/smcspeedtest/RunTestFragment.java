@@ -31,7 +31,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
 public class RunTestFragment extends Fragment {
-    private static boolean justScannedQR;
+    private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
 
     public RunTestFragment() {
         justScannedQR = false;
@@ -120,11 +120,16 @@ public class RunTestFragment extends Fragment {
                     scanner.startScan().addOnSuccessListener(
                         barcode -> {
                             String rawValue = barcode.getRawValue();
-                            Bundle result = new Bundle();
-                            result.putString("bundleKey", rawValue);
-                            getParentFragmentManager().setFragmentResult("requestKey", result);
-
-                            justScannedQR = true;
+                            for(int i = 0; i < allowedLocations.length; i++){
+                                if(rawValue.equals(allowedLocations[i])){
+                                    Bundle result = new Bundle();
+                                    result.putString("bundleKey", rawValue);
+                                    getParentFragmentManager().setFragmentResult("requestKey", result);
+                                    Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
+                                }
+                            }
+                            Toast.makeText(getActivity(), "Invalid QR code.",
+                                    Toast.LENGTH_SHORT).show();
                         });
                 }else{
                     Toast.makeText(getActivity(), "You must have an internet connection to run the test.",
@@ -134,16 +139,6 @@ public class RunTestFragment extends Fragment {
         });
 
         return view;
-    }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-
-        if(justScannedQR){
-            Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
-            justScannedQR = false;
-        }
     }
 }
 
