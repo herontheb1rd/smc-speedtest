@@ -249,5 +249,5 @@ public class ResultsFragment extends Fragment {
         else rsrqResultTV.setText("N/A");
     }
 
-    public native NetPerf runSpeedtest();
+    public native NetPerf runSpeedtest() throws Exception;
 }

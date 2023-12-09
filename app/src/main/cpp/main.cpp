@@ -31,11 +31,13 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
 
     if (!sp.ipInfo(info)){
         env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Cannot retrieve network info"), 0);
+        env->ThrowNew(env->FindClass("java/lang/Exception"), "Cannot retrieve network info");
     }else {
         env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Network info acquired. Checking server list"), 5);
         auto serverList = sp.serverList();
         if (serverList.empty()) {
             env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Server list is empty"), 0);
+            env->ThrowNew(env->FindClass("java/lang/Exception"), "Server list is empty");
         } else {
             serverInfo = sp.bestServer(10, [](bool success) {});
             env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Best server chosen"), 5);
@@ -53,11 +55,13 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
             //get upload and download speed
             if (!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {})) {
                 env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute download speed"), 0);
+                env->ThrowNew(env->FindClass("java/lang/Exception"), "Failed to compute download speed");
             }
 
             env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Download speed computed"), 10);
             if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
                 env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute upload speed"), 0);
+                env->ThrowNew(env->FindClass("java/lang/Exception"), "Failed to compute upload speed");
             }
             env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Upload speed computed"), 10);
 
