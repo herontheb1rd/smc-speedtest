@@ -1,6 +1,7 @@
 package com.herontheb1rd.smcspeedtest;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -9,6 +10,7 @@ import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
@@ -32,7 +34,6 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
 public class RunTestFragment extends Fragment {
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
-
     public RunTestFragment(){
     }
 
@@ -78,66 +79,85 @@ public class RunTestFragment extends Fragment {
         moduleInstallClient.installModules(moduleInstallRequest);
 
         Button runTestB = (Button) view.findViewById(R.id.runTestB);
+        runTestB.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                new AlertDialog.Builder(getActivity())
+                        .setTitle("User Agreement")
+                        .setMessage("This application will gather the following information: your mobile network provider, your phone brand, and (optionally) your current location. We will not release this data publicly, but we will use it for our study. \n\n By pressing Yes you agree to this data being collected. ")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                scanQRCode();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null)
+                        .show();
+            }
+        });
 
+        return view;
+    }
+
+    private boolean isConnected(){
+        boolean isConnected = false;
+
+        //getActiveNetworkInfo is deprecated after version 29
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(ConnectivityManager.class);
+            Network currentNetwork = connectivityManager.getActiveNetwork();
+            NetworkCapabilities caps = connectivityManager.getNetworkCapabilities(currentNetwork);
+
+            if(caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)){
+                isConnected = true;
+            }
+        }else{
+            ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+            if(connectivityManager.getActiveNetworkInfo() != null){
+                isConnected = true;
+            }
+        }
+
+        return isConnected;
+    }
+    private void askLocationPermission(){
         if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+                ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             locationPermissionRequest.launch(new String[] {
                     android.Manifest.permission.ACCESS_FINE_LOCATION,
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
             });
         }
+    }
 
-        runTestB.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                boolean isConnected = false;
+    private void scanQRCode(){
+        if(isConnected()){
+            askLocationPermission();
+            GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
+                    .setBarcodeFormats(
+                            Barcode.FORMAT_QR_CODE)
+                    .build();
 
-                //getActiveNetworkInfo is deprecated after version 29
-                if (android.os.Build.VERSION.SDK_INT >= 29) {
-                    ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(ConnectivityManager.class);
-                    Network currentNetwork = connectivityManager.getActiveNetwork();
-                    NetworkCapabilities caps = connectivityManager.getNetworkCapabilities(currentNetwork);
-
-                    if(caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)){
-                        isConnected = true;
-                    }
-                }else{
-                    ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-
-                    if(connectivityManager.getActiveNetworkInfo() != null){
-                        isConnected = true;
-                    }
-                }
-
-                if(isConnected){
-                    GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
-                        .setBarcodeFormats(
-                                Barcode.FORMAT_QR_CODE)
-                        .build();
-
-                    GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(view.getContext(), options);
-                    scanner.startScan().addOnSuccessListener(
-                        barcode -> {
-                            String rawValue = barcode.getRawValue();
-                            for(int i = 0; i < allowedLocations.length; i++){
-                                if(rawValue.equals(allowedLocations[i])){
-                                    Bundle result = new Bundle();
-                                    result.putString("bundleKey", rawValue);
-                                    getParentFragmentManager().setFragmentResult("requestKey", result);
-                                    Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
-                                }
+            GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(getView().getContext(), options);
+            scanner.startScan().addOnSuccessListener(
+                    barcode -> {
+                        String rawValue = barcode.getRawValue();
+                        for(int i = 0; i < allowedLocations.length; i++){
+                            if(rawValue.equals(allowedLocations[i])){
+                                Bundle result = new Bundle();
+                                result.putString("bundleKey", rawValue);
+                                getParentFragmentManager().setFragmentResult("requestKey", result);
+                                Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
                             }
-                            Toast.makeText(getActivity(), "Invalid QR code.",
-                                    Toast.LENGTH_SHORT).show();
-                        });
-                }else{
-                    Toast.makeText(getActivity(), "You must have an internet connection to run the test.",
-                            Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
+                        }
+                        Toast.makeText(getActivity(), "Invalid QR code.",
+                                Toast.LENGTH_SHORT).show();
+                    });
+        }else{
+            Toast.makeText(getActivity(), "You must have an internet connection to run the test.",
+                    Toast.LENGTH_SHORT).show();
+        }
 
-        return view;
     }
 }
 
