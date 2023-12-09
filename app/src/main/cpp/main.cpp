@@ -29,7 +29,6 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     ServerInfo serverInfo;
     ServerInfo serverQualityInfo;
 
-    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Acquiring network info"), 0);
     if (!sp.ipInfo(info)){
         env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Cannot retrieve network info"), 0);
     }else {
@@ -38,12 +37,11 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
         if (serverList.empty()) {
             env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Server list is empty"), 0);
         } else {
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Choosing best server"), 0);
             serverInfo = sp.bestServer(10, [](bool success) {});
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Best server chosen. Computing latency"), 5);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Best server chosen"), 5);
             //get latency
             latency = sp.latency();
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Latency computed. Computing download speed"), 10);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Latency to server computed"), 10);
 
             //skip the pretest, saving a minute or so
             //uses the broadband config found in TestConfigTemplate.h
@@ -57,7 +55,7 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
                 env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute download speed"), 0);
             }
 
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Download speed computed. Computing upload speed"), 10);
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Download speed computed"), 10);
             if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
                 env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute upload speed"), 0);
             }

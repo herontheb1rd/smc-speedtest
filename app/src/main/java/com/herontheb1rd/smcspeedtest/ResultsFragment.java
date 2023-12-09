@@ -118,7 +118,6 @@ public class ResultsFragment extends Fragment {
                 String placeName = bundle.getString("bundleKey");
 
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-                updateProgress("Getting network performance", 0);
                 ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
 
                 //speed test takes longer than other processes and causes program to hang
@@ -127,12 +126,9 @@ public class ResultsFragment extends Fragment {
                 Futures.addCallback(netperfFuture, new FutureCallback<NetPerf>() {
                     @Override
                     public void onSuccess(NetPerf netPerf) {
-                        updateProgress("Getting location data", 0);
                         Place place = computePlace(placeName);
-                        updateProgress("Getting signal performance", 0);
                         SignalPerf signalPerf = computeSignalPerf();
 
-                        updateProgress("Getting miscellaneous data", 0);
                         long time = Calendar.getInstance().getTime().getTime();
                         String networkProvider = getNetworkProvider();
                         String phoneBrand = Build.MANUFACTURER;
@@ -199,7 +195,6 @@ public class ResultsFragment extends Fragment {
 
     public SignalPerf computeSignalPerf(){
         //default values
-        //in case user phone version is too low
         //can be filtered out later
         int rssi = 1;
         int rsrp = 1;
