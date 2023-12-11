@@ -116,7 +116,6 @@ public class ResultsFragment extends Fragment {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 String placeName = bundle.getString("bundleKey");
-
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
                 ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
 
@@ -144,6 +143,8 @@ public class ResultsFragment extends Fragment {
                         //TODO: Write failure handling code
                     }
                 }, Executors.newSingleThreadExecutor());
+
+
             }
         });
 
@@ -230,10 +231,10 @@ public class ResultsFragment extends Fragment {
         TextView rsrqResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
 
 
-        if(netPerf.getDlspeed() != -1) downloadResultTV.setText(Double.toString(netPerf.getDlspeed()));
+        if(netPerf.getDlspeed() != -1) downloadResultTV.setText(String.format("%.1f", netPerf.getDlspeed()));
         else downloadResultTV.setText("N/A");
 
-        if(netPerf.getUlspeed() != -1) uploadResultTV.setText(Double.toString(netPerf.getUlspeed()));
+        if(netPerf.getUlspeed() != -1) uploadResultTV.setText(String.format("%.1f", netPerf.getUlspeed()));
         else uploadResultTV.setText("N/A");
 
         if(netPerf.getLatency() != -1) latencyResultTV.setText(Integer.toString(netPerf.getLatency()));

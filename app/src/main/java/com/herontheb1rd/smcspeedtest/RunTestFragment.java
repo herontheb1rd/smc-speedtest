@@ -34,7 +34,10 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
 public class RunTestFragment extends Fragment {
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
+    private static boolean justScannedQR;
+
     public RunTestFragment(){
+        justScannedQR = false;
     }
 
     ActivityResultLauncher<String[]> locationPermissionRequest =
@@ -84,9 +87,10 @@ public class RunTestFragment extends Fragment {
             public void onClick(View view){
                 new AlertDialog.Builder(getActivity())
                         .setTitle("User Agreement")
-                        .setMessage("This application will gather the following information: your mobile network provider, your phone brand, and (optionally) your current location. We will not release this data publicly, but we will use it for our study. \n\n By pressing Yes you agree to this data being collected. ")
+                        .setMessage("This application will gather the following information: your mobile network provider, your phone brand, and (optionally) your current location. We will not release this data publicly, but we will use it for our study. \n\nBy pressing Yes you agree to this data being collected. ")
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
+                                askLocationPermission();
                                 scanQRCode();
                             }
                         })
@@ -132,7 +136,6 @@ public class RunTestFragment extends Fragment {
 
     private void scanQRCode(){
         if(isConnected()){
-            askLocationPermission();
             GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
                     .setBarcodeFormats(
                             Barcode.FORMAT_QR_CODE)
@@ -142,22 +145,38 @@ public class RunTestFragment extends Fragment {
             scanner.startScan().addOnSuccessListener(
                     barcode -> {
                         String rawValue = barcode.getRawValue();
+
+                        boolean isValidLocation = false;
                         for(int i = 0; i < allowedLocations.length; i++){
                             if(rawValue.equals(allowedLocations[i])){
-                                Bundle result = new Bundle();
-                                result.putString("bundleKey", rawValue);
-                                getParentFragmentManager().setFragmentResult("requestKey", result);
-                                Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
+                                isValidLocation = true;
+                                break;
                             }
                         }
-                        Toast.makeText(getActivity(), "Invalid QR code.",
-                                Toast.LENGTH_SHORT).show();
+                        if(isValidLocation){
+                            Bundle result = new Bundle();
+                            result.putString("bundleKey", rawValue);
+                            getParentFragmentManager().setFragmentResult("requestKey", result);
+                            justScannedQR = true;
+                        }else{
+                            Toast.makeText(getActivity(), "Invalid QR code.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                     });
         }else{
             Toast.makeText(getActivity(), "You must have an internet connection to run the test.",
                     Toast.LENGTH_SHORT).show();
         }
+    }
 
+    @Override
+    public void onResume(){
+        super.onResume();
+
+        if(justScannedQR){
+            Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
+            justScannedQR = false;
+        }
     }
 }
 
