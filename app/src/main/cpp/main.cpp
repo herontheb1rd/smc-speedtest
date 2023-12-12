@@ -27,7 +27,6 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
     IPInfo info;
     ServerInfo serverInfo;
-    ServerInfo serverQualityInfo;
 
     sp.setInsecure(true);
 
@@ -35,7 +34,6 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
         env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Cannot retrieve network info"), 0);
         //env->ThrowNew(env->FindClass("java/lang/Exception"), "Cannot retrieve network info");
     }else {
-        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF(info.ip_address.c_str()), 5);
         env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Network info acquired. Checking server list"), 5);
         auto serverList = sp.serverList();
         if (serverList.empty()) {
@@ -79,6 +77,71 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
 }
 
 
+extern "C"
+JNIEXPORT jdouble JNICALL
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, jobject thiz) {
+    double dlspeed;
+
+    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    ServerInfo serverInfo;
+
+    //for setting the text
+    jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
+    jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
+
+    double preSpeed = 20.0;
+    TestConfig uploadConfig;
+    TestConfig downloadConfig;
+    testConfigSelector(preSpeed, uploadConfig, downloadConfig);
+
+    //get upload and download speed
+    if (!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {})) {
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute download speed"), 0);
+    }
+
+    return dlspeed;
+}
 
 
+extern "C"
+JNIEXPORT jdouble JNICALL
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, jobject thiz) {
+    double ulspeed;
+
+    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    ServerInfo serverInfo;
+
+    //for setting the text
+    jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
+    jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
+
+    double preSpeed = 20.0;
+    TestConfig uploadConfig;
+    TestConfig downloadConfig;
+    testConfigSelector(preSpeed, uploadConfig, downloadConfig);
+
+    if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute upload speed"), 0);
+    }
+
+    return ulspeed;
+}
+
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, jobject thiz) {
+    int latency;
+
+    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    ServerInfo serverInfo;
+
+    //for setting the text
+    jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
+    jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
+
+    latency = sp.latency();
+
+    return latency;
+}
 
