@@ -76,6 +76,14 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     return resultsObj;
 }
 
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerInfo(JNIEnv *env, jobject thiz, jobject info) {
+    ServerInfo serverInfo;
+    jclass clazz;
+
+
+}
 
 extern "C"
 JNIEXPORT jdouble JNICALL
