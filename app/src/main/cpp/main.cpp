@@ -76,22 +76,51 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     return resultsObj;
 }
 
+
 extern "C"
-JNIEXPORT jint JNICALL
-Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerInfo(JNIEnv *env, jobject thiz, jobject info) {
+JNIEXPORT jlong JNICALL
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerInfo(JNIEnv *env, jobject thiz) {
+    signal(SIGPIPE, SIG_IGN);
+    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    IPInfo ipInfo;
     ServerInfo serverInfo;
-    jclass clazz;
 
+    //for setting the text
+    jclass resultsClazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
+    jmethodID updateProgress = env->GetMethodID(resultsClazz, "updateProgress", "(Ljava/lang/String;I)V");
 
+    sp.setInsecure(true);
+
+    if (!sp.ipInfo(ipInfo)){
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Cannot retrieve network info"), 0);
+        //env->ThrowNew(env->FindClass("java/lang/Exception"), "Cannot retrieve network info");
+    }else {
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Network info acquired. Checking server list"), 5);
+        auto serverList = sp.serverList();
+        if (serverList.empty()) {
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Server list is empty"), 0);
+            //env->ThrowNew(env->FindClass("java/lang/Exception"), "Server list is empty");
+        } else {
+            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Best server chosen"), 5);
+            serverInfo = sp.bestServer(10, [](bool success) {});
+        }
+    }
+
+    //allocates the server info to the heap to be accessed later
+    //we're returning the memory address of a copy of the stored server info to java as a long
+    ServerInfo *serverCpy = (ServerInfo *)malloc(sizeof(ServerInfo));
+    memcpy(serverCpy, &serverInfo, sizeof(ServerInfo));
+    long serverPtr = (long)serverPtr;
+    return serverPtr;
 }
 
 extern "C"
 JNIEXPORT jdouble JNICALL
-Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, jobject thiz) {
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, jobject thiz, jlong serverPtr) {
     double dlspeed;
 
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
-    ServerInfo serverInfo;
+    ServerInfo serverInfo = *(ServerInfo *)serverPtr;
 
     //for setting the text
     jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
@@ -113,11 +142,11 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, j
 
 extern "C"
 JNIEXPORT jdouble JNICALL
-Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, jobject thiz) {
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, jobject thiz, jlong serverPtr) {
     double ulspeed;
 
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
-    ServerInfo serverInfo;
+    ServerInfo serverInfo = *(ServerInfo *)serverPtr;
 
     //for setting the text
     jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
@@ -138,11 +167,11 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, j
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, jobject thiz) {
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, jobject thiz, jlong serverPtr) {
     int latency;
 
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
-    ServerInfo serverInfo;
+    ServerInfo serverInfo = *(ServerInfo *)serverPtr;
 
     //for setting the text
     jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
