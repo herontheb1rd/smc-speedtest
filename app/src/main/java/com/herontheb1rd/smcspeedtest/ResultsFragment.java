@@ -117,6 +117,22 @@ public class ResultsFragment extends Fragment {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 String placeName = bundle.getString("bundleKey");
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+                ListenableFuture<Long> getServerInfoFuture = pool.submit(() -> getServerInfo());
+
+                Futures.addCallback(getServerInfoFuture, new FutureCallback<Long>() {
+                    @Override
+                    public void onSuccess(Long result) {
+                        Log.i("Test", Long.toString(result));
+                        Log.i("Test 2", Double.toString(computeUlspeed(result)));
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+
+                    }
+                }, Executors.newSingleThreadExecutor());
+
+                /*
                 ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
 
                 //speed test takes longer than other processes and causes program to hang
@@ -144,7 +160,7 @@ public class ResultsFragment extends Fragment {
                     }
                 }, Executors.newSingleThreadExecutor());
 
-
+                */
             }
         });
 
@@ -170,6 +186,7 @@ public class ResultsFragment extends Fragment {
 
         return telephonyManager.getNetworkOperatorName();
     }
+
     public Place computePlace(String placeName){
         double latitude = qrLocations.get(placeName)[0];
         double longitude = qrLocations.get(placeName)[1];
@@ -251,4 +268,9 @@ public class ResultsFragment extends Fragment {
     }
 
     public native NetPerf runSpeedtest() throws Exception;
+    public native long getServerInfo();
+    public native long computeLatency(long serverPtr);
+    public native double computeDlspeed(long serverPtr);
+    public native double computeUlspeed(long serverPtr);
+
 }
