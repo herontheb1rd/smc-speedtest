@@ -61,7 +61,7 @@ public class RunTestFragment extends Fragment {
             public void onClick(View view){
                 new AlertDialog.Builder(getActivity())
                         .setTitle("User Agreement")
-                        .setMessage("This application will gather the following information: your mobile network provider, your phone brand, and (optionally) your current location. We will not release this data publicly, but we will use it for our study. \n\nBy pressing Yes you agree to this data being collected. ")
+                        .setMessage("This application will record your phone brand, and the location you scanned your QR code in (but not your phone's longitude and latitude). We will not release this data publicly, but we will use it for our study. \n\nBy pressing Yes you agree to this data being collected. ")
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 scanQRCode();
