@@ -171,11 +171,10 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, j
     return ulspeed;
 }
 
-
 extern "C"
-JNIEXPORT jlong JNICALL
+JNIEXPORT jint JNICALL
 Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, jobject thiz, jlong serverPtr) {
-    long latency = -1;
+    int latency = -1;
 
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
     ServerInfo serverInfo = *((ServerInfo *)serverPtr);

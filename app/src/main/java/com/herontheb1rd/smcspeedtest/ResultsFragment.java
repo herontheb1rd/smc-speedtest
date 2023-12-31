@@ -43,6 +43,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.common.util.concurrent.AsyncCallable;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Callables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -106,6 +107,7 @@ public class ResultsFragment extends Fragment {
     }
 
 
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -116,51 +118,46 @@ public class ResultsFragment extends Fragment {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 String placeName = bundle.getString("bundleKey");
+
+                Executor listeningExecutor = Executors.newSingleThreadExecutor();
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-                ListenableFuture<Long> getServerInfoFuture = pool.submit(() -> getServerInfo());
 
-                Futures.addCallback(getServerInfoFuture, new FutureCallback<Long>() {
-                    @Override
-                    public void onSuccess(Long result) {
-                        Log.i("Test", Long.toString(result));
-                        Log.i("Test 2", Double.toString(computeUlspeed(result)));
-                    }
+                ListenableFuture<Long> serverInfoFuture = pool.submit(() -> getServerInfo());
+                AsyncFunction<Long, NetPerf> asyncNetPerf = serverPtr -> {
+                    ListenableFuture<Double> dlspeedFuture = pool.submit(() -> computeDlspeed(serverPtr));
+                    ListenableFuture<Double> ulspeedFuture = pool.submit(() -> computeUlspeed(serverPtr));
+                    ListenableFuture<Integer> latencyFuture = pool.submit(() -> computeLatency(serverPtr));
 
-                    @Override
-                    public void onFailure(Throwable t) {
+                    ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
+                            .call(() -> new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
+                                    Futures.getDone(latencyFuture)), listeningExecutor);
 
-                    }
-                }, Executors.newSingleThreadExecutor());
+                    return computeNetPerf;
+                };
 
-                /*
-                ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
+                ListenableFuture<NetPerf> netPerfFuture = Futures.transformAsync(serverInfoFuture, asyncNetPerf, listeningExecutor);
 
-                //speed test takes longer than other processes and causes program to hang
-                //running this in the background to prevent it
-                //then running other processes synchronously
-                Futures.addCallback(netperfFuture, new FutureCallback<NetPerf>() {
-                    @Override
-                    public void onSuccess(NetPerf netPerf) {
-                        Place place = computePlace(placeName);
-                        SignalPerf signalPerf = computeSignalPerf();
+                Futures.addCallback(netPerfFuture, new FutureCallback<NetPerf>() {
+                        @Override
+                        public void onSuccess(NetPerf netPerf) {
+                            Place place = computePlace(placeName);
+                            SignalPerf signalPerf = computeSignalPerf();
 
-                        long time = Calendar.getInstance().getTime().getTime();
-                        String networkProvider = getNetworkProvider();
-                        String phoneBrand = Build.MANUFACTURER;
-                        updateProgress("Test finished", 10);
+                            long time = Calendar.getInstance().getTime().getTime();
+                            String networkProvider = getNetworkProvider();
+                            String phoneBrand = Build.MANUFACTURER;
+                            updateProgress("Test finished", 10);
 
-                        Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
-                        displayResults(results.getNetPerf(), results.getSignalPerf());
-                        //mDatabase.child("results").push().setValue(results);
-                    }
+                            Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
+                            displayResults(results.getNetPerf(), results.getSignalPerf());
+                            //mDatabase.child("results").push().setValue(results);
+                        }
 
-                    @Override
-                    public void onFailure(Throwable t) {
-                        //TODO: Write failure handling code
-                    }
-                }, Executors.newSingleThreadExecutor());
-
-                */
+                        @Override
+                        public void onFailure(Throwable t) {
+                            //TODO: Write failure handling code
+                        }
+                    }, listeningExecutor);
             }
         });
 
@@ -269,8 +266,9 @@ public class ResultsFragment extends Fragment {
 
     public native NetPerf runSpeedtest() throws Exception;
     public native long getServerInfo();
-    public native long computeLatency(long serverPtr);
     public native double computeDlspeed(long serverPtr);
     public native double computeUlspeed(long serverPtr);
+    public native int computeLatency(long serverPtr);
+
 
 }
