@@ -208,6 +208,14 @@ public class ResultsFragment extends Fragment {
         return new Place(placeName, latitude, longitude);
     }
 
+    public int getWifiRSSI(){
+        WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        WifiInfo info = wifiManager.getConnectionInfo();
+        String ssid = info.getSSID();
+        int rssi = info.getRssi();
+
+        return rssi;
+    }
     public SignalPerf computeSignalPerf(){
         //default values
         //can be filtered out later
