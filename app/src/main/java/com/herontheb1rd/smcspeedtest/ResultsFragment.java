@@ -130,7 +130,7 @@ public class ResultsFragment extends Fragment {
 
                     ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
                             .call(() -> new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
-                                    Futures.getDone(latencyFuture)), listeningExecutor);
+                                    Futures.getDone(latencyFuture), getWifiRSSI()), listeningExecutor);
 
                     return computeNetPerf;
                 };
@@ -141,15 +141,11 @@ public class ResultsFragment extends Fragment {
                         @Override
                         public void onSuccess(NetPerf netPerf) {
                             Place place = computePlace(placeName);
-                            SignalPerf signalPerf = computeSignalPerf();
-
                             long time = Calendar.getInstance().getTime().getTime();
-                            String networkProvider = getNetworkProvider();
                             String phoneBrand = Build.MANUFACTURER;
-                            updateProgress("Test finished", 10);
 
-                            Results results = new Results(time, networkProvider, phoneBrand, place, netPerf, signalPerf);
-                            displayResults(results.getNetPerf(), results.getSignalPerf());
+                            Results results = new Results(time, phoneBrand, place, netPerf);
+                            displayResults(results.getNetPerf());
                             //mDatabase.child("results").push().setValue(results);
                         }
 
@@ -176,12 +172,6 @@ public class ResultsFragment extends Fragment {
         });
 
         progressBar.incrementProgressBy(progressIncrement);
-    }
-
-    public String getNetworkProvider(){
-        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-
-        return telephonyManager.getNetworkOperatorName();
     }
 
     public Place computePlace(String placeName){
@@ -216,41 +206,12 @@ public class ResultsFragment extends Fragment {
 
         return rssi;
     }
-    public SignalPerf computeSignalPerf(){
-        //default values
-        //can be filtered out later
-        int rssi = 1;
-        int rsrp = 1;
-        int rsrq = 1;
 
-        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
-            CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                rssi = cellSignalStrengthLte.getRssi();
-                updateProgress("RSSI computed", 10);
-                rsrp = cellSignalStrengthLte.getRsrp();
-                updateProgress("RSRP computed", 10);
-                rsrq = cellSignalStrengthLte.getRsrq();
-                updateProgress("RSRQ computed", 10);
-            }else{
-                updateProgress("Phone cannot compute signal performance. Skipping", 30);
-            }
-        }else{
-            updateProgress("Permissions were not given to compute signal performance. Skipping", 30);
-        }
-        return new SignalPerf(rssi, rsrq, rsrp);
-    }
-
-
-    public void displayResults(NetPerf netPerf, SignalPerf signalPerf){
+    public void displayResults(NetPerf netPerf){
         TextView downloadResultTV = (TextView) getView().findViewById(R.id.downloadResultTV);
         TextView uploadResultTV = (TextView) getView().findViewById(R.id.uploadResultTV);
         TextView latencyResultTV = (TextView) getView().findViewById(R.id.latencyResultTV);
         TextView rssiResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
-        TextView rsrpResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
-        TextView rsrqResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
 
 
         if(netPerf.getDlspeed() != -1) downloadResultTV.setText(String.format("%.1f", netPerf.getDlspeed()));
@@ -262,14 +223,9 @@ public class ResultsFragment extends Fragment {
         if(netPerf.getLatency() != -1) latencyResultTV.setText(Integer.toString(netPerf.getLatency()));
         else latencyResultTV.setText("N/A");
 
-        if(signalPerf.getRssi() != 1) rssiResultTV.setText(Integer.toString(signalPerf.getRssi()));
+        if(netPerf.getRssi() != 1) rssiResultTV.setText(Integer.toString(netPerf.getRssi()));
         else rssiResultTV.setText("N/A");
 
-        if(signalPerf.getRsrp() != 1) rsrpResultTV.setText(Integer.toString(signalPerf.getRsrp()));
-        else rsrpResultTV.setText("N/A");
-
-        if(signalPerf.getRsrq() != 1) rsrqResultTV.setText(Integer.toString(signalPerf.getRsrq()));
-        else rsrqResultTV.setText("N/A");
     }
 
     public native NetPerf runSpeedtest() throws Exception;
@@ -277,6 +233,5 @@ public class ResultsFragment extends Fragment {
     public native double computeDlspeed(long serverPtr);
     public native double computeUlspeed(long serverPtr);
     public native int computeLatency(long serverPtr);
-
 
 }
