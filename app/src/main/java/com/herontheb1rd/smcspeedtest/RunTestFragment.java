@@ -40,32 +40,6 @@ public class RunTestFragment extends Fragment {
         justScannedQR = false;
     }
 
-    ActivityResultLauncher<String[]> locationPermissionRequest =
-            registerForActivityResult(new ActivityResultContracts
-                            .RequestMultiplePermissions(), result -> {
-                Boolean fineLocationGranted = null;
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                    fineLocationGranted = result.getOrDefault(
-                            android.Manifest.permission.ACCESS_FINE_LOCATION, false);
-                }
-                Boolean coarseLocationGranted = null;
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-                    coarseLocationGranted = result.getOrDefault(
-                                    android.Manifest.permission.ACCESS_COARSE_LOCATION,false);
-                }
-                if (fineLocationGranted != null && fineLocationGranted) {
-                    Toast.makeText(getActivity(), "Location access granted.",
-                            Toast.LENGTH_SHORT).show();
-                } else if (coarseLocationGranted != null && coarseLocationGranted) {
-                    Toast.makeText(getActivity(), "Approximate location will be used. Accuracy may be affected.",
-                            Toast.LENGTH_SHORT).show();
-                } else {
-                    // No location access granted.
-                    Toast.makeText(getActivity(), "Location access not granted. Accuracy may be affected.",
-                            Toast.LENGTH_SHORT).show();
-                }
-                    }
-            );
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -90,7 +64,6 @@ public class RunTestFragment extends Fragment {
                         .setMessage("This application will gather the following information: your mobile network provider, your phone brand, and (optionally) your current location. We will not release this data publicly, but we will use it for our study. \n\nBy pressing Yes you agree to this data being collected. ")
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                                askLocationPermission();
                                 scanQRCode();
                             }
                         })
@@ -123,15 +96,6 @@ public class RunTestFragment extends Fragment {
         }
 
         return isConnected;
-    }
-    private void askLocationPermission(){
-        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            locationPermissionRequest.launch(new String[] {
-                    android.Manifest.permission.ACCESS_FINE_LOCATION,
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION
-            });
-        }
     }
 
     private void scanQRCode(){
