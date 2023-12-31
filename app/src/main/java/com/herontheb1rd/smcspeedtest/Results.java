@@ -3,17 +3,13 @@ package com.herontheb1rd.smcspeedtest;
 
 public class Results {
     private long time;
-    private String networkProvider;
     private String phoneBrand;
     private Place place;
     private NetPerf netPerf;
-    private SignalPerf signalPerf;
+    int rssi;
 
     public long getTime(){
         return time;
-    }
-    public String getNetworkProvider(){
-        return networkProvider;
     }
     public String getPhoneBrand(){
         return phoneBrand;
@@ -24,18 +20,16 @@ public class Results {
     public NetPerf getNetPerf(){
         return netPerf;
     }
-    public SignalPerf getSignalPerf() { return signalPerf; }
-
+    public int getRssi () {return rssi; }
     public Results(){
 
     }
 
-    public Results(long time, String networkProvider, String phoneBrand, Place place, NetPerf netPerf, SignalPerf signalPerf){
+    public Results(long time,  String phoneBrand, Place place, NetPerf netPerf, int rssi){
         this.time = time;
-        this.networkProvider = networkProvider;
         this.phoneBrand = phoneBrand;
         this.place = place;
         this.netPerf = netPerf;
-        this.signalPerf = signalPerf;
+        this.rssi = rssi;
     }
 }
