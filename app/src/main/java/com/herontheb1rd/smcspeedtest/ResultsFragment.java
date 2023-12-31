@@ -178,23 +178,6 @@ public class ResultsFragment extends Fragment {
         double latitude = qrLocations.get(placeName)[0];
         double longitude = qrLocations.get(placeName)[1];
 
-        if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            FusedLocationProviderClient fusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
-            try {
-                Location location = Tasks.await(fusedLocationClient.getLastLocation());
-                latitude = location.getLatitude();
-                longitude = location.getLongitude();
-                updateProgress("Location acquired", 20);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }else{
-            updateProgress("Permissions not given for getting location. Skipping", 20);
-        }
-
         return new Place(placeName, latitude, longitude);
     }
 
