@@ -186,8 +186,12 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, j
     if(sp.setServer(serverInfo)) {
         latency = sp.latency();
     }
-    //std::free((ServerInfo *)serverPtr);
 
     return latency;
 }
 
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_freeServerPtr(JNIEnv *env, jobject thiz, jlong serverPtr) {
+    free((ServerInfo *)serverPtr);
+}

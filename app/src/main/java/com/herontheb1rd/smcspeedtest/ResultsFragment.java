@@ -129,9 +129,12 @@ public class ResultsFragment extends Fragment {
                     ListenableFuture<Integer> latencyFuture = pool.submit(() -> computeLatency(serverPtr));
 
                     ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
-                            .call(() -> new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
-                                    Futures.getDone(latencyFuture), getWifiRSSI()), listeningExecutor);
-
+                            .call(() -> {
+                                NetPerf netPerf = new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
+                                    Futures.getDone(latencyFuture), getWifiRSSI());
+                                freeServerPtr(serverPtr);
+                                return netPerf;
+                            }, listeningExecutor);
                     return computeNetPerf;
                 };
 
@@ -140,9 +143,9 @@ public class ResultsFragment extends Fragment {
                 Futures.addCallback(netPerfFuture, new FutureCallback<NetPerf>() {
                         @Override
                         public void onSuccess(NetPerf netPerf) {
-                            Place place = computePlace(placeName);
                             long time = Calendar.getInstance().getTime().getTime();
                             String phoneBrand = Build.MANUFACTURER;
+                            Place place = computePlace(placeName);
 
                             Results results = new Results(time, phoneBrand, place, netPerf);
                             displayResults(results.getNetPerf());
@@ -153,7 +156,7 @@ public class ResultsFragment extends Fragment {
                         public void onFailure(Throwable t) {
                             //TODO: Write failure handling code
                         }
-                    }, listeningExecutor);
+                }, listeningExecutor);
             }
         });
 
@@ -216,5 +219,6 @@ public class ResultsFragment extends Fragment {
     public native double computeDlspeed(long serverPtr);
     public native double computeUlspeed(long serverPtr);
     public native int computeLatency(long serverPtr);
+    public native void freeServerPtr(long serverPtr);
 
 }
