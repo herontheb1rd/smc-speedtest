@@ -93,15 +93,10 @@ public class ResultsFragment extends Fragment {
         super.onStart();
 
         mAuth.signInAnonymously()
-                .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            FirebaseUser user = mAuth.getCurrentUser();
-                        } else {
-                            Toast.makeText(getActivity(), "Firebase authentication failed. Can't upload results",
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                .addOnCompleteListener(getActivity(), task -> {
+                    if (!task.isSuccessful()) {
+                        Toast.makeText(getActivity(), "Firebase authentication failed. Can't upload results",
+                                Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -146,6 +141,7 @@ public class ResultsFragment extends Fragment {
                             long time = Calendar.getInstance().getTime().getTime();
                             String phoneBrand = Build.MANUFACTURER;
                             Place place = computePlace(placeName);
+                            updateProgress("Test complete", 10);
 
                             Results results = new Results(time, phoneBrand, place, netPerf);
                             displayResults(results.getNetPerf());
@@ -168,7 +164,11 @@ public class ResultsFragment extends Fragment {
         ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
 
         progressTV.post(() -> progressTV.setText(progressText));
-        progressBar.setProgress(progressBar.getProgress() + progressIncrement, true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            progressBar.setProgress(progressBar.getProgress() + progressIncrement, true);
+        }else{
+            progressBar.incrementProgressBy(progressIncrement);
+        }
     }
 
     public Place computePlace(String placeName){
@@ -207,7 +207,6 @@ public class ResultsFragment extends Fragment {
 
     }
 
-    public native NetPerf runSpeedtest() throws Exception;
     public native long getServerInfo();
     public native double computeDlspeed(long serverPtr);
     public native double computeUlspeed(long serverPtr);
