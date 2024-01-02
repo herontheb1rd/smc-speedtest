@@ -187,7 +187,6 @@ public class ResultsFragment extends Fragment {
     public int getWifiRSSI(){
         WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = wifiManager.getConnectionInfo();
-        String ssid = info.getSSID();
         int rssi = info.getRssi();
 
         return rssi;
