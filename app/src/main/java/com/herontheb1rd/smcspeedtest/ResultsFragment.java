@@ -167,14 +167,8 @@ public class ResultsFragment extends Fragment {
         TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
         ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
 
-        progressTV.post(new Runnable(){
-            @Override
-            public void run(){
-                progressTV.setText(progressText);
-            }
-        });
-
-        progressBar.incrementProgressBy(progressIncrement);
+        progressTV.post(() -> progressTV.setText(progressText));
+        progressBar.setProgress(progressBar.getProgress() + progressIncrement, true);
     }
 
     public Place computePlace(String placeName){
