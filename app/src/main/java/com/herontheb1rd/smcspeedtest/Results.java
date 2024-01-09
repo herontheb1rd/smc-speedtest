@@ -15,6 +15,7 @@ public class Results {
     public String getPhoneBrand(){
         return phoneBrand;
     }
+    public String getNetworkProvider() { return networkProvider; }
     public Place getPlace(){
         return place;
     }
@@ -27,9 +28,10 @@ public class Results {
 
     }
 
-    public Results(long time, String phoneBrand, Place place, NetPerf netPerf, SignalPerf signalPerf){
+    public Results(long time, String phoneBrand, String networkProvider, Place place, NetPerf netPerf, SignalPerf signalPerf){
         this.time = time;
         this.phoneBrand = phoneBrand;
+        this.networkProvider = networkProvider;
         this.place = place;
         this.netPerf = netPerf;
         this.signalPerf = signalPerf;

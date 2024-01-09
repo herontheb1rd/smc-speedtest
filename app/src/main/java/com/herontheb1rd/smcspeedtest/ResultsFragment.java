@@ -163,7 +163,7 @@ public class ResultsFragment extends Fragment {
 
                             updateProgress("Test complete", 10);
 
-                            Results results = new Results(time, phoneBrand, place, netPerf, signalPerf);
+                            Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
                             //mDatabase.child("results").push().setValue(results);
                         }
 
@@ -210,9 +210,7 @@ public class ResultsFragment extends Fragment {
                 rssi = cellSignalStrengthLte.getRssi();
                 rsrp = cellSignalStrengthLte.getRsrp();
                 rsrq = cellSignalStrengthLte.getRsrq();
-            }else{
             }
-        }else{
         }
 
         return new SignalPerf(rssi, rsrq, rsrp);
