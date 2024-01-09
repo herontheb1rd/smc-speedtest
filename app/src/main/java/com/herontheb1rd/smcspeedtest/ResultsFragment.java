@@ -119,14 +119,28 @@ public class ResultsFragment extends Fragment {
 
                 ListenableFuture<Long> serverInfoFuture = pool.submit(() -> getServerInfo());
                 AsyncFunction<Long, NetPerf> asyncNetPerf = serverPtr -> {
-                    ListenableFuture<Double> dlspeedFuture = pool.submit(() -> computeDlspeed(serverPtr));
-                    ListenableFuture<Double> ulspeedFuture = pool.submit(() -> computeUlspeed(serverPtr));
-                    ListenableFuture<Integer> latencyFuture = pool.submit(() -> computeLatency(serverPtr));
+                    ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
+                        double dlspeed = computeDlspeed(serverPtr);
+                        displayResult(R.id.downloadResultTV, String.format("%.1f", dlspeed));
+                        return dlspeed;
+                    });
+
+                    ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
+                        double ulspeed = computeUlspeed(serverPtr);
+                        displayResult(R.id.uploadResultTV, String.format("%.1f", ulspeed));
+                        return ulspeed;
+                    });
+
+                    ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
+                        int latency = computeLatency(serverPtr);
+                        displayResult(R.id.latencyResultTV, Integer.toString(latency));
+                        return latency;
+                    });
 
                     ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
                             .call(() -> {
                                 NetPerf netPerf = new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
-                                    Futures.getDone(latencyFuture), getWifiRSSI());
+                                    Futures.getDone(latencyFuture));
                                 freeServerPtr(serverPtr);
                                 return netPerf;
                             }, listeningExecutor);
@@ -140,11 +154,13 @@ public class ResultsFragment extends Fragment {
                         public void onSuccess(NetPerf netPerf) {
                             long time = Calendar.getInstance().getTime().getTime();
                             String phoneBrand = Build.MANUFACTURER;
-                            Place place = computePlace(placeName);
+                            String networkProvider = getNetworkProvider();
+                            Place place = getPlace(placeName);
+                            SignalPerf signalPerf = computeSignalPerf();
+
                             updateProgress("Test complete", 10);
 
-                            Results results = new Results(time, phoneBrand, place, netPerf);
-                            displayResults(results.getNetPerf());
+                            Results results = new Results(time, phoneBrand, place, netPerf, signalPerf);
                             //mDatabase.child("results").push().setValue(results);
                         }
 
@@ -164,47 +180,43 @@ public class ResultsFragment extends Fragment {
         ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
 
         progressTV.post(() -> progressTV.setText(progressText));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            progressBar.setProgress(progressBar.getProgress() + progressIncrement, true);
-        }else{
-            progressBar.incrementProgressBy(progressIncrement);
-        }
+        progressBar.incrementProgressBy(progressIncrement);
     }
 
-    public Place computePlace(String placeName){
+    public Place getPlace(String placeName){
         double latitude = qrLocations.get(placeName)[0];
         double longitude = qrLocations.get(placeName)[1];
 
         return new Place(placeName, latitude, longitude);
     }
 
-    public int getWifiRSSI(){
-        WifiManager wifiManager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        WifiInfo info = wifiManager.getConnectionInfo();
-        int rssi = info.getRssi();
-
-        return rssi;
+    public String getNetworkProvider(){
+        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+        return telephonyManager.getNetworkOperatorName();
     }
 
-    public void displayResults(NetPerf netPerf){
-        TextView downloadResultTV = (TextView) getView().findViewById(R.id.downloadResultTV);
-        TextView uploadResultTV = (TextView) getView().findViewById(R.id.uploadResultTV);
-        TextView latencyResultTV = (TextView) getView().findViewById(R.id.latencyResultTV);
-        TextView rssiResultTV = (TextView) getView().findViewById(R.id.rssiResultTV);
+    public SignalPerf computeSignalPerf(){
+        int rssi = 1;
+        int rsrp = 1;
+        int rsrq = 1;
+        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+            CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                rssi = cellSignalStrengthLte.getRssi();
+                rsrp = cellSignalStrengthLte.getRsrp();
+                rsrq = cellSignalStrengthLte.getRsrq();
+            }else{
+            }
+        }else{
+        }
 
+        return new SignalPerf(rssi, rsrq, rsrp);
+    }
 
-        if(netPerf.getDlspeed() != -1) downloadResultTV.setText(String.format("%.1f", netPerf.getDlspeed()));
-        else downloadResultTV.setText("N/A");
-
-        if(netPerf.getUlspeed() != -1) uploadResultTV.setText(String.format("%.1f", netPerf.getUlspeed()));
-        else uploadResultTV.setText("N/A");
-
-        if(netPerf.getLatency() != -1) latencyResultTV.setText(Integer.toString(netPerf.getLatency()));
-        else latencyResultTV.setText("N/A");
-
-        if(netPerf.getRssi() != 1) rssiResultTV.setText(Integer.toString(netPerf.getRssi()));
-        else rssiResultTV.setText("N/A");
-
+    public void displayResult(int id, String resultStr){
+        ((TextView) getView().findViewById(id)).setText(resultStr);
     }
 
     public native long getServerInfo();

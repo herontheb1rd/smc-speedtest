@@ -61,7 +61,7 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, j
     jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
 
     if(sp.setServer(serverInfo)) {
-        double preSpeed = 20.0;
+        double preSpeed = 0.0;
         TestConfig uploadConfig;
         TestConfig downloadConfig;
         testConfigSelector(preSpeed, uploadConfig, downloadConfig);
@@ -81,7 +81,7 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, j
 extern "C"
 JNIEXPORT jdouble JNICALL
 Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, jobject thiz, jlong serverPtr) {
-    double ulspeed = 0;
+    double ulspeed = -1;
 
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
     ServerInfo serverInfo = *(ServerInfo *)serverPtr;
@@ -91,7 +91,7 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, j
     jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
 
     if(sp.setServer(serverInfo)) {
-        double preSpeed = 20.0;
+        double preSpeed = 0.0;
         TestConfig uploadConfig;
         TestConfig downloadConfig;
         testConfigSelector(preSpeed, uploadConfig, downloadConfig);
