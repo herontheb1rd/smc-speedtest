@@ -58,9 +58,6 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, j
 
     sp.setInsecure(true);
 
-    //for setting the text
-    jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
-    jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
 
     if(sp.setServer(serverInfo)) {
         double preSpeed = 0.0;
@@ -68,14 +65,8 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, j
         TestConfig downloadConfig;
         testConfigSelector(preSpeed, uploadConfig, downloadConfig);
 
-        //get upload and download speed
-        sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {})) {
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute download speed"), 0);
-        }
+        sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {});
     }
-
-    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Download speed computed"), 30);
-
     return dlspeed;
 }
 
@@ -90,22 +81,14 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, j
 
     sp.setInsecure(true);
 
-    //for setting the text
-    jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
-    jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
-
     if(sp.setServer(serverInfo)) {
         double preSpeed = 0.0;
         TestConfig uploadConfig;
         TestConfig downloadConfig;
         testConfigSelector(preSpeed, uploadConfig, downloadConfig);
 
-        if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Failed to compute upload speed"), 0);
-        }
+        sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {});
     }
-
-    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Upload speed computed"), 30);
 
     return ulspeed;
 }
@@ -120,16 +103,9 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, j
 
     sp.setInsecure(true);
 
-    //for setting the text
-    jclass clazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
-    jmethodID updateProgress = env->GetMethodID(clazz, "updateProgress", "(Ljava/lang/String;I)V");
-
     if(sp.setServer(serverInfo)) {
         latency = sp.latency();
     }
-
-    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Latency computed"), 20);
-
     return latency;
 }
 

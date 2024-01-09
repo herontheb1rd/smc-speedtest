@@ -121,18 +121,21 @@ public class ResultsFragment extends Fragment {
                 AsyncFunction<Long, NetPerf> asyncNetPerf = serverPtr -> {
                     ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
                         double dlspeed = computeDlspeed(serverPtr);
+                        updateProgress("Download speed computed", 30);
                         displayResult(R.id.downloadResultTV, String.format("%.1f", dlspeed));
                         return dlspeed;
                     });
 
                     ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
                         double ulspeed = computeUlspeed(serverPtr);
+                        updateProgress("Upload speed computed", 30);
                         displayResult(R.id.uploadResultTV, String.format("%.1f", ulspeed));
                         return ulspeed;
                     });
 
                     ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
                         int latency = computeLatency(serverPtr);
+                        updateProgress("Latency computed", 20);
                         displayResult(R.id.latencyResultTV, Integer.toString(latency));
                         return latency;
                     });
