@@ -96,15 +96,14 @@
         android:id="@+id/latencyResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
         android:text="---"
         android:textColor="?attr/colorPrimary"
         android:textSize="48sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.7"
+        app:layout_constraintHorizontal_bias="0.15"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
+        app:layout_constraintTop_toBottomOf="@+id/uploadResultTV" />
 
     <TextView
         android:id="@+id/latencyUnitTV"
@@ -132,6 +131,68 @@
         android:id="@+id/rssiResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="---"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="48sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.70"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.50" />
+
+    <TextView
+        android:id="@+id/rsrpLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RSRP"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/rsrpResultTV"
+        app:layout_constraintStart_toStartOf="@+id/rsrpResultTV" />
+
+
+    <TextView
+        android:id="@+id/rsrpResultTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="64dp"
+        android:text="---"
+        android:textAlignment="textStart"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="48sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.70"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rssiResultTV" />
+
+    <TextView
+        android:id="@+id/rsrpUnitTV"
+        android:layout_width="54dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="5dp"
+        android:text="dBm"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toEndOf="@+id/rsrpResultTV"
+        app:layout_constraintTop_toTopOf="@+id/rsrpResultTV" />
+
+    <TextView
+        android:id="@+id/rsrqLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RSRQ"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/rsrqResultTV"
+        app:layout_constraintStart_toStartOf="@+id/rsrqResultTV" />
+
+    <TextView
+        android:id="@+id/rsrqResultTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginTop="64dp"
         android:text="---"
         android:textColor="?attr/colorPrimary"
@@ -139,7 +200,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.70"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/latencyResultTV" />
+        app:layout_constraintTop_toBottomOf="@+id/rsrpResultTV" />
+
+    <TextView
+        android:id="@+id/rsrqUnitTV"
+        android:layout_width="54dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="5dp"
+        android:text="dB"
+        android:textColor="?attr/colorPrimary"
+        android:textSize="20sp"
+        app:layout_constraintStart_toEndOf="@+id/rsrqResultTV"
+        app:layout_constraintTop_toTopOf="@+id/rsrqResultTV" />
+
 
     <TextView
         android:id="@+id/rssiUnitTV"
@@ -159,7 +232,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
-        android:text="Starting internet performance test"
+        android:text=""
         android:textAlignment="textStart"
         android:textColor="?attr/colorPrimary"
         android:textSize="20sp"
