@@ -202,6 +202,7 @@ public class ResultsFragment extends Fragment {
         int rssi = 1;
         int rsrp = 1;
         int rsrq = 1;
+
         TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
@@ -210,6 +211,10 @@ public class ResultsFragment extends Fragment {
                 rssi = cellSignalStrengthLte.getRssi();
                 rsrp = cellSignalStrengthLte.getRsrp();
                 rsrq = cellSignalStrengthLte.getRsrq();
+
+                displayResult(R.id.rssiResultTV, Integer.toString(rssi));
+                displayResult(R.id.rsrpResultTV, Integer.toString(rsrp));
+                displayResult(R.id.rsrqResultTV, Integer.toString(rsrq));
             }
         }
 
@@ -225,5 +230,4 @@ public class ResultsFragment extends Fragment {
     public native double computeUlspeed(long serverPtr);
     public native int computeLatency(long serverPtr);
     public native void freeServerPtr(long serverPtr);
-
 }
