@@ -102,27 +102,21 @@ public class RunTestFragment extends Fragment {
     }
 
     private boolean isConnected(){
-        boolean isConnected = false;
+        ConnectivityManager cm = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
 
         //getActiveNetworkInfo is deprecated after version 29
         if (android.os.Build.VERSION.SDK_INT >= 29) {
-            ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(ConnectivityManager.class);
-            Network currentNetwork = connectivityManager.getActiveNetwork();
-            NetworkCapabilities caps = connectivityManager.getNetworkCapabilities(currentNetwork);
+            Network currentNetwork = cm.getActiveNetwork();
+            NetworkCapabilities caps = cm.getNetworkCapabilities(currentNetwork);
 
-            
-            if(caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)){
-                isConnected = true;
-            }
+            return caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
         }else{
-            ConnectivityManager connectivityManager = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-
-            if(connectivityManager.getActiveNetworkInfo() != null){
-                isConnected = true;
+            if(cm.getActiveNetworkInfo() != null){
+                return cm.getActiveNetworkInfo().isConnectedOrConnecting();
+            }else{
+                return false;
             }
         }
-
-        return isConnected;
     }
 
     private void askLocationPermission(){
@@ -166,7 +160,7 @@ public class RunTestFragment extends Fragment {
                         }
                     });
         }else{
-            Toast.makeText(getActivity(), "You must have an internet connection to run the test.",
+            Toast.makeText(getActivity(), "Turn on your mobile data to run the test.",
                     Toast.LENGTH_SHORT).show();
         }
     }
