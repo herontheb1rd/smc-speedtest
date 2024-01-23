@@ -26,6 +26,7 @@ import android.telephony.CellInfoLte;
 import android.telephony.CellSignalStrengthGsm;
 import android.telephony.CellSignalStrengthLte;
 import android.telephony.SignalStrength;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,6 +60,7 @@ import com.google.firebase.database.DatabaseReference;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import static java.util.Map.entry;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -72,7 +74,17 @@ public class ResultsFragment extends Fragment {
         System.loadLibrary("smcspeedtest");
     }
 
-    private final Map<String, double[]> qrLocations = new HashMap<>();
+    private final Map<String, double[]> qrLocations = new HashMap<String, double[]>() {{
+        put("Library", new double[]{10.0, 10.0});
+    }};
+
+    //codes from https://mcc-mnc.com/
+    private final Map<String, String> simOperators = new HashMap<String, String>() {{
+        put("51566", "DITO");
+        put("51502", "Globe");
+        put("51501", "Globe");
+        put("51503", "Smart");
+    }};
 
     private DatabaseReference mDatabase;
     private FirebaseAuth mAuth;
@@ -83,9 +95,6 @@ public class ResultsFragment extends Fragment {
                 "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
         ).getReference();
         mAuth = FirebaseAuth.getInstance();
-
-        //TODO: put default locations
-        qrLocations.put("Library", new double[]{10.0, 10.0});
     }
 
     @Override
@@ -102,7 +111,6 @@ public class ResultsFragment extends Fragment {
     }
 
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -114,6 +122,8 @@ public class ResultsFragment extends Fragment {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 String placeName = bundle.getString("bundleKey");
 
+                updateProgress(getNetworkProvider(), 0);
+                /*
                 Executor listeningExecutor = Executors.newSingleThreadExecutor();
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
 
@@ -172,13 +182,15 @@ public class ResultsFragment extends Fragment {
                             //TODO: Write failure handling code
                         }
                 }, listeningExecutor);
+
+                 */
             }
         });
 
         return view;
     }
 
-    public void updateProgress(String progressText, int progressIncrement){
+    public void updateProgress(String progressText, int progressIncrement) {
         TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
         ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
 
@@ -186,16 +198,22 @@ public class ResultsFragment extends Fragment {
         progressBar.incrementProgressBy(progressIncrement);
     }
 
-    public Place getPlace(String placeName){
+    public Place getPlace(String placeName) {
         double latitude = qrLocations.get(placeName)[0];
         double longitude = qrLocations.get(placeName)[1];
 
         return new Place(placeName, latitude, longitude);
     }
 
-    public String getNetworkProvider(){
-        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-        return telephonyManager.getNetworkOperatorName();
+    public String getNetworkProvider() {
+        TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
+            TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
+            return simOperators.get(dataTM.getSimOperator());
+        }else {
+            return simOperators.get(tm.getSimOperator());
+        }
     }
 
     public SignalPerf computeSignalPerf(){
@@ -203,21 +221,31 @@ public class ResultsFragment extends Fragment {
         int rsrp = 1;
         int rsrq = 1;
 
-        TelephonyManager telephonyManager = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+        TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            CellInfoLte cellinfolte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
-            CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
+                TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
+
+                CellInfoLte cellinfolte = (CellInfoLte) dataTM.getAllCellInfo().get(0);
+                CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
+
                 rssi = cellSignalStrengthLte.getRssi();
-                rsrp = cellSignalStrengthLte.getRsrp();
-                rsrq = cellSignalStrengthLte.getRsrq();
-
                 displayResult(R.id.rssiResultTV, Integer.toString(rssi));
-                displayResult(R.id.rsrpResultTV, Integer.toString(rsrp));
-                displayResult(R.id.rsrqResultTV, Integer.toString(rsrq));
-            }
-        }
 
+                rsrp = cellSignalStrengthLte.getRsrp();
+                displayResult(R.id.rsrpResultTV, Integer.toString(rsrp));
+
+                rsrq = cellSignalStrengthLte.getRsrq();
+                displayResult(R.id.rsrqResultTV, Integer.toString(rsrq));
+            }else{
+                Toast.makeText(getActivity(), "Phone model too old to retrieve signal info",
+                        Toast.LENGTH_SHORT).show();
+            }
+        }else {
+            Toast.makeText(getActivity(), "Location access not granted. Skipping signal data collection",
+                    Toast.LENGTH_SHORT).show();
+        }
         return new SignalPerf(rssi, rsrq, rsrp);
     }
 
