@@ -122,8 +122,6 @@ public class ResultsFragment extends Fragment {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 String placeName = bundle.getString("bundleKey");
 
-                updateProgress(getNetworkProvider(), 0);
-                /*
                 Executor listeningExecutor = Executors.newSingleThreadExecutor();
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
 
@@ -183,7 +181,7 @@ public class ResultsFragment extends Fragment {
                         }
                 }, listeningExecutor);
 
-                 */
+
             }
         });
 
