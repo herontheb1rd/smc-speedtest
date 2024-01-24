@@ -37,6 +37,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +45,7 @@ import java.util.List;
 public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener, OnMapReadyCallback {
     private DatabaseReference mDatabase;
     private ArrayList<Results> results = new ArrayList<Results>();
+    private final String[] locations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
 
     public HeatMapFragment() {
         // Required empty public constructor
@@ -116,57 +118,67 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         resetHeatMap();
     }
 
+    //arduino's map function: https://www.arduino.cc/reference/en/language/functions/math/map/
+    //used to scale the results to the color values on a heat map
+    private int map(double x, double in_min, double in_max, double out_min, double out_max) {
+        return (int) ((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
+    }
+
+    private double getDLMean(List<Double> doubleList){
+        if(!doubleList.isEmpty()){
+            double sum = 0.0;
+            for (Double d : doubleList) {
+                sum += d;
+            }
+            return sum / doubleList.size();
+        }
+        return 0.0;
+    }
+
+    private double getDLMin(List<Double> doubleList){
+        return doubleList.indexOf(Collections.min(doubleList));
+    }
+
+    private double getDLMax(List<Double> doubleList){
+        return doubleList.indexOf(Collections.max(doubleList));
+    }
+
     public void updateHeatMap(int metric){
-        List<WeightedLatLng> weightedLatLngs = new ArrayList<>();
-        for(Results curResult : results){
-            double intensity = 0;
-            switch(metric){
-                case 0:
-                    intensity = curResult.getNetPerf().getDlspeed();
-                    if(intensity == -1){
-                        continue;
-                    }
-                    break;
-                case 1:
-                    intensity = curResult.getNetPerf().getUlspeed();
-                    if(intensity == -1){
-                        continue;
-                    }
-                    break;
-                case 2:
-                    intensity = curResult.getNetPerf().getLatency();
-                    if(intensity == -1){
-                        continue;
-                    }
-                    break;
-                case 3:
-                    intensity = curResult.getSignalPerf().getRssi();
-                    if(intensity == 1){
-                        continue;
-                    }
-                    break;
-                case 4:
-                    intensity = curResult.getSignalPerf().getRsrp();
-                    if(intensity == 1){
-                        continue;
-                    }
-                    break;
-                case 5:
-                    intensity = curResult.getSignalPerf().getRsrq();
-                    if(intensity == 1){
-                        continue;
-                    }
-                    break;
+        for(String location: locations) {
+            List<Double> resultsList = new ArrayList<>();
+            for (Results curResult : results) {
+                double intensity = 0;
+                switch (metric) {
+                    case 0:
+                        intensity = curResult.getNetPerf().getDlspeed();
+                        break;
+                    case 1:
+                        intensity = curResult.getNetPerf().getUlspeed();
+                        break;
+                    case 2:
+                        intensity = Double.valueOf(curResult.getNetPerf().getLatency());
+                        break;
+                    case 3:
+                        intensity = Double.valueOf(curResult.getSignalPerf().getRssi());
+                        break;
+                    case 4:
+                        intensity = Double.valueOf(curResult.getSignalPerf().getRsrp());
+                        break;
+                    case 5:
+                        intensity = Double.valueOf(curResult.getSignalPerf().getRsrq());
+                        break;
+                }
+                //skip if values are invalid
+                if ((metric > 0 && metric <= 3) && intensity == -1) continue;
+                if ((metric > 3 && metric <= 6) && intensity == 1) continue;
+
+                resultsList.add(intensity);
             }
 
-            weightedLatLngs.add(new WeightedLatLng(new LatLng(curResult.getPlace().getLatitude(),
-                    curResult.getPlace().getLongitude()),
-                    intensity));
+            double meanResult = getDLMean(resultsList);
+            //chooses color from meanResult
+            int color = map(meanResult, getDLMin(resultsList), getDLMax(resultsList), 0, 11);
         }
-
-        HeatmapTileProvider provider = new HeatmapTileProvider.Builder()
-                .weightedData(weightedLatLngs)
-                .build();
     }
 
     public void resetHeatMap(){
