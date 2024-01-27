@@ -16,7 +16,6 @@ import android.widget.TextView;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
@@ -36,7 +35,7 @@ import java.util.Map;
 
 public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener, OnMapReadyCallback {
     private DatabaseReference mDatabase;
-    private ArrayList<Results> results = new ArrayList<Results>();
+    private ArrayList<Results> mResults = new ArrayList<>();
     private final Map<String, LatLng[]> locationDict = new HashMap<String, LatLng[]>() {{
         put("Library", new LatLng[]{new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0)});
         put("Canteen", new LatLng[]{new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0)});
@@ -45,6 +44,11 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         put("ABD", new LatLng[]{new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0)});
         put("Garden", new LatLng[]{new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0)});
     }};
+    private final int[] colorGradient = {0x0066ff000, 0xff66ff00, 0xff93ff00, 0xffc1ff00, 0xffeeff00, 0xfff4e30, 0xfff9c600, 0xffffaa00, 0xffff7100, 0xffff3900, 0xffff0000};
+    private final LatLng PSHS = new LatLng(7.082788894235911, 125.50813754841627);
+
+    private ArrayList<Polygon> mPolygonList = new ArrayList<>();
+
 
     public HeatMapFragment() {
         // Required empty public constructor
@@ -71,44 +75,27 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         //initialize spinner
         Spinner spinner = (Spinner)view.findViewById(R.id.metric_spinner);
         String[] metricOptions = {"Download Speed", "Upload Speed", "Latency"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
                 android.R.layout.simple_spinner_item,
                 metricOptions);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
 
-        //get results from database
-        long before24hours = new Date().getTime() - (24 * 3600 * 1000);
-        Query timeQuery = mDatabase.child("results").orderByChild("date_time")
-                .startAt(before24hours);
-        timeQuery.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
-                    results.add(singleSnapshot.getValue(Results.class));
-                }
-                TextView dataTV = (TextView) getActivity().findViewById(R.id.dataTV);
-                dataTV.setText(Long.toString(results.get(0).getTime()));
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e("Database error", "onCancelled", databaseError.toException());
-            }
-        });
+        getFirebaseResults();
 
         return view;
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        final LatLng PSHS = new LatLng(7.082788894235911, 125.50813754841627);
         googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(PSHS));
 
         for(LatLng[] ll: locationDict.values()){
             Polygon polygon = googleMap.addPolygon(new PolygonOptions()
                     .add(ll));
+            mPolygonList.add(polygon);
         }
     }
 
@@ -120,9 +107,29 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         resetHeatMap();
     }
 
+    public void getFirebaseResults(){
+        //get results from database
+        long before24hours = new Date().getTime() - (24 * 3600 * 1000);
+        Query timeQuery = mDatabase.child("results").orderByChild("date_time")
+                .startAt(before24hours);
+        timeQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
+                    mResults.add(singleSnapshot.getValue(Results.class));
+                }
+                TextView dataTV = (TextView) getActivity().findViewById(R.id.dataTV);
+                dataTV.setText(Long.toString(mResults.get(0).getTime()));
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e("Database error", "onCancelled", databaseError.toException());
+            }
+        });
+    }
     //arduino's map function: https://www.arduino.cc/reference/en/language/functions/math/map/
     //used to scale the results to the color values on a heat map
-    private int map(double x, double in_min, double in_max, double out_min, double out_max) {
+    private int scaleResult(double x, double in_min, double in_max, double out_min, double out_max) {
         return (int) ((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
     }
 
@@ -145,11 +152,11 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         return doubleList.indexOf(Collections.max(doubleList));
     }
 
-    public List<Integer> updateHeatMap(int metric){
+    private List<Integer> computeLocationColors(int metric){
         List<Integer> colorList = new ArrayList<>();
         for(String location: locationDict.keySet()) {
             List<Double> resultsList = new ArrayList<>();
-            for (Results curResult : results) {
+            for (Results curResult : mResults) {
                 double intensity = 0;
                 switch (metric) {
                     case 0:
@@ -180,14 +187,29 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
             double meanResult = getMeanResult(resultsList);
             //chooses color from meanResult
-            int color = map(meanResult, getMinResult(resultsList), getMaxResult(resultsList), 0, 11);
-            colorList.add(color);
+            int colorIndex = scaleResult(meanResult, getMinResult(resultsList), getMaxResult(resultsList), 0, 11);
+            colorList.add(colorGradient[colorIndex]);
         }
+
         return colorList;
     }
 
-    public void resetHeatMap(){
+    public void updateHeatMap(int metric){
+        List<Integer> colorList = computeLocationColors(metric);
 
+        for(int i = 0; i < mPolygonList.size(); i++){
+            Polygon p = mPolygonList.get(i);
+            p.setFillColor(colorList.get(i));
+            p.setStrokeColor(colorList.get(i));
+        }
+    }
+
+    public void resetHeatMap(){
+        for(int i = 0; i < mPolygonList.size(); i++){
+            Polygon p = mPolygonList.get(i);
+            p.setFillColor(0x00000000);
+            p.setStrokeColor(0xff000000);
+        }
     }
 
 }
