@@ -154,7 +154,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     private List<Integer> computeLocationColors(int metric){
         List<Integer> colorList = new ArrayList<>();
-        for(String location: locationDict.keySet()) {
+        for(int i = 0; i < locationDict.keySet().size(); i++) {
             List<Double> resultsList = new ArrayList<>();
             for (Results curResult : mResults) {
                 double intensity = 0;
