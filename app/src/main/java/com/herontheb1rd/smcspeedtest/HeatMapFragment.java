@@ -45,6 +45,9 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         put("ABD", new LatLng[]{new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0)});
         put("Garden", new LatLng[]{new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0)});
     }};
+
+    //from here: https://gis.stackexchange.com/questions/246322/get-the-inverse-of-default-heat-map-gradient-in-google-maps-javascript-api
+    //converted to rgba and then to hex
     private final int[] colorGradient = {0x0066ff000, 0xff66ff00, 0xff93ff00, 0xffc1ff00, 0xffeeff00, 0xfff4e30, 0xfff9c600, 0xffffaa00, 0xffff7100, 0xffff3900, 0xffff0000};
     private final LatLng pshsLatLng = new LatLng(7.082788894235911, 125.50813754841627);
     private final LatLng[] qrLatLng = {new LatLng(0, 0), new LatLng(0,0)};
@@ -213,6 +216,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     public void resetHeatMap(){
         for(int i = 0; i < mPolygonList.size(); i++){
             Polygon p = mPolygonList.get(i);
+            //sets fill color to nothing and stroke color to black
             p.setFillColor(0x00000000);
             p.setStrokeColor(0xff000000);
         }
