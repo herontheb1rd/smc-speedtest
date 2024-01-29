@@ -1,5 +1,6 @@
 package com.herontheb1rd.smcspeedtest;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -71,6 +72,17 @@ public class RunTestFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_run_test, container, false);
 
+        if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)){
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("User Agreement")
+                    .setMessage("This application requires location permissions to get signal data. This does NOT get your longitude and latitude.")
+                    .setPositiveButton(android.R.string.yes, (dialog, which) -> askLocationPermission())
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+        }
+
+
         //module install apis fix for google code scanner
         ModuleInstallClient moduleInstallClient = ModuleInstall.getClient(view.getContext());
         OptionalModuleApi optionalModuleApi = GmsBarcodeScanning.getClient(view.getContext());
@@ -81,22 +93,12 @@ public class RunTestFragment extends Fragment {
         moduleInstallClient.installModules(moduleInstallRequest);
 
         Button runTestB = (Button) view.findViewById(R.id.runTestB);
-        runTestB.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                new AlertDialog.Builder(getActivity())
-                        .setTitle("User Agreement")
-                        .setMessage("This application will record your phone brand, and the location you scanned your QR code in (but not your phone's longitude and latitude). We will not release this data publicly, but we will use it for our study. \n\nBy pressing Yes you agree to this data being collected. ")
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int which) {
-                                askLocationPermission();
-                                scanQRCode();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, null)
-                        .show();
-            }
-        });
+        runTestB.setOnClickListener(view1 -> new AlertDialog.Builder(getActivity())
+                .setTitle("User Agreement")
+                .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it for our study.\n\nBy pressing Yes you agree to this data being collected. ")
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> scanQRCode())
+                .setNegativeButton(android.R.string.no, null)
+                .show());
 
         return view;
     }
