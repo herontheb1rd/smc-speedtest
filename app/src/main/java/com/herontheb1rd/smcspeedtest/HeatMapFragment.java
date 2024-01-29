@@ -161,8 +161,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         return doubleList.indexOf(Collections.max(doubleList));
     }
 
-    private List<Integer> computeLocationColors(int metric){
-        List<Integer> colorList = new ArrayList<>();
+    private void updateHeatMap(int metric){
         for(int i = 0; i < locationDict.keySet().size(); i++) {
             List<Double> resultsList = new ArrayList<>();
             for (Results curResult : mResults) {
@@ -197,19 +196,11 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
             double meanResult = getMeanResult(resultsList);
             //chooses color from meanResult
             int colorIndex = scaleResult(meanResult, getMinResult(resultsList), getMaxResult(resultsList), 0, 11);
-            colorList.add(colorGradient[colorIndex]);
-        }
 
-        return colorList;
-    }
-
-    public void updateHeatMap(int metric){
-        List<Integer> colorList = computeLocationColors(metric);
-
-        for(int i = 0; i < mPolygonList.size(); i++){
+            //changes color of polygon
             Polygon p = mPolygonList.get(i);
-            p.setFillColor(colorList.get(i));
-            p.setStrokeColor(colorList.get(i));
+            p.setFillColor(colorGradient[colorIndex]);
+            p.setStrokeColor(colorGradient[colorIndex]);
         }
     }
 
