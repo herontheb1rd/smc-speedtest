@@ -52,7 +52,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     private final LatLng pshsLatLng = new LatLng(7.082788894235911, 125.50813754841627);
     private final LatLng[] qrLatLng = {new LatLng(0, 0), new LatLng(0,0)};
 
-    private ArrayList<Polygon> mPolygonList = new ArrayList<>();
+    private Map<String, Polygon> mPolygonMap = new HashMap<>();
 
 
     public HeatMapFragment() {
@@ -101,11 +101,12 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
             googleMap.addMarker(new MarkerOptions().position(ll));
         }
 
-        for(LatLng[] ll: locationDict.values()){
+        for(String s: locationDict.keySet()){
             Polygon polygon = googleMap.addPolygon(new PolygonOptions()
-                    .add(ll));
-            mPolygonList.add(polygon);
+                    .add(locationDict.get(s)));
+            mPolygonMap.put(s, polygon);
         }
+
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {
@@ -162,51 +163,60 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     }
 
     private void updateHeatMap(int metric){
-        for(int i = 0; i < locationDict.keySet().size(); i++) {
-            List<Double> resultsList = new ArrayList<>();
-            for (Results curResult : mResults) {
-                double intensity = 0;
-                switch (metric) {
-                    case 0:
-                        intensity = curResult.getNetPerf().getDlspeed();
-                        break;
-                    case 1:
-                        intensity = curResult.getNetPerf().getUlspeed();
-                        break;
-                    case 2:
-                        intensity = Double.valueOf(curResult.getNetPerf().getLatency());
-                        break;
-                    case 3:
-                        intensity = Double.valueOf(curResult.getSignalPerf().getRssi());
-                        break;
-                    case 4:
-                        intensity = Double.valueOf(curResult.getSignalPerf().getRsrp());
-                        break;
-                    case 5:
-                        intensity = Double.valueOf(curResult.getSignalPerf().getRsrq());
-                        break;
-                }
-                //skip if values are invalid
-                if ((metric > 0 && metric <= 3) && intensity == -1) continue;
-                if ((metric > 3 && metric <= 6) && intensity == 1) continue;
+        Map<String, List<Double>> resultsMap = new HashMap<>();
+        //initialize hash map
+        for(String placeName: locationDict.keySet()){
+            resultsMap.put(placeName, new ArrayList<Double>());
+        }
 
-                resultsList.add(intensity);
+        //place values in hash map
+        for (Results curResult : mResults) {
+            double intensity = 0;
+            String placeName = curResult.getPlace().getPlaceName();
+            switch (metric) {
+                case 0:
+                    intensity = curResult.getNetPerf().getDlspeed();
+                    break;
+                case 1:
+                    intensity = curResult.getNetPerf().getUlspeed();
+                    break;
+                case 2:
+                    intensity = Double.valueOf(curResult.getNetPerf().getLatency());
+                    break;
+                case 3:
+                    intensity = Double.valueOf(curResult.getSignalPerf().getRssi());
+                    break;
+                case 4:
+                    intensity = Double.valueOf(curResult.getSignalPerf().getRsrp());
+                    break;
+                case 5:
+                    intensity = Double.valueOf(curResult.getSignalPerf().getRsrq());
+                    break;
             }
+            //skip if values are invalid
+            if ((metric > 0 && metric <= 3) && intensity == -1) continue;
+            if ((metric > 3 && metric <= 6) && intensity == 1) continue;
 
-            double meanResult = getMeanResult(resultsList);
+            resultsMap.get(placeName).add(intensity);
+        }
+
+        //apply colors from values
+        for(String placeName: locationDict.keySet()){
+            double meanResult = getMeanResult(resultsMap.get(placeName));
+            double minResult = getMinResult(resultsMap.get(placeName));
+            double maxResult = getMaxResult(resultsMap.get(placeName));
             //chooses color from meanResult
-            int colorIndex = scaleResult(meanResult, getMinResult(resultsList), getMaxResult(resultsList), 0, 11);
+            int colorIndex = scaleResult(meanResult, minResult, maxResult, 0, 11);
 
             //changes color of polygon
-            Polygon p = mPolygonList.get(i);
-            p.setFillColor(colorGradient[colorIndex]);
-            p.setStrokeColor(colorGradient[colorIndex]);
+            mPolygonMap.get(placeName).setFillColor(colorGradient[colorIndex]);
+            mPolygonMap.get(placeName).setStrokeColor(colorGradient[colorIndex]);
         }
+
     }
 
     public void resetHeatMap(){
-        for(int i = 0; i < mPolygonList.size(); i++){
-            Polygon p = mPolygonList.get(i);
+        for(Polygon p: mPolygonMap.values()){
             //sets fill color to nothing and stroke color to black
             p.setFillColor(0x00000000);
             p.setStrokeColor(0xff000000);
