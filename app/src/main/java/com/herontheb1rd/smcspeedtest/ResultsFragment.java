@@ -76,6 +76,11 @@ public class ResultsFragment extends Fragment {
 
     private final Map<String, double[]> qrLocations = new HashMap<String, double[]>() {{
         put("Library", new double[]{10.0, 10.0});
+        put("Canteen", new double[]{10.0, 10.0});
+        put("Kiosk", new double[]{10.0, 10.0});
+        put("Airport", new double[]{10.0, 10.0});
+        put("ABD", new double[]{10.0, 10.0});
+        put("Garden", new double[]{10.0, 10.0});
     }};
 
     //codes from https://mcc-mnc.com/

@@ -145,8 +145,8 @@ public class RunTestFragment extends Fragment {
                         String rawValue = barcode.getRawValue();
 
                         boolean isValidLocation = false;
-                        for(int i = 0; i < allowedLocations.length; i++){
-                            if(rawValue.equals(allowedLocations[i])){
+                        for(String l: allowedLocations){
+                            if(rawValue.equals(l)){
                                 isValidLocation = true;
                                 break;
                             }

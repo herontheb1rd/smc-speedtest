@@ -50,16 +50,22 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     //converted to rgba and then to hex
     private final int[] colorGradient = {0x0066ff000, 0xff66ff00, 0xff93ff00, 0xffc1ff00, 0xffeeff00, 0xfff4e30, 0xfff9c600, 0xffffaa00, 0xffff7100, 0xffff3900, 0xffff0000};
     private final LatLng pshsLatLng = new LatLng(7.082788894235911, 125.50813754841627);
-    private final LatLng[] qrLatLng = {new LatLng(0, 0), new LatLng(0,0)};
+    private final LatLng[] qrLatLng = {new LatLng(0, 0),
+            new LatLng(0,0),
+            new LatLng(0, 0),
+            new LatLng(0, 0),
+            new LatLng(0, 0),
+            new LatLng(0, 0)};
 
-    private Map<String, Polygon> mPolygonMap = new HashMap<>();
-
+    private Map<String, Polygon> mPolygonMap;
 
     public HeatMapFragment() {
         // Required empty public constructor
         mDatabase = FirebaseDatabase.getInstance(
                 "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
         ).getReference();
+
+        mPolygonMap = new HashMap<>();
     }
 
     @Override
@@ -109,9 +115,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     }
 
-    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {
-        updateHeatMap(metric);
-    }
+    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) { updateHeatMap(metric); }
 
     public void onNothingSelected(AdapterView<?> parent){
         resetHeatMap();
@@ -183,19 +187,9 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                 case 2:
                     intensity = Double.valueOf(curResult.getNetPerf().getLatency());
                     break;
-                case 3:
-                    intensity = Double.valueOf(curResult.getSignalPerf().getRssi());
-                    break;
-                case 4:
-                    intensity = Double.valueOf(curResult.getSignalPerf().getRsrp());
-                    break;
-                case 5:
-                    intensity = Double.valueOf(curResult.getSignalPerf().getRsrq());
-                    break;
             }
             //skip if values are invalid
-            if ((metric > 0 && metric <= 3) && intensity == -1) continue;
-            if ((metric > 3 && metric <= 6) && intensity == 1) continue;
+            if (intensity == -1) continue;
 
             resultsMap.get(placeName).add(intensity);
         }
@@ -212,7 +206,6 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
             mPolygonMap.get(placeName).setFillColor(colorGradient[colorIndex]);
             mPolygonMap.get(placeName).setStrokeColor(colorGradient[colorIndex]);
         }
-
     }
 
     public void resetHeatMap(){
