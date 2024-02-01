@@ -17,6 +17,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
@@ -46,16 +47,19 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         put("Garden", new LatLng[]{new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0), new LatLng(0, 0)});
     }};
 
+    private final Map<String, LatLng> qrMap = new HashMap<String, LatLng>(){{
+        put("Library", new LatLng(0, 0));
+        put("Canteen", new LatLng(0, 0));
+        put("Kiosk", new LatLng(0, 0));
+        put("Airport", new LatLng(0, 0));
+        put("ABD", new LatLng(0, 0));
+        put("Garden", new LatLng(0, 0));
+    }};
+
     //from here: https://gis.stackexchange.com/questions/246322/get-the-inverse-of-default-heat-map-gradient-in-google-maps-javascript-api
     //converted to rgba and then to hex
     private final int[] colorGradient = {0x0066ff000, 0xff66ff00, 0xff93ff00, 0xffc1ff00, 0xffeeff00, 0xfff4e30, 0xfff9c600, 0xffffaa00, 0xffff7100, 0xffff3900, 0xffff0000};
     private final LatLng pshsLatLng = new LatLng(7.082788894235911, 125.50813754841627);
-    private final LatLng[] qrLatLng = {new LatLng(0, 0),
-            new LatLng(0,0),
-            new LatLng(0, 0),
-            new LatLng(0, 0),
-            new LatLng(0, 0),
-            new LatLng(0, 0)};
 
     private Map<String, Polygon> mPolygonMap;
 
@@ -103,8 +107,9 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         googleMap.moveCamera(CameraUpdateFactory.newLatLng(pshsLatLng));
 
-        for(LatLng ll: qrLatLng){
-            googleMap.addMarker(new MarkerOptions().position(ll));
+        for(String s: qrMap.keySet()){
+            Marker m = googleMap.addMarker(new MarkerOptions().position(qrMap.get(s)).title(s));
+            m.showInfoWindow();
         }
 
         for(String s: locationDict.keySet()){
