@@ -33,6 +33,8 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanner;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions;
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 
+import java.util.Arrays;
+
 public class RunTestFragment extends Fragment {
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
     private static boolean justScannedQR;
@@ -143,14 +145,8 @@ public class RunTestFragment extends Fragment {
             scanner.startScan().addOnSuccessListener(
                     barcode -> {
                         String rawValue = barcode.getRawValue();
+                        boolean isValidLocation = Arrays.asList(allowedLocations).contains(rawValue);
 
-                        boolean isValidLocation = false;
-                        for(String l: allowedLocations){
-                            if(rawValue.equals(l)){
-                                isValidLocation = true;
-                                break;
-                            }
-                        }
                         if(isValidLocation){
                             Bundle result = new Bundle();
                             result.putString("bundleKey", rawValue);
