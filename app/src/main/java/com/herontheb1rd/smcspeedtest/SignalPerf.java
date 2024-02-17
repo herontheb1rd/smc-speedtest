@@ -9,6 +9,10 @@ public class SignalPerf {
     public int getRsrp(){ return rsrp; }
     public int getRsrq(){ return rsrq; }
 
+    public SignalPerf(){
+
+    }
+
     public SignalPerf(int rssi, int rsrp, int rsrq){
         this.rssi = rssi;
         this.rsrp = rsrp;

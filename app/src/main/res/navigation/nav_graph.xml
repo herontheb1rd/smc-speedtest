@@ -23,5 +23,10 @@
             android:id="@+id/action_resultsFragment_to_runTestFragment"
             app:destination="@id/runTestFragment" />
     </fragment>
+    <fragment
+        android:id="@+id/heatMapFragment"
+        android:name="com.herontheb1rd.smcspeedtest.HeatMapFragment"
+        android:label="fragment_heat_map"
+        tools:layout="@layout/fragment_heat_map" />
 
 </navigation>

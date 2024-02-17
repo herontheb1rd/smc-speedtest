@@ -61,15 +61,10 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     private final int[] colorGradient = {0x0066ff000, 0xff66ff00, 0xff93ff00, 0xffc1ff00, 0xffeeff00, 0xfff4e30, 0xfff9c600, 0xffffaa00, 0xffff7100, 0xffff3900, 0xffff0000};
     private final LatLng pshsLatLng = new LatLng(7.082788894235911, 125.50813754841627);
 
-    private Map<String, Polygon> mPolygonMap;
+    private Map<String, Polygon> mPolygonMap = new HashMap<>();
 
     public HeatMapFragment() {
-        // Required empty public constructor
-        mDatabase = FirebaseDatabase.getInstance(
-                "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
-        ).getReference();
-
-        mPolygonMap = new HashMap<>();
+        mDatabase = FirebaseDatabase.getInstance("https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app").getReference();
     }
 
     @Override
@@ -88,7 +83,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         View view = inflater.inflate(R.layout.fragment_heat_map, container, false);
 
         //initialize spinner
-        Spinner spinner = (Spinner)view.findViewById(R.id.metric_spinner);
+        Spinner spinner = (Spinner)view.findViewById(R.id.metricSpinner);
         String[] metricOptions = {"Download Speed", "Upload Speed", "Latency"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
                 android.R.layout.simple_spinner_item,
@@ -97,6 +92,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
 
+        Log.i("TEST", "sdf");
         getFirebaseResults();
 
         return view;
@@ -128,17 +124,17 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     public void getFirebaseResults(){
         //get results from database
-        long before24hours = new Date().getTime() - (24 * 3600 * 1000);
-        Query timeQuery = mDatabase.child("results").orderByChild("date_time")
-                .startAt(before24hours);
-        timeQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+        Log.i("TEST", "asd");
+
+        DatabaseReference resultsRef = mDatabase.child("results");
+        resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                     mResults.add(singleSnapshot.getValue(Results.class));
                 }
-                TextView dataTV = (TextView) getActivity().findViewById(R.id.dataTV);
-                dataTV.setText(Long.toString(mResults.get(0).getTime()));
+
+                Log.i("DATABASE", Double.toString(mResults.get(0).getNetPerf().getDlspeed()));
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {

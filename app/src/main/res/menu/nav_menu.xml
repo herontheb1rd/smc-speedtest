@@ -5,7 +5,7 @@
         android:enabled="true"
         android:title="Run Test"/>
     <item
-        android:id="@+id/HeatMapFragment"
+        android:id="@+id/heatMapFragment"
         android:enabled="true"
         android:title="Heat Map"/>
 </menu>
