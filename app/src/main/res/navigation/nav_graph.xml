@@ -18,7 +18,7 @@
         android:id="@+id/resultsFragment"
         android:name="com.herontheb1rd.smcspeedtest.ResultsFragment"
         android:label="Results"
-        tools:layout="@layout/fragment_results" >
+        tools:layout="@layout/fragment_results">
         <action
             android:id="@+id/action_resultsFragment_to_runTestFragment"
             app:destination="@id/runTestFragment" />
@@ -26,7 +26,7 @@
     <fragment
         android:id="@+id/heatMapFragment"
         android:name="com.herontheb1rd.smcspeedtest.HeatMapFragment"
-        android:label="fragment_heat_map"
+        android:label="Heat Map"
         tools:layout="@layout/fragment_heat_map" />
 
 </navigation>

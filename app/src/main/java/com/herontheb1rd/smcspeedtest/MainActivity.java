@@ -12,6 +12,7 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -37,18 +38,15 @@ public class MainActivity extends AppCompatActivity {
 
         DrawerLayout drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 
-        NavHostFragment navHostFragment = (NavHostFragment)getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment);
         NavController navController = navHostFragment.getNavController();
-        appBarConfiguration =
-                new AppBarConfiguration.Builder(navController.getGraph())
-                        .setOpenableLayout(drawerLayout)
-                        .build();
-
+        appBarConfiguration = new AppBarConfiguration.Builder(navController.getGraph())
+                .setOpenableLayout(drawerLayout)
+                .build();
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
 
         NavigationView navView = findViewById(R.id.nav_view);
-        NavigationUI.setupWithNavController(
-                navView, navController);
+        NavigationUI.setupWithNavController(navView, navController);
     }
 
     @Override
@@ -56,6 +54,13 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, appBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        return NavigationUI.onNavDestinationSelected(item, navController)
+                || super.onOptionsItemSelected(item);
     }
 
 }

@@ -71,7 +71,6 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getActivity().setContentView(R.layout.activity_main);
         //SupportMapFragment mapFragment = (SupportMapFragment) getActivity().getSupportFragmentManager()
         //       .findFragmentById(R.id.map);
         //mapFragment.getMapAsync(this);
@@ -116,10 +115,10 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     }
 
-    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) { updateHeatMap(metric); }
+    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {  }
 
     public void onNothingSelected(AdapterView<?> parent){
-        resetHeatMap();
+
     }
 
     public void getFirebaseResults(){
@@ -142,6 +141,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
             }
         });
     }
+    
     //arduino's map function: https://www.arduino.cc/reference/en/language/functions/math/map/
     //used to scale the results to the color values on a heat map
     private int scaleResult(double x, double in_min, double in_max, double out_min, double out_max) {
