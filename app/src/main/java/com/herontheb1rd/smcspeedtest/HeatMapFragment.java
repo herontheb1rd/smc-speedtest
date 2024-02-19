@@ -64,12 +64,14 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     private Map<String, Polygon> mPolygonMap = new HashMap<>();
 
     public HeatMapFragment() {
-        mDatabase = FirebaseDatabase.getInstance("https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app").getReference();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mDatabase = FirebaseDatabase.getInstance("https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app")
+                .getReference();
 
         //SupportMapFragment mapFragment = (SupportMapFragment) getActivity().getSupportFragmentManager()
         //       .findFragmentById(R.id.map);
@@ -117,7 +119,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {}
     public void onNothingSelected(AdapterView<?> parent){}
 
-    public void getFirebaseResults(){
+    private void getFirebaseResults(){
         //get results from database
         DatabaseReference resultsRef = mDatabase.child("results");
         resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -201,7 +203,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         }
     }
 
-    public void resetHeatMap(){
+    private void resetHeatMap(){
         for(Polygon p: mPolygonMap.values()){
             //sets fill color to nothing and stroke color to black
             p.setFillColor(0x00000000);

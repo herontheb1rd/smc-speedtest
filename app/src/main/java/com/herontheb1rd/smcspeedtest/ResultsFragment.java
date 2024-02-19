@@ -96,16 +96,17 @@ public class ResultsFragment extends Fragment {
 
 
     public ResultsFragment() {
-        mDatabase = FirebaseDatabase.getInstance(
-                "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
-        ).getReference();
-        mAuth = FirebaseAuth.getInstance();
+
     }
 
     @Override
     public void onStart() {
         super.onStart();
 
+        mDatabase = FirebaseDatabase.getInstance(
+                "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
+        ).getReference();
+        mAuth = FirebaseAuth.getInstance();
         mAuth.signInAnonymously()
                 .addOnCompleteListener(getActivity(), task -> {
                     if (!task.isSuccessful()) {
@@ -195,7 +196,7 @@ public class ResultsFragment extends Fragment {
         return view;
     }
 
-    public void updateProgress(String progressText, int progressIncrement) {
+    private void updateProgress(String progressText, int progressIncrement) {
         TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
         ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
 
@@ -203,14 +204,14 @@ public class ResultsFragment extends Fragment {
         progressBar.incrementProgressBy(progressIncrement);
     }
 
-    public Place getPlace(String placeName) {
+    private Place getPlace(String placeName) {
         double latitude = qrLocations.get(placeName)[0];
         double longitude = qrLocations.get(placeName)[1];
 
         return new Place(placeName, latitude, longitude);
     }
 
-    public String getNetworkProvider() {
+    private String getNetworkProvider() {
         TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
@@ -221,7 +222,7 @@ public class ResultsFragment extends Fragment {
         }
     }
 
-    public SignalPerf computeSignalPerf(){
+    private SignalPerf computeSignalPerf(){
         int rssi = 1;
         int rsrp = 1;
         int rsrq = 1;
@@ -254,13 +255,13 @@ public class ResultsFragment extends Fragment {
         return new SignalPerf(rssi, rsrq, rsrp);
     }
 
-    public void displayResult(int id, String resultStr){
+    private void displayResult(int id, String resultStr){
         ((TextView) getView().findViewById(id)).setText(resultStr);
     }
 
-    public native long getServerInfo();
-    public native double computeDlspeed(long serverPtr);
-    public native double computeUlspeed(long serverPtr);
-    public native int computeLatency(long serverPtr);
-    public native void freeServerPtr(long serverPtr);
+    private native long getServerInfo();
+    private native double computeDlspeed(long serverPtr);
+    private native double computeUlspeed(long serverPtr);
+    private native int computeLatency(long serverPtr);
+    private native void freeServerPtr(long serverPtr);
 }
