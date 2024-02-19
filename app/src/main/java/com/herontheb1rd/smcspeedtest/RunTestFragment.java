@@ -2,7 +2,6 @@ package com.herontheb1rd.smcspeedtest;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -17,7 +16,6 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,12 +35,11 @@ import java.util.Arrays;
 
 public class RunTestFragment extends Fragment {
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
-    private static boolean justScannedQR;
+    private static boolean mQRValid = false;
 
     public RunTestFragment(){
-        justScannedQR = false;
-    }
 
+    }
     ActivityResultLauncher<String[]> locationPermissionRequest =
             registerForActivityResult(new ActivityResultContracts
                             .RequestMultiplePermissions(), result -> {
@@ -151,7 +148,7 @@ public class RunTestFragment extends Fragment {
                             Bundle result = new Bundle();
                             result.putString("bundleKey", rawValue);
                             getParentFragmentManager().setFragmentResult("requestKey", result);
-                            justScannedQR = true;
+                            mQRValid = true;
                         }else{
                             Toast.makeText(getActivity(), "Invalid QR code.",
                                     Toast.LENGTH_SHORT).show();
@@ -167,9 +164,9 @@ public class RunTestFragment extends Fragment {
     public void onResume(){
         super.onResume();
 
-        if(justScannedQR){
+        if(mQRValid){
             Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
-            justScannedQR = false;
+            mQRValid = false;
         }
     }
 }

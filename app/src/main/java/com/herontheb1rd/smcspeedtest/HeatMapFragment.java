@@ -91,7 +91,6 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
 
-        Log.i("TEST", "sdf");
         getFirebaseResults();
 
         return view;
@@ -115,16 +114,11 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     }
 
-    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {  }
-
-    public void onNothingSelected(AdapterView<?> parent){
-
-    }
+    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {}
+    public void onNothingSelected(AdapterView<?> parent){}
 
     public void getFirebaseResults(){
         //get results from database
-        Log.i("TEST", "asd");
-
         DatabaseReference resultsRef = mDatabase.child("results");
         resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -132,12 +126,10 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                 for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                     mResults.add(singleSnapshot.getValue(Results.class));
                 }
-
-                Log.i("DATABASE", Double.toString(mResults.get(0).getNetPerf().getDlspeed()));
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {
-                Log.e("Database error", "onCancelled", databaseError.toException());
+
             }
         });
     }
