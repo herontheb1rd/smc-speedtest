@@ -93,8 +93,6 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
 
-        getFirebaseResults();
-
         return view;
     }
 
@@ -116,10 +114,10 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     }
 
-    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {}
+    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {getFirebaseResults(metric);}
     public void onNothingSelected(AdapterView<?> parent){}
 
-    private void getFirebaseResults(){
+    private void getFirebaseResults(int metric){
         //get results from database
         DatabaseReference resultsRef = mDatabase.child("results");
         resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -128,6 +126,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                 for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                     mResults.add(singleSnapshot.getValue(Results.class));
                 }
+                updateHeatMap(metric);
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -162,11 +161,14 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     }
 
     private void updateHeatMap(int metric){
-        Map<String, List<Double>> resultsMap = new HashMap<>();
+        Map<String, List<Double>> locationResultsMap = new HashMap<>();
+        ArrayList<Double> resultsList = new ArrayList<>();
+
         //initialize hash map
         for(String placeName: locationDict.keySet()){
-            resultsMap.put(placeName, new ArrayList<Double>());
+            locationResultsMap.put(placeName, new ArrayList<Double>());
         }
+
 
         //place values in hash map
         for (Results curResult : mResults) {
@@ -186,20 +188,32 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
             //skip if values are invalid
             if (intensity == -1) continue;
 
-            resultsMap.get(placeName).add(intensity);
+            locationResultsMap.get(placeName).add(intensity);
+            resultsList.add(intensity);
         }
 
+        double minResult = getMinResult(resultsList);
+        double maxResult = getMaxResult(resultsList);
         //apply colors from values
         for(String placeName: locationDict.keySet()){
-            double meanResult = getMeanResult(resultsMap.get(placeName));
-            double minResult = getMinResult(resultsMap.get(placeName));
-            double maxResult = getMaxResult(resultsMap.get(placeName));
-            //chooses color from meanResult
-            int colorIndex = scaleResult(meanResult, minResult, maxResult, 0, 11);
+            List<Double> curLocationResults = locationResultsMap.get(placeName);
+            if(curLocationResults.size() != 0){
+                double meanResult = getMeanResult(locationResultsMap.get(placeName));
+                Log.i("TEST", placeName);
+                Log.i("TEST", Double.toString(meanResult));
+                //chooses color from meanResult
+                int colorIndex = scaleResult(meanResult, minResult, maxResult, 0, 11);
 
-            //changes color of polygon
-            mPolygonMap.get(placeName).setFillColor(colorGradient[colorIndex]);
-            mPolygonMap.get(placeName).setStrokeColor(colorGradient[colorIndex]);
+                //changes color of polygon
+                //mPolygonMap.get(placeName).setFillColor(colorGradient[colorIndex]);
+                //mPolygonMap.get(placeName).setStrokeColor(colorGradient[colorIndex]);
+            }else{
+                Log.i("TEST", placeName+" is empty");
+
+                //sets fill color to nothing and stroke color to black
+                //mPolygonMap.get(placeName).setFillColor(0x00000000);
+                //mPolygonMap.get(placeName).setStrokeColor(0xff000000);
+            }
         }
     }
 
