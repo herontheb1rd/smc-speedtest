@@ -189,7 +189,6 @@ public class ResultsFragment extends Fragment {
                         }
                 }, listeningExecutor);
 
-
             }
         });
 
@@ -229,8 +228,8 @@ public class ResultsFragment extends Fragment {
 
         TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                int dataSubId = SubscriptionManager.getActiveDataSubscriptionId();
                 TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
 
                 CellInfoLte cellinfolte = (CellInfoLte) dataTM.getAllCellInfo().get(0);
@@ -259,9 +258,9 @@ public class ResultsFragment extends Fragment {
         ((TextView) getView().findViewById(id)).setText(resultStr);
     }
 
-    private native long getServerInfo();
-    private native double computeDlspeed(long serverPtr);
-    private native double computeUlspeed(long serverPtr);
-    private native int computeLatency(long serverPtr);
-    private native void freeServerPtr(long serverPtr);
+    public native long getServerInfo();
+    public native double computeDlspeed(long serverPtr);
+    public native double computeUlspeed(long serverPtr);
+    public native int computeLatency(long serverPtr);
+    public native void freeServerPtr(long serverPtr);
 }

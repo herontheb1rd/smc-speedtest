@@ -108,8 +108,9 @@ public class RunTestFragment extends Fragment {
         //getActiveNetworkInfo is deprecated after version 29
         if (android.os.Build.VERSION.SDK_INT >= 29) {
             Network currentNetwork = cm.getActiveNetwork();
+            if(currentNetwork == null)
+                return false;
             NetworkCapabilities caps = cm.getNetworkCapabilities(currentNetwork);
-
             return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
         }else{
             if(cm.getActiveNetworkInfo() != null){
@@ -133,6 +134,11 @@ public class RunTestFragment extends Fragment {
 
     private void scanQRCode(){
         if(isConnected()){
+            Bundle result = new Bundle();
+            result.putString("bundleKey", "Library");
+            getParentFragmentManager().setFragmentResult("requestKey", result);
+            mQRValid = true;
+            /*
             GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
                     .setBarcodeFormats(
                             Barcode.FORMAT_QR_CODE)
@@ -154,6 +160,8 @@ public class RunTestFragment extends Fragment {
                                     Toast.LENGTH_SHORT).show();
                         }
                     });
+
+             */
         }else{
             Toast.makeText(getActivity(), "Turn on your mobile data to run the test.",
                     Toast.LENGTH_SHORT).show();
