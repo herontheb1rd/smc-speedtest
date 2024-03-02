@@ -6,19 +6,27 @@
     android:layout_height="match_parent"
     tools:context=".HeatMapFragment">
 
-    <TextView
-        android:id="@+id/dataTV"
+
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:map="http://schemas.android.com/apk/res-auto"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:id="@+id/map"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginStart="32dp"
         android:layout_marginTop="96dp"
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="32dp"
-        android:text="Retrieved data will appear here"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        map:liteMode="true"
+        map:cameraTargetLat="7.082788894235911"
+        map:cameraTargetLng="125.50813754841627"
+        map:cameraZoom="20"
+        map:mapType="normal"
+        tools:layout="@layout/fragment_heat_map" />
 
     <Spinner
         android:id="@+id/metricSpinner"
@@ -27,7 +35,8 @@
         android:minHeight="48dp"
         android:spinnerMode="dialog"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/dataTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.05" />
 

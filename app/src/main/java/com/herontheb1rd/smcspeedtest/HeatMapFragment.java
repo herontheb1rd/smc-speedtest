@@ -16,6 +16,7 @@ import android.widget.TextView;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -72,16 +73,17 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
         mDatabase = FirebaseDatabase.getInstance("https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference();
-
-        //SupportMapFragment mapFragment = (SupportMapFragment) getActivity().getSupportFragmentManager()
-        //       .findFragmentById(R.id.map);
-        //mapFragment.getMapAsync(this);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_heat_map, container, false);
+
+
+        SupportMapFragment mapFragment = (SupportMapFragment) this.getChildFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
         //initialize spinner
         Spinner spinner = (Spinner)view.findViewById(R.id.metricSpinner);
@@ -98,23 +100,22 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        googleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(pshsLatLng));
-
+        /*
         for(String s: qrMap.keySet()){
             Marker m = googleMap.addMarker(new MarkerOptions().position(qrMap.get(s)).title(s));
             m.showInfoWindow();
         }
 
+
         for(String s: locationDict.keySet()){
             Polygon polygon = googleMap.addPolygon(new PolygonOptions()
                     .add(locationDict.get(s)));
             mPolygonMap.put(s, polygon);
-        }
+        }*/
 
     }
 
-    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {getFirebaseResults(metric);}
+    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {}
     public void onNothingSelected(AdapterView<?> parent){}
 
     private void getFirebaseResults(int metric){
