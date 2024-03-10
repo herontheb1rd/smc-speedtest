@@ -173,14 +173,14 @@
         android:id="@+id/progressGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
+        android:visibility="visible"
         app:constraint_referenced_ids="progressBar, progressTV" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/resultsGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="visible"
+        android:visibility="invisible"
         app:constraint_referenced_ids="downloadLabelTV, downloadResultTV, downloadUnitTV, uploadLabelTV, uploadResultTV, uploadUnitTV, latencyLabelTV,  latencyResultTV, latencyUnitTV, betterLocationLabelTV,betterLocationTV" />
 
 

@@ -54,11 +54,18 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import static java.util.Map.entry;
 import java.util.Objects;
@@ -177,6 +184,7 @@ public class ResultsFragment extends Fragment {
 
                             updateProgress("Test complete", 10);
 
+                            findBetterLocation(networkProvider, placeName);
 
                             Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
                             mDatabase.child("results").push().setValue(results);
@@ -195,6 +203,76 @@ public class ResultsFragment extends Fragment {
 
         return view;
     }
+
+    private double getMeanPerformance(List<NetPerf> resultList){
+        //"performance" is dlspeed + ulspeed - latency
+        //there might be better methods but this is a lazy way of implementing it i suppose
+        //because out goal is higher dlspeed and ulspeed but lower latency
+
+        int resultsSize = resultList.size();
+
+        double dlspeedSum = 0;
+        double ulspeedSum = 0;
+        double latencySum = 0;
+        for(NetPerf n: resultList){
+            dlspeedSum += n.getDlspeed();
+            ulspeedSum += n.getUlspeed();
+            latencySum += n.getLatency();
+        }
+
+        return dlspeedSum/resultsSize + ulspeedSum/resultsSize - latencySum/resultsSize;
+    }
+
+    private String getMaxKey(Map<String, Double> dict){
+        String betterLocation = "";
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            betterLocation = Collections.max(dict.entrySet(), Map.Entry.comparingByValue()).getKey();
+        }else{
+            double maxValue = 0.0;
+            for(String l: dict.keySet()){
+                if(dict.get(l) > maxValue){
+                    betterLocation = l;
+                    maxValue = dict.get(l);
+                }
+            }
+        }
+        return betterLocation;
+    }
+    private void findBetterLocation(String networkProvider, String currentLocation){
+        Map<String, List<NetPerf>> locationResultsDict = new HashMap<>();
+        Map<String, Double> locationPerformance = new HashMap<>();
+        for(String l: qrLocations.keySet()){
+            locationResultsDict.put(l, new ArrayList<>());
+            locationPerformance.put(l, new Double(0.0));
+        }
+
+        //get results from database
+        Query resultsQuery = mDatabase.child("results").orderByChild("networkProvider").equalTo(networkProvider);
+        resultsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
+                    Results curResult = singleSnapshot.getValue(Results.class);
+                    locationResultsDict.get(curResult.getPlace().getPlaceName()).add(curResult.getNetPerf());
+                }
+
+                for(String l: locationResultsDict.keySet()){
+                    locationPerformance.put(l, getMeanPerformance(locationResultsDict.get(l)));
+                }
+
+                String betterLocation = getMaxKey(locationPerformance);
+                if(betterLocation.equals(currentLocation)){
+                    betterLocation = "Nowhere else!";
+                }
+                TextView betterLocationTV = (TextView) getView().findViewById(R.id.betterLocationTV);
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
 
     private void updateProgress(String progressText, int progressIncrement) {
         TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
