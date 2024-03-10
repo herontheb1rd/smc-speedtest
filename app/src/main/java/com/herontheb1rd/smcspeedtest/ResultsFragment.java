@@ -177,6 +177,7 @@ public class ResultsFragment extends Fragment {
 
                             updateProgress("Test complete", 10);
 
+
                             Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
                             mDatabase.child("results").push().setValue(results);
                         }
@@ -236,13 +237,8 @@ public class ResultsFragment extends Fragment {
                 CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
 
                 rssi = cellSignalStrengthLte.getRssi();
-                displayResult(R.id.rssiResultTV, Integer.toString(rssi));
-
                 rsrp = cellSignalStrengthLte.getRsrp();
-                displayResult(R.id.rsrpResultTV, Integer.toString(rsrp));
-
                 rsrq = cellSignalStrengthLte.getRsrq();
-                displayResult(R.id.rsrqResultTV, Integer.toString(rsrq));
             }else{
                 Toast.makeText(getActivity(), "Phone model too old to retrieve signal info",
                         Toast.LENGTH_SHORT).show();
