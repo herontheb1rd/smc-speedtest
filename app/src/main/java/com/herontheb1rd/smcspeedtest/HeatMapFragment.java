@@ -49,7 +49,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         put("Garden", new LatLng[]{new LatLng(7.0846667, 125.508603), new LatLng(7.084671, 125.508401), new LatLng(7.084882, 125.508299), new LatLng(7.084811, 125.508374), new LatLng(7.085043, 125.508291), new LatLng(7.085232, 125.508494), new LatLng(7.085111, 125.508611)});
     }};
 
-    private final Map<String, LatLng> qrMap = new HashMap<String, LatLng>(){{
+    private final Map<String, LatLng> qrDict = new HashMap<String, LatLng>(){{
         put("Library", new LatLng(7.08424, 125.50799));
         put("Canteen", new LatLng( 7.08314, 125.50790));
         put("Kiosk", new LatLng( 7.08350, 125.50799));
@@ -156,9 +156,9 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     }
 
     private void initMarkers(GoogleMap map){
-        for(String s: qrMap.keySet()){
+        for(String s: qrDict.keySet()){
             Marker m = map.addMarker(new MarkerOptions()
-                    .position(qrMap.get(s))
+                    .position(qrDict.get(s))
                     .title(s));
             m.showInfoWindow();
         }
