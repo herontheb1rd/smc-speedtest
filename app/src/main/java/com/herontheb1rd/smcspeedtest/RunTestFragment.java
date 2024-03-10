@@ -3,6 +3,7 @@ package com.herontheb1rd.smcspeedtest;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -71,6 +72,8 @@ public class RunTestFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_run_test, container, false);
 
+        scanQRCode();
+
         if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)){
             new AlertDialog.Builder(getActivity())
@@ -121,6 +124,12 @@ public class RunTestFragment extends Fragment {
         }
     }
 
+    private boolean isLocationOn(){
+        LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
+
+        return lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
     private void askLocationPermission(){
         if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
@@ -133,39 +142,41 @@ public class RunTestFragment extends Fragment {
 
 
     private void scanQRCode(){
-        if(isConnected()){
-            Bundle result = new Bundle();
-            result.putString("bundleKey", "Library");
-            getParentFragmentManager().setFragmentResult("requestKey", result);
-            mQRValid = true;
-            /*
-            GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
-                    .setBarcodeFormats(
-                            Barcode.FORMAT_QR_CODE)
-                    .build();
+        GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
+                .setBarcodeFormats(
+                        Barcode.FORMAT_QR_CODE)
+                .build();
 
-            GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(getView().getContext(), options);
-            scanner.startScan().addOnSuccessListener(
-                    barcode -> {
-                        String rawValue = barcode.getRawValue();
-                        boolean isValidLocation = Arrays.asList(allowedLocations).contains(rawValue);
+        GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(getView().getContext(), options);
+        scanner.startScan().addOnSuccessListener(
+                barcode -> {
+                    mQRValid = true;
 
-                        if(isValidLocation){
-                            Bundle result = new Bundle();
-                            result.putString("bundleKey", rawValue);
-                            getParentFragmentManager().setFragmentResult("requestKey", result);
-                            mQRValid = true;
-                        }else{
-                            Toast.makeText(getActivity(), "Invalid QR code.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
-                    });
+                    String rawValue = barcode.getRawValue();
+                    boolean isValidLocation = Arrays.asList(allowedLocations).contains(rawValue);
+                    if(!isConnected()) {
+                        Toast.makeText(getActivity(), "Turn on your mobile data to continue",
+                                Toast.LENGTH_SHORT).show();
+                        mQRValid = false;
+                    }
+                    if(!isLocationOn()){
+                        Toast.makeText(getActivity(), "Turn on your location to continue",
+                                Toast.LENGTH_SHORT).show();
+                        mQRValid = false;
+                    }
+                    if(!isValidLocation){
+                        Toast.makeText(getActivity(), "Invalid QR code",
+                                Toast.LENGTH_SHORT).show();
+                        mQRValid = false;
+                    }
 
-             */
-        }else{
-            Toast.makeText(getActivity(), "Turn on your mobile data to run the test.",
-                    Toast.LENGTH_SHORT).show();
-        }
+                    if(mQRValid){
+                        Bundle result = new Bundle();
+                        result.putString("bundleKey", rawValue);
+                        getParentFragmentManager().setFragmentResult("requestKey", result);
+                    }
+                });
+
     }
 
     @Override
