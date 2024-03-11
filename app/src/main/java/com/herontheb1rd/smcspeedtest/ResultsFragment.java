@@ -62,6 +62,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,14 +82,8 @@ public class ResultsFragment extends Fragment {
         System.loadLibrary("smcspeedtest");
     }
 
-    private final Map<String, double[]> qrLocations = new HashMap<String, double[]>() {{
-        put("Library", new double[]{10.0, 10.0});
-        put("Canteen", new double[]{10.0, 10.0});
-        put("Kiosk", new double[]{10.0, 10.0});
-        put("Airport", new double[]{10.0, 10.0});
-        put("ABD", new double[]{10.0, 10.0});
-        put("Garden", new double[]{10.0, 10.0});
-    }};
+    private final List<String> qrLocations = Arrays.asList("Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden");
+
 
     //codes from https://mcc-mnc.com/
     public final Map<String, String> simOperators = new HashMap<String, String>() {{
@@ -133,7 +128,7 @@ public class ResultsFragment extends Fragment {
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                String placeName = bundle.getString("bundleKey");
+                String place = bundle.getString("bundleKey");
 
                 Executor listeningExecutor = Executors.newSingleThreadExecutor();
                 ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
@@ -179,12 +174,11 @@ public class ResultsFragment extends Fragment {
                             long time = Calendar.getInstance().getTime().getTime();
                             String phoneBrand = Build.MANUFACTURER;
                             String networkProvider = getNetworkProvider();
-                            Place place = getPlace(placeName);
                             SignalPerf signalPerf = computeSignalPerf();
 
                             updateProgress("Test complete", 10);
 
-                            findBetterLocation(networkProvider, placeName);
+                            findBetterLocation(networkProvider, place);
 
                             Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
                             mDatabase.child("results").push().setValue(results);
@@ -241,7 +235,7 @@ public class ResultsFragment extends Fragment {
     private void findBetterLocation(String networkProvider, String currentLocation){
         Map<String, List<NetPerf>> locationResultsDict = new HashMap<>();
         Map<String, Double> locationPerformance = new HashMap<>();
-        for(String l: qrLocations.keySet()){
+        for(String l: qrLocations){
             locationResultsDict.put(l, new ArrayList<>());
             locationPerformance.put(l, new Double(0.0));
         }
@@ -253,7 +247,7 @@ public class ResultsFragment extends Fragment {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
                     Results curResult = singleSnapshot.getValue(Results.class);
-                    locationResultsDict.get(curResult.getPlace().getPlaceName()).add(curResult.getNetPerf());
+                    locationResultsDict.get(curResult.getPlace()).add(curResult.getNetPerf());
                 }
 
                 for(String l: locationResultsDict.keySet()){
@@ -280,13 +274,6 @@ public class ResultsFragment extends Fragment {
 
         progressTV.post(() -> progressTV.setText(progressText));
         progressBar.incrementProgressBy(progressIncrement);
-    }
-
-    private Place getPlace(String placeName) {
-        double latitude = qrLocations.get(placeName)[0];
-        double longitude = qrLocations.get(placeName)[1];
-
-        return new Place(placeName, latitude, longitude);
     }
 
     public String getNetworkProvider() {

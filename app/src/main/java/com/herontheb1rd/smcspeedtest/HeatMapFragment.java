@@ -193,7 +193,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         //place values in hash map
         for (Results curResult : mResults) {
             double intensity = 0;
-            String placeName = curResult.getPlace().getPlaceName();
+            String placeName = curResult.getPlace();
             switch (metric) {
                 case 0:
                     intensity = curResult.getNetPerf().getDlspeed();

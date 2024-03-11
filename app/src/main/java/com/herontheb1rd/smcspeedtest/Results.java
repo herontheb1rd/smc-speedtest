@@ -5,7 +5,7 @@ public class Results {
     private long time;
     private String phoneBrand;
     private String networkProvider;
-    private Place place;
+    private String place;
     private NetPerf netPerf;
     private SignalPerf signalPerf;
 
@@ -16,7 +16,7 @@ public class Results {
         return phoneBrand;
     }
     public String getNetworkProvider() { return networkProvider; }
-    public Place getPlace(){
+    public String getPlace(){
         return place;
     }
     public NetPerf getNetPerf(){
@@ -28,7 +28,7 @@ public class Results {
 
     }
 
-    public Results(long time, String phoneBrand, String networkProvider, Place place, NetPerf netPerf, SignalPerf signalPerf){
+    public Results(long time, String phoneBrand, String networkProvider, String place, NetPerf netPerf, SignalPerf signalPerf){
         this.time = time;
         this.phoneBrand = phoneBrand;
         this.networkProvider = networkProvider;
