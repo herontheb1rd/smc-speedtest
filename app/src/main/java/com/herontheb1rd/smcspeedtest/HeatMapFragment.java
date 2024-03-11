@@ -64,8 +64,11 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     private final LatLng pshsLatLng = new LatLng(7.082788894235911, 125.50813754841627);
 
     private Map<String, Polygon> mPolygonMap = new HashMap<>();
+    private static String mNetworkProvider;
 
     public HeatMapFragment() {
+        ResultsFragment r = new ResultsFragment();
+        mNetworkProvider = r.getNetworkProvider();
     }
 
     @Override
@@ -98,6 +101,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         return view;
     }
 
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         googleMap.getUiSettings().setMapToolbarEnabled(false);
@@ -114,7 +118,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     private void getFirebaseResults(int metric){
         //get results from database
-        DatabaseReference resultsRef = mDatabase.child("results");
+        Query resultsRef = mDatabase.child("results").orderByChild("networkProvider").equalTo(mNetworkProvider);
         resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

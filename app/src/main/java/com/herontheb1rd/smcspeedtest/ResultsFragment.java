@@ -91,7 +91,7 @@ public class ResultsFragment extends Fragment {
     }};
 
     //codes from https://mcc-mnc.com/
-    private final Map<String, String> simOperators = new HashMap<String, String>() {{
+    public final Map<String, String> simOperators = new HashMap<String, String>() {{
         put("51566", "DITO");
         put("51502", "Globe");
         put("51501", "Globe");
@@ -289,7 +289,7 @@ public class ResultsFragment extends Fragment {
         return new Place(placeName, latitude, longitude);
     }
 
-    private String getNetworkProvider() {
+    public String getNetworkProvider() {
         TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
