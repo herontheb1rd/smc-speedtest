@@ -1,7 +1,10 @@
 package com.herontheb1rd.smcspeedtest;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
@@ -35,6 +38,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScanning;
 import java.util.Arrays;
 
 public class RunTestFragment extends Fragment {
+    SharedPreferences prefs = null;
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
     private static boolean mQRValid = false;
 
@@ -67,12 +71,21 @@ public class RunTestFragment extends Fragment {
                         }
                     }
             );
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
+    }
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_run_test, container, false);
 
-        scanQRCode();
+        checkIfAgreed();
 
         if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)){
@@ -95,14 +108,23 @@ public class RunTestFragment extends Fragment {
         moduleInstallClient.installModules(moduleInstallRequest);
 
         Button runTestB = (Button) view.findViewById(R.id.runTestB);
-        runTestB.setOnClickListener(view1 -> new AlertDialog.Builder(getActivity())
-                .setTitle("User Agreement")
-                .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it for our study.\n\nBy pressing Yes you agree to this data being collected. ")
-                .setPositiveButton(android.R.string.yes, (dialog, which) -> scanQRCode())
-                .setNegativeButton(android.R.string.no, null)
-                .show());
+        runTestB.setOnClickListener(view1 -> checkIfAgreed());
 
         return view;
+    }
+
+    private void checkIfAgreed(){
+        if (prefs.getBoolean("agreed", false)) {
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("User Agreement")
+                    .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it for our study.\n\nBy pressing Yes you agree to this data being collected. ")
+                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                        scanQRCode();
+                        prefs.edit().putBoolean("agreed", true).commit();
+                    })
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+        }
     }
 
     private boolean isConnected(){
