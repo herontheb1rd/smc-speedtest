@@ -293,25 +293,37 @@ public class ResultsFragment extends Fragment {
         int rsrq = 1;
 
         TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                int dataSubId = SubscriptionManager.getActiveDataSubscriptionId();
-                TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
-
-                CellInfoLte cellinfolte = (CellInfoLte) dataTM.getAllCellInfo().get(0);
-                CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
-
-                rssi = cellSignalStrengthLte.getRssi();
-                rsrp = cellSignalStrengthLte.getRsrp();
-                rsrq = cellSignalStrengthLte.getRsrq();
-            }else{
-                Toast.makeText(getActivity(), "Phone model too old to retrieve signal info",
-                        Toast.LENGTH_SHORT).show();
-            }
-        }else {
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(getActivity(), "Location access not granted. Skipping signal data collection",
                     Toast.LENGTH_SHORT).show();
+
+            return new SignalPerf(rssi, rsrq, rsrp);
         }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            Toast.makeText(getActivity(), "Phone model too old to retrieve signal info",
+                    Toast.LENGTH_SHORT).show();
+
+            return new SignalPerf(rssi, rsrq, rsrp);
+        }
+
+        LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
+        if(!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            Toast.makeText(getActivity(), "Location turned off. Signal data cannot be retrieved",
+                    Toast.LENGTH_SHORT).show();
+
+            return new SignalPerf(rssi, rsrq, rsrp);
+        }
+
+        int dataSubId = SubscriptionManager.getActiveDataSubscriptionId();
+        TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
+
+        CellInfoLte cellinfolte = (CellInfoLte) dataTM.getAllCellInfo().get(0);
+        CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
+
+        rssi = cellSignalStrengthLte.getRssi();
+        rsrp = cellSignalStrengthLte.getRsrp();
+        rsrq = cellSignalStrengthLte.getRsrq();
+
         return new SignalPerf(rssi, rsrq, rsrp);
     }
 

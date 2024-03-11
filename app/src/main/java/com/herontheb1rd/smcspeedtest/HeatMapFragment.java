@@ -226,8 +226,6 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                 //mPolygonMap.get(placeName).setFillColor(colorGradient[colorIndex]);
                 //mPolygonMap.get(placeName).setStrokeColor(colorGradient[colorIndex]);
             }else{
-                Log.i("TEST", placeName+" is empty");
-
                 //sets fill color to nothing and stroke color to black
                 //mPolygonMap.get(placeName).setFillColor(0x00000000);
                 //mPolygonMap.get(placeName).setStrokeColor(0xff000000);
