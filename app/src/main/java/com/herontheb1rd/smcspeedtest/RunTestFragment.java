@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,8 +86,6 @@ public class RunTestFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_run_test, container, false);
 
-        checkIfAgreed();
-
         if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)){
             new AlertDialog.Builder(getActivity())
@@ -97,6 +96,7 @@ public class RunTestFragment extends Fragment {
                     .show();
         }
 
+        //checkIfAgreed(view);
 
         //module install apis fix for google code scanner
         ModuleInstallClient moduleInstallClient = ModuleInstall.getClient(view.getContext());
@@ -108,22 +108,24 @@ public class RunTestFragment extends Fragment {
         moduleInstallClient.installModules(moduleInstallRequest);
 
         Button runTestB = (Button) view.findViewById(R.id.runTestB);
-        runTestB.setOnClickListener(view1 -> checkIfAgreed());
+        runTestB.setOnClickListener(v -> checkIfAgreed(view));
 
         return view;
     }
 
-    private void checkIfAgreed(){
+    private void checkIfAgreed(View view){
         if (prefs.getBoolean("agreed", false)) {
             new AlertDialog.Builder(getActivity())
                     .setTitle("User Agreement")
                     .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it for our study.\n\nBy pressing Yes you agree to this data being collected. ")
                     .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                        scanQRCode();
                         prefs.edit().putBoolean("agreed", true).commit();
+                        scanQRCode(view);
                     })
                     .setNegativeButton(android.R.string.no, null)
                     .show();
+        }else{
+            scanQRCode(view);
         }
     }
 
@@ -163,13 +165,19 @@ public class RunTestFragment extends Fragment {
     }
 
 
-    private void scanQRCode(){
-        GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
-                .setBarcodeFormats(
-                        Barcode.FORMAT_QR_CODE)
-                .build();
+    private void scanQRCode(View view){
+        Bundle result = new Bundle();
+        result.putString("bundleKey", "Library");
+        getParentFragmentManager().setFragmentResult("requestKey", result);
+        Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
 
-        GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(getView().getContext(), options);
+        /*
+        GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
+        .setBarcodeFormats(
+                Barcode.FORMAT_QR_CODE)
+        .build();
+
+        GmsBarcodeScanner scanner = GmsBarcodeScanning.getClient(view.getContext(), options);
         scanner.startScan().addOnSuccessListener(
                 barcode -> {
                     mQRValid = true;
@@ -198,7 +206,7 @@ public class RunTestFragment extends Fragment {
                         getParentFragmentManager().setFragmentResult("requestKey", result);
                     }
                 });
-
+        */
     }
 
     @Override

@@ -19,19 +19,14 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerInfo(JNIEnv *env, jo
     IPInfo ipInfo;
     ServerInfo serverInfo;
 
-    //for setting the text
-    jclass resultsClazz = env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment");
-    jmethodID updateProgress = env->GetMethodID(resultsClazz, "updateProgress", "(Ljava/lang/String;I)V");
-
     sp.setInsecure(true);
 
     if (!sp.ipInfo(ipInfo)){
         //TODO: figure out how to throw an error without making app crash
-        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("IP info could not be obtained"), 0);
     }else {
         auto serverList = sp.serverList();
         if (serverList.empty()) {
-            env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Server list could not be obtained"), 0);
+
         } else {
             serverInfo = sp.bestServer(10, [](bool success) {});
         }
@@ -42,8 +37,6 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerInfo(JNIEnv *env, jo
     ServerInfo *serverCpy = (ServerInfo *)malloc(sizeof(ServerInfo));
     memcpy(serverCpy, &serverInfo, sizeof(ServerInfo));
     unsigned long long serverPtr = (unsigned long long)serverCpy;
-
-    env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Connected to server"), 10);
 
     return serverPtr;
 }

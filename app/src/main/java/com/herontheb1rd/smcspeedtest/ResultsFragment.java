@@ -73,7 +73,9 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class ResultsFragment extends Fragment {
 
@@ -130,27 +132,36 @@ public class ResultsFragment extends Fragment {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
                 String place = bundle.getString("bundleKey");
 
-                Executor listeningExecutor = Executors.newSingleThreadExecutor();
-                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+                Executor executor = Executors.newSingleThreadExecutor();
+                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(5));
 
-                ListenableFuture<Long> serverInfoFuture = pool.submit(() -> getServerInfo());
+                ListenableFuture<Long> serverInfoFuture = pool.submit(() -> {
+                    long serverInfo = 10;
+                    //long serverInfo = getServerInfo();
+                    updateProgress("Server info acquired", 10);
+                    return serverInfo;
+                });
+
                 AsyncFunction<Long, NetPerf> asyncNetPerf = serverPtr -> {
                     ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
-                        double dlspeed = computeDlspeed(serverPtr);
+                        double dlspeed = 10;
+                        //double dlspeed = computeDlspeed(serverPtr);
                         updateProgress("Download speed computed", 30);
                         displayResult(R.id.downloadResultTV, String.format("%.1f", dlspeed));
                         return dlspeed;
                     });
 
                     ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
-                        double ulspeed = computeUlspeed(serverPtr);
+                        double ulspeed = 10;
+                        //double ulspeed = computeUlspeed(serverPtr);
                         updateProgress("Upload speed computed", 30);
                         displayResult(R.id.uploadResultTV, String.format("%.1f", ulspeed));
                         return ulspeed;
                     });
 
                     ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
-                        int latency = computeLatency(serverPtr);
+                        int latency = 10;
+                        //int latency = computeLatency(serverPtr);
                         updateProgress("Latency computed", 20);
                         displayResult(R.id.latencyResultTV, Integer.toString(latency));
                         return latency;
@@ -159,39 +170,41 @@ public class ResultsFragment extends Fragment {
                     ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
                             .call(() -> {
                                 NetPerf netPerf = new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
-                                    Futures.getDone(latencyFuture));
-                                freeServerPtr(serverPtr);
+                                        Futures.getDone(latencyFuture));
+                                //freeServerPtr(serverPtr);
                                 return netPerf;
-                            }, listeningExecutor);
+                            }, pool);
                     return computeNetPerf;
                 };
 
-                ListenableFuture<NetPerf> netPerfFuture = Futures.transformAsync(serverInfoFuture, asyncNetPerf, listeningExecutor);
+                ListenableFuture<NetPerf> netPerfFuture = Futures.transformAsync(serverInfoFuture, asyncNetPerf, pool);
 
                 Futures.addCallback(netPerfFuture, new FutureCallback<NetPerf>() {
-                        @Override
-                        public void onSuccess(NetPerf netPerf) {
-                            long time = Calendar.getInstance().getTime().getTime();
-                            String phoneBrand = Build.MANUFACTURER;
-                            String networkProvider = getNetworkProvider();
-                            SignalPerf signalPerf = computeSignalPerf();
+                    @Override
+                    public void onSuccess(NetPerf netPerf) {
+                        long time = Calendar.getInstance().getTime().getTime();
+                        String phoneBrand = Build.MANUFACTURER;
+                        String networkProvider = "DITO";
+                        //String networkProvider = getNetworkProvider();
+                        SignalPerf signalPerf = new SignalPerf(10, 10, 10);
+                        //SignalPerf signalPerf = computeSignalPerf();
 
-                            updateProgress("Test complete", 10);
+                        updateProgress("Test complete", 10);
 
-                            findBetterLocation(networkProvider, place);
+                        Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
+                        mDatabase.child("results").child(networkProvider).push().setValue(results);
 
-                            Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
-                            mDatabase.child("results").push().setValue(results);
-                        }
+                        findBetterLocation(networkProvider, place);
+                        showResults();
+                    }
 
-                        @Override
-                        public void onFailure(Throwable t) {
-                            Toast.makeText(getActivity(), "Test failed to run properly. Please try again",
-                                    Toast.LENGTH_SHORT).show();
-                            Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
-                        }
-                }, listeningExecutor);
-
+                    @Override
+                    public void onFailure(Throwable t) {
+                        Toast.makeText(getActivity(), "Test failed to run properly. Please try again",
+                                Toast.LENGTH_SHORT).show();
+                        Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
+                    }
+                }, pool);
             }
         });
 
@@ -205,6 +218,10 @@ public class ResultsFragment extends Fragment {
 
         int resultsSize = resultList.size();
 
+        if(resultsSize == 0){
+            return 0.0;
+        }
+
         double dlspeedSum = 0;
         double ulspeedSum = 0;
         double latencySum = 0;
@@ -214,20 +231,17 @@ public class ResultsFragment extends Fragment {
             latencySum += n.getLatency();
         }
 
-        return dlspeedSum/resultsSize + ulspeedSum/resultsSize - latencySum/resultsSize;
+        double meanPerformance = dlspeedSum/resultsSize + ulspeedSum/resultsSize - latencySum/resultsSize;
+        return meanPerformance;
     }
 
     private String getMaxKey(Map<String, Double> dict){
         String betterLocation = "";
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            betterLocation = Collections.max(dict.entrySet(), Map.Entry.comparingByValue()).getKey();
-        }else{
-            double maxValue = 0.0;
-            for(String l: dict.keySet()){
-                if(dict.get(l) > maxValue){
-                    betterLocation = l;
-                    maxValue = dict.get(l);
-                }
+        double maxValue = 0.0;
+        for(String l: dict.keySet()){
+            if(dict.get(l) > maxValue){
+                betterLocation = l;
+                maxValue = dict.get(l);
             }
         }
         return betterLocation;
@@ -235,30 +249,35 @@ public class ResultsFragment extends Fragment {
     private void findBetterLocation(String networkProvider, String currentLocation){
         Map<String, List<NetPerf>> locationResultsDict = new HashMap<>();
         Map<String, Double> locationPerformance = new HashMap<>();
+
         for(String l: qrLocations){
             locationResultsDict.put(l, new ArrayList<>());
             locationPerformance.put(l, new Double(0.0));
         }
 
+
         //get results from database
-        Query resultsQuery = mDatabase.child("results").orderByChild("networkProvider").equalTo(networkProvider);
+        Query resultsQuery = mDatabase.child("results").child(networkProvider);
         resultsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot singleSnapshot : dataSnapshot.getChildren()){
-                    Results curResult = singleSnapshot.getValue(Results.class);
+                for (DataSnapshot networkSnapshot : dataSnapshot.getChildren()) {
+                    Results curResult = networkSnapshot.getValue(Results.class);
+
                     locationResultsDict.get(curResult.getPlace()).add(curResult.getNetPerf());
                 }
 
-                for(String l: locationResultsDict.keySet()){
+                for (String l : locationResultsDict.keySet()) {
                     locationPerformance.put(l, getMeanPerformance(locationResultsDict.get(l)));
                 }
 
                 String betterLocation = getMaxKey(locationPerformance);
-                if(betterLocation.equals(currentLocation)){
+                if (betterLocation.equals(currentLocation)) {
                     betterLocation = "Nowhere else!";
                 }
+
                 TextView betterLocationTV = (TextView) getView().findViewById(R.id.betterLocationTV);
+                betterLocationTV.setText(betterLocation);
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {
@@ -274,6 +293,15 @@ public class ResultsFragment extends Fragment {
 
         progressTV.post(() -> progressTV.setText(progressText));
         progressBar.incrementProgressBy(progressIncrement);
+    }
+
+    private void showResults(){
+       Group progressGroup = (Group) getView().findViewById(R.id.progressGroup);
+       Group resultsGroup = (Group) getView().findViewById(R.id.resultsGroup);
+       getActivity().runOnUiThread(() -> {
+           progressGroup.setVisibility(View.INVISIBLE);
+           resultsGroup.setVisibility(View.VISIBLE);
+       });
     }
 
     public String getNetworkProvider() {

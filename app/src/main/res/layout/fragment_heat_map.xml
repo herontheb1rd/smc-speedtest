@@ -22,9 +22,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         map:liteMode="true"
-        map:cameraTargetLat="7.082788894235911"
-        map:cameraTargetLng="125.50813754841627"
-        map:cameraZoom="20"
+        map:cameraTargetLat="7.08389"
+        map:cameraTargetLng="125.50828"
+        map:cameraZoom="19"
         map:mapType="normal"
         tools:layout="@layout/fragment_heat_map" />
 
