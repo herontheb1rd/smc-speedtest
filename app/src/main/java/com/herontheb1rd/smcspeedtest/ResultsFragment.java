@@ -194,7 +194,7 @@ public class ResultsFragment extends Fragment {
                         Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
                         mDatabase.child("results").child(networkProvider).push().setValue(results);
 
-                        findBetterLocation(networkProvider, place);
+                        findBetterLocation(networkProvider, place, netPerf);
                         showResults();
                     }
 
@@ -235,18 +235,21 @@ public class ResultsFragment extends Fragment {
         return meanPerformance;
     }
 
-    private String getMaxKey(Map<String, Double> dict){
-        String betterLocation = "";
-        double maxValue = 0.0;
+    private String compareLocations(Map<String, Double> dict, NetPerf netPerf){
+        String betterLocation = "Nowhere else!";
+
+        double maxValue = netPerf.getDlspeed() + netPerf.getUlspeed() - netPerf.getLatency();
+
         for(String l: dict.keySet()){
             if(dict.get(l) > maxValue){
                 betterLocation = l;
                 maxValue = dict.get(l);
             }
         }
+
         return betterLocation;
     }
-    private void findBetterLocation(String networkProvider, String currentLocation){
+    private void findBetterLocation(String networkProvider, String currentLocation, NetPerf netPerf){
         Map<String, List<NetPerf>> locationResultsDict = new HashMap<>();
         Map<String, Double> locationPerformance = new HashMap<>();
 
@@ -271,7 +274,7 @@ public class ResultsFragment extends Fragment {
                     locationPerformance.put(l, getMeanPerformance(locationResultsDict.get(l)));
                 }
 
-                String betterLocation = getMaxKey(locationPerformance);
+                String betterLocation = compareLocations(locationPerformance, netPerf);
                 if (betterLocation.equals(currentLocation)) {
                     betterLocation = "Nowhere else!";
                 }
