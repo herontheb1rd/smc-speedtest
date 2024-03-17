@@ -159,9 +159,8 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         for(String s: locationDict.keySet()){
             Polygon p= map.addPolygon(new PolygonOptions()
                     .add(locationDict.get(s)));
-            p.setFillColor(0x00000000);
-            p.setStrokeColor(0xff000000);
-            p.setStrokeWidth(2.5f);
+            p.setFillColor(Color.LTGRAY);
+            p.setStrokeColor(Color.LTGRAY);
             mPolygonMap.put(s, p);
         }
     }
@@ -218,9 +217,9 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         for(String placeName: locationDict.keySet()){
             double curMean = locationMeanMap.get(placeName);
             if(curMean == 0.0){
-                //sets fill color to nothing and stroke color to black
-                mPolygonMap.get(placeName).setFillColor(0x00000000);
-                mPolygonMap.get(placeName).setStrokeColor(0xff000000);
+                //sets fill color to nothing and stroke color to gray
+                mPolygonMap.get(placeName).setFillColor(Color.LTGRAY);
+                mPolygonMap.get(placeName).setStrokeColor(Color.LTGRAY);
             }else{
                 int colorIndex = scaleResult(curMean, minResult, maxResult, 0, 9);
                 //changes color of polygon
@@ -232,9 +231,9 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     private void resetHeatMap(){
         for(Polygon p: mPolygonMap.values()){
-            //sets fill color to nothing and stroke color to black
-            p.setFillColor(0x00000000);
-            p.setStrokeColor(0xff000000);
+            //sets fill color to nothing and stroke color to transparent
+            p.setFillColor(Color.TRANSPARENT);
+            p.setStrokeColor(Color.TRANSPARENT);
         }
     }
 
