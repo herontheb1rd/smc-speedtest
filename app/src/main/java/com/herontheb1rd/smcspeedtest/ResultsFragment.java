@@ -160,7 +160,7 @@ public class ResultsFragment extends Fragment {
                     });
 
                     ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
-                        int latency = 10;
+                        int latency = 70;
                         //int latency = computeLatency(serverPtr);
                         updateProgress("Latency computed", 20);
                         displayResult(R.id.latencyResultTV, Integer.toString(latency));
@@ -192,7 +192,7 @@ public class ResultsFragment extends Fragment {
                         updateProgress("Test complete", 10);
 
                         Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
-                        mDatabase.child("results").child(networkProvider).push().setValue(results);
+                        //mDatabase.child("results").child(networkProvider).push().setValue(results);
 
                         findBetterLocation(networkProvider, place, netPerf);
                         showResults();
@@ -231,16 +231,18 @@ public class ResultsFragment extends Fragment {
             latencySum += n.getLatency();
         }
 
-        double meanPerformance = dlspeedSum/resultsSize + ulspeedSum/resultsSize - latencySum/resultsSize;
+        double meanPerformance = dlspeedSum/resultsSize * ulspeedSum/resultsSize / latencySum/resultsSize;
         return meanPerformance;
     }
 
     private String compareLocations(Map<String, Double> dict, NetPerf netPerf){
         String betterLocation = "Nowhere else!";
 
-        double maxValue = netPerf.getDlspeed() + netPerf.getUlspeed() - netPerf.getLatency();
+        double maxValue = netPerf.getDlspeed() * netPerf.getUlspeed() / netPerf.getLatency();
 
         for(String l: dict.keySet()){
+            Log.i("test", l);
+            Log.i("test", Double.toString(dict.get(l)));
             if(dict.get(l) > maxValue){
                 betterLocation = l;
                 maxValue = dict.get(l);
