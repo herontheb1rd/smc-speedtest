@@ -221,7 +221,14 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                 mPolygonMap.get(placeName).setFillColor(Color.LTGRAY);
                 mPolygonMap.get(placeName).setStrokeColor(Color.LTGRAY);
             }else{
-                int colorIndex = scaleResult(curMean, minResult, maxResult, 0, 9);
+                int colorIndex;
+                if(metric == 2){
+                    //for latency we want it to scale backwards, meaning lower is better
+                    //so this reverses it linearly
+                    colorIndex = scaleResult(maxResult-curMean+minResult, minResult, maxResult, 0, 9);
+                }else{
+                    colorIndex = scaleResult(curMean, minResult, maxResult, 0, 9);
+                }
                 //changes color of polygon
                 mPolygonMap.get(placeName).setFillColor(colorGradient[colorIndex]);
                 mPolygonMap.get(placeName).setStrokeColor(colorGradient[colorIndex]);
