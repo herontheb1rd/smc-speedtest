@@ -1,14 +1,17 @@
 package com.herontheb1rd.smcspeedtest;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,10 +20,11 @@ import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -34,11 +38,10 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener, OnMapReadyCallback {
     private DatabaseReference mDatabase;
@@ -52,11 +55,24 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         put("Garden", new LatLng[]{new LatLng(7.08512, 125.50841), new LatLng(7.08511, 125.50860), new LatLng(7.08467, 125.50860), new LatLng(7.08468, 125.50840)});
     }};
 
+    private final Map<String, LatLng> qrDict = new HashMap<String, LatLng>(){{
+        put("Library", new LatLng(7.08424, 125.50799));
+        put("Canteen", new LatLng( 7.08314, 125.50790));
+        put("Kiosk", new LatLng( 7.08350, 125.50799));
+        put("Airport", new LatLng( 7.08440, 125.50852));
+        put("ABD", new LatLng(7.08161, 125.508311));
+        put("Garden", new LatLng(7.084942, 125.508449));
+    }};
+
+
+
     //from here: https://gis.stackexchange.com/questions/246322/get-the-inverse-of-default-heat-map-gradient-in-google-maps-javascript-api
     //converted to rgba and then to hex
     private final int[] colorGradient = {0xff66ff00, 0xff93ff00, 0xffc1ff00, 0xffeeff00, 0xfff4e300, 0xfff9c600, 0xffffaa00, 0xffff7100, 0xffff3900, 0xffff0000};
 
-    private Map<String, Polygon> mPolygonMap = new HashMap<>();
+    private Map<String, Polygon> mPolygonDict = new HashMap<>();
+    private Map<String, MarkerOptions> mMarkerDict = new HashMap<>();
+
     private static String mNetworkProvider;
 
     public final Map<String, String> simOperators = new HashMap<String, String>() {{
@@ -114,10 +130,38 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         googleMap.getUiSettings().setMapToolbarEnabled(false);
 
         initPolygons(googleMap);
+        initMarkers(googleMap);
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {getFirebaseResults(metric);}
-    public void onNothingSelected(AdapterView<?> parent){}
+    public void onNothingSelected(AdapterView<?> parent){resetHeatMap();}
+
+    public BitmapDescriptor addTextOnMap(final LatLng location, final String text) {
+        final int fontSize = 12;
+        final int padding = 8;
+
+        final TextView textView = new TextView(getContext());
+        textView.setText(text);
+        textView.setTextSize(fontSize);
+
+        final Paint paintText = textView.getPaint();
+
+        final Rect boundsText = new Rect();
+        paintText.getTextBounds(text, 0, textView.length(), boundsText);
+        paintText.setTextAlign(Paint.Align.CENTER);
+
+        final Bitmap.Config conf = Bitmap.Config.ARGB_8888;
+        final Bitmap bmpText = Bitmap.createBitmap(boundsText.width() + 2
+                * 8, boundsText.height() + 2 * padding, conf);
+
+        final Canvas canvasText = new Canvas(bmpText);
+        paintText.setColor(Color.BLACK);
+
+        canvasText.drawText(text, canvasText.getWidth() / 2,
+                canvasText.getHeight() - padding - boundsText.bottom, paintText);
+
+        return BitmapDescriptorFactory.fromBitmap(bmpText);
+    }
 
     private void getFirebaseResults(int metric){
         //get results from database
@@ -161,7 +205,20 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                     .add(locationDict.get(s)));
             p.setFillColor(Color.LTGRAY);
             p.setStrokeColor(Color.LTGRAY);
-            mPolygonMap.put(s, p);
+            mPolygonDict.put(s, p);
+        }
+    }
+
+    private void initMarkers(GoogleMap map) {
+        for (String s : qrDict.keySet()) {
+            MarkerOptions m = new MarkerOptions().position(qrDict.get(s));
+            mMarkerDict.put(s, m);
+        }
+    }
+
+    private void displayMeanResults(Map<String, Double> locationMeanMap){
+        for(String l: qrDict.keySet()){
+            addTextOnMap(qrDict.get(l), Double.toString(locationMeanMap.get(l)));
         }
     }
 
@@ -218,8 +275,8 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
             double curMean = locationMeanMap.get(placeName);
             if(curMean == 0.0){
                 //sets fill color to nothing and stroke color to gray
-                mPolygonMap.get(placeName).setFillColor(Color.LTGRAY);
-                mPolygonMap.get(placeName).setStrokeColor(Color.LTGRAY);
+                mPolygonDict.get(placeName).setFillColor(Color.LTGRAY);
+                mPolygonDict.get(placeName).setStrokeColor(Color.LTGRAY);
             }else{
                 int colorIndex;
                 if(metric == 2){
@@ -230,14 +287,17 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                     colorIndex = scaleResult(curMean, minResult, maxResult, 0, 9);
                 }
                 //changes color of polygon
-                mPolygonMap.get(placeName).setFillColor(colorGradient[colorIndex]);
-                mPolygonMap.get(placeName).setStrokeColor(colorGradient[colorIndex]);
+                mPolygonDict.get(placeName).setFillColor(colorGradient[colorIndex]);
+                mPolygonDict.get(placeName).setStrokeColor(colorGradient[colorIndex]);
             }
         }
+
+        //display mean results
+        displayMeanResults(locationMeanMap);
     }
 
     private void resetHeatMap(){
-        for(Polygon p: mPolygonMap.values()){
+        for(Polygon p: mPolygonDict.values()){
             //sets fill color to nothing and stroke color to transparent
             p.setFillColor(Color.TRANSPARENT);
             p.setStrokeColor(Color.TRANSPARENT);
