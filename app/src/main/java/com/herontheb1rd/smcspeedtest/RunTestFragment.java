@@ -42,6 +42,7 @@ public class RunTestFragment extends Fragment {
     SharedPreferences prefs = null;
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
     private static boolean mQRValid = false;
+    private static boolean mRanOnce = false;
 
     public RunTestFragment(){
 
@@ -96,7 +97,18 @@ public class RunTestFragment extends Fragment {
                     .show();
         }
 
-        //checkIfAgreed(view);
+        //on a separate thread, check if the user's internet/location is on
+        //if it is, start the
+        new Thread(new Runnable(){
+            public void run(){
+                while(true){
+                    if(!mRanOnce && isConnected() && isLocationOn()){
+                        checkIfAgreed(view);
+                    }
+                    break;
+                }
+            }
+        }).start();
 
         //module install apis fix for google code scanner
         ModuleInstallClient moduleInstallClient = ModuleInstall.getClient(view.getContext());
@@ -127,6 +139,8 @@ public class RunTestFragment extends Fragment {
         }else{
             scanQRCode(view);
         }
+
+        if(!mRanOnce) mRanOnce = true;
     }
 
     private boolean isConnected(){
@@ -166,12 +180,6 @@ public class RunTestFragment extends Fragment {
 
 
     private void scanQRCode(View view){
-        Bundle result = new Bundle();
-        result.putString("bundleKey", "Library");
-        getParentFragmentManager().setFragmentResult("requestKey", result);
-        Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
-
-        /*
         GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
         .setBarcodeFormats(
                 Barcode.FORMAT_QR_CODE)
@@ -206,7 +214,7 @@ public class RunTestFragment extends Fragment {
                         getParentFragmentManager().setFragmentResult("requestKey", result);
                     }
                 });
-        */
+
     }
 
     @Override
