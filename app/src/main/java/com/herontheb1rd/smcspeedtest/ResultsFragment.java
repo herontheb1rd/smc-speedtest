@@ -192,7 +192,7 @@ public class ResultsFragment extends Fragment {
                         updateProgress("Test complete", 10);
 
                         Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
-                        //mDatabase.child("results").child(networkProvider).push().setValue(results);
+                        mDatabase.child("results").child(networkProvider).push().setValue(results);
 
                         findBetterLocation(networkProvider, place, netPerf);
                         showResults();
@@ -262,7 +262,8 @@ public class ResultsFragment extends Fragment {
 
 
         //get results from database
-        Query resultsQuery = mDatabase.child("results").child(networkProvider);
+        long twoHoursAgo = Calendar.getInstance().getTime().getTime() - (2*3600*1000);
+        Query resultsQuery = mDatabase.child("results").child(networkProvider).orderByChild("time").startAt(twoHoursAgo);
         resultsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

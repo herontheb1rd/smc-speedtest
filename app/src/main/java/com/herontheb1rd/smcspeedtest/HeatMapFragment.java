@@ -38,6 +38,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -165,7 +166,8 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
     private void getFirebaseResults(int metric){
         //get results from database
-        Query resultsRef = mDatabase.child("results").child(getNetworkProvider());
+        long twoHoursAgo = Calendar.getInstance().getTime().getTime() - (2*3600*1000);
+        Query resultsRef = mDatabase.child("results").child(getNetworkProvider()).orderByChild("time").startAt(twoHoursAgo);
         resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
