@@ -43,10 +43,8 @@ public class RunTestFragment extends Fragment {
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
     private static boolean mQRValid = false;
     private static boolean mRanOnce = false;
+    
 
-    public RunTestFragment(){
-
-    }
     ActivityResultLauncher<String[]> locationPermissionRequest =
             registerForActivityResult(new ActivityResultContracts
                             .RequestMultiplePermissions(), result -> {
@@ -98,13 +96,11 @@ public class RunTestFragment extends Fragment {
         }
 
         //on a separate thread, check if the user's internet/location is on
-        //if it is, start the
-        new Thread(new Runnable(){
-            public void run(){
-                while(true){
-                    if(!mRanOnce && isConnected() && isLocationOn()){
-                        checkIfAgreed(view);
-                    }
+        //if it is, start the qr test
+        new Thread(() -> {
+            while(!mRanOnce){
+                if(isConnected() && isLocationOn()){
+                    checkIfAgreed(view);
                     break;
                 }
             }
@@ -132,6 +128,7 @@ public class RunTestFragment extends Fragment {
                     .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it for our study.\n\nBy pressing Yes you agree to this data being collected. ")
                     .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                         prefs.edit().putBoolean("agreed", true).commit();
+                        if(!mRanOnce) mRanOnce = true;
                         scanQRCode(view);
                     })
                     .setNegativeButton(android.R.string.no, null)
@@ -139,8 +136,6 @@ public class RunTestFragment extends Fragment {
         }else{
             scanQRCode(view);
         }
-
-        if(!mRanOnce) mRanOnce = true;
     }
 
     private boolean isConnected(){
@@ -164,7 +159,7 @@ public class RunTestFragment extends Fragment {
 
     private boolean isLocationOn(){
         LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
-
+        Log.i("test", Boolean.toString(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)));
         return lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
