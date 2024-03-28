@@ -1,6 +1,3 @@
-//modified main code to return an object array of the results
-//instead of printing them to console
-
 #include <iostream>
 #include <map>
 #include <iomanip>
@@ -10,6 +7,8 @@
 #include <jni.h>
 #include <string>
 
+//main.cpp
+//Code by Heron Nalasa
 
 extern "C"
 JNIEXPORT jlong JNICALL

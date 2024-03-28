@@ -1,3 +1,6 @@
+//HeatMapFragment.java
+//Code by Heron Nalasa
+
 package com.herontheb1rd.smcspeedtest;
 
 import android.content.Context;

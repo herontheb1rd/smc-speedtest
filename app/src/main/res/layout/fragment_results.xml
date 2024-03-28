@@ -6,15 +6,63 @@
     android:layout_height="match_parent"
     tools:context=".ResultsFragment">
 
+    <View
+        android:id="@+id/downloadBackgroundView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="-8dp"
+        android:layout_marginTop="-8dp"
+        android:layout_marginEnd="-8dp"
+        android:layout_marginBottom="-8dp"
+        android:background="@drawable/result_background"
+        app:layout_constraintBottom_toBottomOf="@+id/downloadResultTV"
+        app:layout_constraintEnd_toEndOf="@+id/downloadUnitTV"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@+id/downloadResultTV"
+        app:layout_constraintTop_toTopOf="@+id/downloadLabelTV"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <View
+        android:id="@+id/uploadBackgroundView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="-8dp"
+        android:layout_marginTop="-8dp"
+        android:layout_marginEnd="-8dp"
+        android:layout_marginBottom="-8dp"
+        android:background="@drawable/result_background"
+        app:layout_constraintBottom_toBottomOf="@+id/uploadResultTV"
+        app:layout_constraintEnd_toEndOf="@+id/uploadUnitTV"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@+id/uploadResultTV"
+        app:layout_constraintTop_toTopOf="@+id/uploadLabelTV"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <View
+        android:id="@+id/latencyBackgroundView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="-8dp"
+        android:layout_marginTop="-8dp"
+        android:layout_marginEnd="-80dp"
+        android:layout_marginBottom="-8dp"
+        android:background="@drawable/result_background"
+        app:layout_constraintBottom_toBottomOf="@+id/latencyResultTV"
+        app:layout_constraintEnd_toEndOf="@+id/latencyUnitTV"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/latencyResultTV"
+        app:layout_constraintTop_toTopOf="@+id/latencyLabelTV"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/downloadLabelTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="-8dp"
+        android:fontFamily="@font/inter_medium"
         android:text="Download "
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="24sp"
-        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/downloadResultTV"
         app:layout_constraintStart_toStartOf="@+id/downloadResultTV" />
 
@@ -22,13 +70,14 @@
         android:id="@+id/downloadResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="---"
+        android:text="99.9"
         android:textAlignment="textStart"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
+
         android:textSize="48sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.10"
+        app:layout_constraintHorizontal_bias="0.08"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.30" />
@@ -37,22 +86,24 @@
         android:id="@+id/downloadUnitTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
         android:text="Mbps"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@+id/downloadResultTV"
-        app:layout_constraintTop_toTopOf="@+id/downloadResultTV" />
+        app:layout_constraintTop_toBottomOf="@+id/downloadLabelTV" />
 
 
     <TextView
         android:id="@+id/uploadLabelTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="-8dp"
+        android:fontFamily="@font/inter_medium"
         android:text="Upload"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="24sp"
-        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/uploadResultTV"
         app:layout_constraintStart_toStartOf="@+id/uploadResultTV" />
 
@@ -61,11 +112,11 @@
         android:id="@+id/uploadResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="---"
-        android:textColor="?attr/colorPrimary"
+        android:text="99.9"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="48sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.70"
+        app:layout_constraintHorizontal_bias="0.725"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/downloadResultTV" />
 
@@ -73,9 +124,10 @@
         android:id="@+id/uploadUnitTV"
         android:layout_width="54dp"
         android:layout_height="26dp"
-        android:layout_marginStart="5dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
         android:text="Mbps"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@+id/uploadResultTV"
         app:layout_constraintTop_toTopOf="@+id/uploadResultTV" />
@@ -84,10 +136,11 @@
         android:id="@+id/latencyLabelTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="-8dp"
+        android:fontFamily="@font/inter_medium"
         android:text="Latency "
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="24sp"
-        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/latencyResultTV"
         app:layout_constraintStart_toStartOf="@+id/latencyResultTV" />
 
@@ -95,12 +148,12 @@
         android:id="@+id/latencyResultTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="104dp"
-        android:text="---"
-        android:textColor="?attr/colorPrimary"
+        android:layout_marginTop="120dp"
+        android:text="99"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="48sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.40"
+        app:layout_constraintHorizontal_bias="0.35"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/uploadResultTV" />
 
@@ -108,9 +161,10 @@
         android:id="@+id/latencyUnitTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
         android:text="ms"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@+id/latencyResultTV"
         app:layout_constraintTop_toTopOf="@+id/latencyResultTV" />
@@ -123,7 +177,7 @@
         android:layout_marginEnd="20dp"
         android:text="Starting internet test"
         android:textAlignment="textStart"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="20sp"
         android:textStyle="normal"
         android:visibility="visible"
@@ -149,7 +203,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Better internet speed can be found at: "
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -163,7 +217,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="---"
-        android:textColor="?attr/colorPrimary"
+        android:textColor="?attr/colorOnSecondary"
         android:textSize="28sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -173,14 +227,14 @@
         android:id="@+id/progressGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="visible"
+        android:visibility="invisible"
         app:constraint_referenced_ids="progressBar, progressTV" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/resultsGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
+        android:visibility="visible"
         app:constraint_referenced_ids="downloadLabelTV, downloadResultTV, downloadUnitTV, uploadLabelTV, uploadResultTV, uploadUnitTV, latencyLabelTV,  latencyResultTV, latencyUnitTV, betterLocationLabelTV,betterLocationTV" />
 
 

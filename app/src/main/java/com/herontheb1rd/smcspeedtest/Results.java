@@ -1,5 +1,7 @@
-package com.herontheb1rd.smcspeedtest;
+//Results.java
+//Code by Heron Nalasa
 
+package com.herontheb1rd.smcspeedtest;
 
 public class Results {
     private long time;

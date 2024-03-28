@@ -1,3 +1,6 @@
+//SignalPerf.java
+//Code by Heron Nalasa
+
 package com.herontheb1rd.smcspeedtest;
 
 public class SignalPerf {

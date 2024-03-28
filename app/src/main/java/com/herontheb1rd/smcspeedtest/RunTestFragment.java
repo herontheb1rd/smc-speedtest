@@ -1,3 +1,6 @@
+//RunTestFragment.java
+//Code by Heron Nalasa
+
 package com.herontheb1rd.smcspeedtest;
 
 import static android.content.Context.MODE_PRIVATE;
