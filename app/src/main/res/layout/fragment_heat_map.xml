@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,38 +7,27 @@
     tools:context=".HeatMapFragment">
 
 
-    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:map="http://schemas.android.com/apk/res-auto"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
+    <fragment
         android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="96dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="32dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        map:liteMode="true"
-        map:cameraTargetLat="7.08389"
-        map:cameraTargetLng="125.50828"
-        map:cameraZoom="19"
-        map:mapType="normal"
-        tools:layout="@layout/fragment_heat_map" />
+        app:cameraTargetLat="7.08389"
+        app:cameraTargetLng="125.50828"
+        app:cameraZoom="19"
+        app:liteMode="true"
+        app:mapType="normal" />
 
     <Spinner
         android:id="@+id/metricSpinner"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        android:background="?attr/colorPrimary"
         android:minHeight="48dp"
-        android:spinnerMode="dialog"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.05" />
+        android:spinnerMode="dialog" />
 
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

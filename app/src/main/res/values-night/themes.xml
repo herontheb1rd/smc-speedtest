@@ -12,7 +12,10 @@
         <item name="colorSecondary">#1B1F2A</item>
         <item name="colorSecondaryVariant">#1E2330</item>
         <item name="colorOnSecondary">@color/white</item>
+        <!-- Tertiary brand color. -->
+        <item name="colorTertiary">#A6ADBD</item>
+        <item name="colorOnTertiary">@color/black</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor">?attr/colorSecondaryVariant</item>
     </style>
 </resources>
