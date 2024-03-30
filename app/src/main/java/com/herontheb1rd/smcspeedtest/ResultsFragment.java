@@ -239,7 +239,7 @@ public class ResultsFragment extends Fragment {
     }
 
     private String compareLocations(Map<String, Double> dict, NetPerf netPerf){
-        String betterLocation = "Nowhere else!";
+        String betterLocation = "None";
 
         double maxValue = netPerf.getDlspeed() * netPerf.getUlspeed() / netPerf.getLatency();
 
@@ -282,7 +282,7 @@ public class ResultsFragment extends Fragment {
 
                 String betterLocation = compareLocations(locationPerformance, netPerf);
                 if (betterLocation.equals(currentLocation)) {
-                    betterLocation = "Nowhere else!";
+                    betterLocation = "None";
                 }
 
                 TextView betterLocationTV = (TextView) getView().findViewById(R.id.betterLocationTV);

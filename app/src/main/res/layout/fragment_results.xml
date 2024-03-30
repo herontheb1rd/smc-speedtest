@@ -223,7 +223,7 @@
         android:layout_height="wrap_content"
         android:text="None"
         android:textColor="?attr/colorOnTertiary"
-        android:textSize="36sp"
+        android:textSize="32sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/betterLocationLabelTV"
         app:layout_constraintTop_toTopOf="parent"

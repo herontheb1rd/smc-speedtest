@@ -5,7 +5,7 @@
         <item name="android:colorBackground">#121212</item>
         <item name="colorOnBackground">@color/white</item>
         <!-- Primary brand color. -->
-        <item name="colorPrimary">#222222</item>
+        <item name="colorPrimary">#1B1F2A</item>
         <item name="colorPrimaryVariant">#1E1E1E</item>
         <item name="colorOnPrimary">@color/white</item>
         <!-- Secondary brand color. -->

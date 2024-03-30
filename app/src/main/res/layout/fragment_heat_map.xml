@@ -18,16 +18,22 @@
         app:liteMode="true"
         app:mapType="normal" />
 
-    <Spinner
-        android:id="@+id/metricSpinner"
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="32dp"
-        android:layout_marginTop="32dp"
-        android:background="?attr/colorPrimary"
-        android:minHeight="48dp"
-        android:spinnerMode="dialog" />
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/button_background">
+
+        <Spinner
+            android:id="@+id/metricSpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:minHeight="48dp"
+            android:spinnerMode="dialog" />
+    </RelativeLayout>
+
 
 </RelativeLayout>

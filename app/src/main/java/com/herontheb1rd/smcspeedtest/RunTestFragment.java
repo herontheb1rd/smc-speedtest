@@ -45,7 +45,7 @@ public class RunTestFragment extends Fragment {
     SharedPreferences prefs = null;
     private final String[] allowedLocations = {"Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden"};
     private static boolean mQRValid = false;
-    private static boolean mRanOnce = false;
+    private static boolean mRanOnce;
     
 
     ActivityResultLauncher<String[]> locationPermissionRequest =
@@ -80,6 +80,19 @@ public class RunTestFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
+
+
+        if(savedInstanceState == null) {
+            mRanOnce = false;
+        }else{
+            mRanOnce = savedInstanceState.getBoolean("ranOnce");
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putBoolean("ranOnce", mRanOnce);
+        super.onSaveInstanceState(savedInstanceState);
     }
 
 
@@ -87,6 +100,7 @@ public class RunTestFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_run_test, container, false);
+
 
         if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)){
@@ -97,6 +111,7 @@ public class RunTestFragment extends Fragment {
                     .setNegativeButton(android.R.string.no, null)
                     .show();
         }
+
 
         //on a separate thread, check if the user's internet/location is on
         //if it is, start the qr test
@@ -131,8 +146,20 @@ public class RunTestFragment extends Fragment {
                     .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it for our study.\n\nBy pressing Yes you agree to this data being collected. ")
                     .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                         prefs.edit().putBoolean("agreed", true).commit();
-                        if(!mRanOnce) mRanOnce = true;
-                        scanQRCode(view);
+
+                        boolean canUserRun = true;
+                        if(!isConnected()) {
+                            Toast.makeText(getActivity(), "Turn on your mobile data to continue",
+                                    Toast.LENGTH_SHORT).show();
+                            canUserRun = false;
+                        }
+                        if(!isLocationOn()){
+                            Toast.makeText(getActivity(), "Turn on your location to continue",
+                                    Toast.LENGTH_SHORT).show();
+                            canUserRun = false;
+                        }
+                        if(canUserRun)
+                            scanQRCode(view);
                     })
                     .setNegativeButton(android.R.string.no, null)
                     .show();
@@ -162,7 +189,6 @@ public class RunTestFragment extends Fragment {
 
     private boolean isLocationOn(){
         LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
-        Log.i("test", Boolean.toString(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)));
         return lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
@@ -188,18 +214,12 @@ public class RunTestFragment extends Fragment {
                 barcode -> {
                     mQRValid = true;
 
+                    if(!mRanOnce) {
+                        mRanOnce = true;
+                    }
+
                     String rawValue = barcode.getRawValue();
                     boolean isValidLocation = Arrays.asList(allowedLocations).contains(rawValue);
-                    if(!isConnected()) {
-                        Toast.makeText(getActivity(), "Turn on your mobile data to continue",
-                                Toast.LENGTH_SHORT).show();
-                        mQRValid = false;
-                    }
-                    if(!isLocationOn()){
-                        Toast.makeText(getActivity(), "Turn on your location to continue",
-                                Toast.LENGTH_SHORT).show();
-                        mQRValid = false;
-                    }
                     if(!isValidLocation){
                         Toast.makeText(getActivity(), "Invalid QR code",
                                 Toast.LENGTH_SHORT).show();
@@ -218,6 +238,10 @@ public class RunTestFragment extends Fragment {
     @Override
     public void onResume(){
         super.onResume();
+
+        //if the user has interacted *at least once* with anything else (e.g. nav drawer or failed test)
+        //then dont auto start it because it gets really annoying
+        mRanOnce = true;
 
         if(mQRValid){
             Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
