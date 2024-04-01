@@ -81,26 +81,12 @@ public class RunTestFragment extends Fragment {
 
         prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
 
-
-        if(savedInstanceState == null) {
-            mRanOnce = false;
-        }else{
-            mRanOnce = savedInstanceState.getBoolean("ranOnce");
-        }
     }
-
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putBoolean("ranOnce", mRanOnce);
-        super.onSaveInstanceState(savedInstanceState);
-    }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_run_test, container, false);
-
 
         if(ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)){
@@ -111,7 +97,6 @@ public class RunTestFragment extends Fragment {
                     .setNegativeButton(android.R.string.no, null)
                     .show();
         }
-
 
         //on a separate thread, check if the user's internet/location is on
         //if it is, start the qr test
@@ -231,7 +216,8 @@ public class RunTestFragment extends Fragment {
                         result.putString("bundleKey", rawValue);
                         getParentFragmentManager().setFragmentResult("requestKey", result);
                     }
-                });
+                }).addOnCanceledListener(()-> mRanOnce = true)
+        ;
 
     }
 

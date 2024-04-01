@@ -244,8 +244,6 @@ public class ResultsFragment extends Fragment {
         double maxValue = netPerf.getDlspeed() * netPerf.getUlspeed() / netPerf.getLatency();
 
         for(String l: dict.keySet()){
-            Log.i("test", l);
-            Log.i("test", Double.toString(dict.get(l)));
             if(dict.get(l) > maxValue){
                 betterLocation = l;
                 maxValue = dict.get(l);
