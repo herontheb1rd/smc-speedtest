@@ -22,6 +22,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -29,10 +30,10 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
 import com.google.android.gms.maps.model.PolygonOptions;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -49,6 +50,8 @@ import java.util.Objects;
 
 public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener, OnMapReadyCallback {
     private DatabaseReference mDatabase;
+    private FirebaseAuth mAuth;
+
     private ArrayList<Results> mResults = new ArrayList<>();
     private final Map<String, LatLng[]> locationDict = new HashMap<String, LatLng[]>() {{
         put("Library", new LatLng[]{new LatLng(7.08438, 125.50793), new LatLng(7.08438, 125.50808), new LatLng(7.08411, 125.50808), new LatLng(7.08411, 125.50793)});
@@ -103,6 +106,14 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
         mDatabase = FirebaseDatabase.getInstance("https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference();
+        mAuth = FirebaseAuth.getInstance();
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(getActivity(), task -> {
+                    if (!task.isSuccessful()) {
+                        Toast.makeText(getActivity(), "Firebase authentication failed. Map will not load.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Override
@@ -168,22 +179,24 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     }
 
     private void getFirebaseResults(int metric){
-        //get results from database
-        long twoHoursAgo = Calendar.getInstance().getTime().getTime() - (2*3600*1000);
-        Query resultsRef = mDatabase.child("results").child(getNetworkProvider()).orderByChild("time").startAt(twoHoursAgo);
-        resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for(DataSnapshot networkSnapshot : dataSnapshot.getChildren()){
-                    mResults.add(networkSnapshot.getValue(Results.class));
+        if(mAuth.getCurrentUser() != null){
+            //get results from database
+            long twoHoursAgo = Calendar.getInstance().getTime().getTime() - (2*3600*1000);
+            Query resultsRef = mDatabase.child("results").child(getNetworkProvider()).orderByChild("time").startAt(twoHoursAgo);
+            resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for(DataSnapshot networkSnapshot : dataSnapshot.getChildren()){
+                        mResults.add(networkSnapshot.getValue(Results.class));
+                    }
+                    updateHeatMap(metric);
                 }
-                updateHeatMap(metric);
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
 
-            }
-        });
+                }
+            });
+        }
     }
     
     //arduino's map function: https://www.arduino.cc/reference/en/language/functions/math/map/

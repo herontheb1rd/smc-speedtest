@@ -118,7 +118,7 @@ public class RunTestFragment extends Fragment {
                         .build();
         moduleInstallClient.installModules(moduleInstallRequest);
 
-        Button runTestB = (Button) view.findViewById(R.id.runTestB);
+        Button runTestB = view.findViewById(R.id.runTestB);
         runTestB.setOnClickListener(v -> checkIfAgreed(view));
 
         return view;
@@ -130,7 +130,7 @@ public class RunTestFragment extends Fragment {
                     .setTitle("User Agreement")
                     .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it for our study.\n\nBy pressing Yes you agree to this data being collected. ")
                     .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                        prefs.edit().putBoolean("agreed", true).commit();
+                        prefs.edit().putBoolean("agreed", true).apply();
 
                         boolean canUserRun = true;
                         if(!isConnected()) {
