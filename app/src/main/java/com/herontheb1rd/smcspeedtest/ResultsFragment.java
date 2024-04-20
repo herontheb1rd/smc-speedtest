@@ -110,32 +110,28 @@ public class ResultsFragment extends Fragment {
             ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(5));
 
             ListenableFuture<Long> serverInfoFuture = pool.submit(() -> {
-                long serverInfo = 10;
-                //long serverInfo = getServerInfo();
+                long serverInfo = getServerInfo();
                 updateProgress("Server info acquired", 10);
                 return serverInfo;
             });
 
             AsyncFunction<Long, NetPerf> asyncNetPerf = serverPtr -> {
                 ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
-                    double dlspeed = 10;
-                    //double dlspeed = computeDlspeed(serverPtr);
+                    double dlspeed = computeDlspeed(serverPtr);
                     updateProgress("Download speed computed", 30);
                     displayResult(R.id.downloadResultTV, String.format("%.1f", dlspeed));
                     return dlspeed;
                 });
 
                 ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
-                    double ulspeed = 10;
-                    //double ulspeed = computeUlspeed(serverPtr);
+                    double ulspeed = computeUlspeed(serverPtr);
                     updateProgress("Upload speed computed", 30);
                     displayResult(R.id.uploadResultTV, String.format("%.1f", ulspeed));
                     return ulspeed;
                 });
 
                 ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
-                    int latency = 70;
-                    //int latency = computeLatency(serverPtr);
+                    int latency = computeLatency(serverPtr);
                     updateProgress("Latency computed", 20);
                     displayResult(R.id.latencyResultTV, Integer.toString(latency));
                     return latency;
@@ -145,7 +141,7 @@ public class ResultsFragment extends Fragment {
                         .call(() -> {
                             NetPerf netPerf = new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
                                     Futures.getDone(latencyFuture));
-                            //freeServerPtr(serverPtr);
+                            freeServerPtr(serverPtr);
                             return netPerf;
                         }, pool);
                 return computeNetPerf;
@@ -158,10 +154,8 @@ public class ResultsFragment extends Fragment {
                 public void onSuccess(NetPerf netPerf) {
                     long time = Calendar.getInstance().getTime().getTime();
                     String phoneBrand = Build.MANUFACTURER;
-                    String networkProvider = "DITO";
-                    //String networkProvider = getNetworkProvider();
-                    SignalPerf signalPerf = new SignalPerf(10, 10, 10);
-                    //SignalPerf signalPerf = computeSignalPerf();
+                    String networkProvider = getNetworkProvider();
+                    SignalPerf signalPerf = computeSignalPerf();
 
                     updateProgress("Test complete", 10);
 
@@ -275,12 +269,12 @@ public class ResultsFragment extends Fragment {
     }
 
     private void showResults(){
-       Group progressGroup = (Group) getView().findViewById(R.id.progressGroup);
-       Group resultsGroup = (Group) getView().findViewById(R.id.resultsGroup);
-       getActivity().runOnUiThread(() -> {
-           progressGroup.setVisibility(View.INVISIBLE);
-           resultsGroup.setVisibility(View.VISIBLE);
-       });
+        Group progressGroup = (Group) getView().findViewById(R.id.progressGroup);
+        Group resultsGroup = (Group) getView().findViewById(R.id.resultsGroup);
+        getActivity().runOnUiThread(() -> {
+            progressGroup.setVisibility(View.INVISIBLE);
+            resultsGroup.setVisibility(View.VISIBLE);
+        });
     }
 
     public String getNetworkProvider() {

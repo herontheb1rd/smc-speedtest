@@ -124,6 +124,22 @@ public class RunTestFragment extends Fragment {
         return view;
     }
 
+    private boolean preQRCode(){
+        boolean canUserRun = true;
+        if(!isConnected()) {
+            Toast.makeText(getActivity(), "Turn on your mobile data to continue",
+                    Toast.LENGTH_SHORT).show();
+            canUserRun = false;
+        }
+        if(!isLocationOn()){
+            Toast.makeText(getActivity(), "Turn on your location to continue",
+                    Toast.LENGTH_SHORT).show();
+            canUserRun = false;
+        }
+
+        return canUserRun;
+    }
+
     private void checkIfAgreed(View view){
         if (prefs.getBoolean("agreed", false)) {
             new AlertDialog.Builder(getActivity())
@@ -132,24 +148,14 @@ public class RunTestFragment extends Fragment {
                     .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                         prefs.edit().putBoolean("agreed", true).apply();
 
-                        boolean canUserRun = true;
-                        if(!isConnected()) {
-                            Toast.makeText(getActivity(), "Turn on your mobile data to continue",
-                                    Toast.LENGTH_SHORT).show();
-                            canUserRun = false;
-                        }
-                        if(!isLocationOn()){
-                            Toast.makeText(getActivity(), "Turn on your location to continue",
-                                    Toast.LENGTH_SHORT).show();
-                            canUserRun = false;
-                        }
-                        if(canUserRun)
+                        if(preQRCode())
                             scanQRCode(view);
                     })
                     .setNegativeButton(android.R.string.no, null)
                     .show();
         }else{
-            scanQRCode(view);
+            if(preQRCode())
+                scanQRCode(view);
         }
     }
 
@@ -189,6 +195,7 @@ public class RunTestFragment extends Fragment {
 
 
     private void scanQRCode(View view){
+
         GmsBarcodeScannerOptions options = new GmsBarcodeScannerOptions.Builder()
         .setBarcodeFormats(
                 Barcode.FORMAT_QR_CODE)
@@ -216,9 +223,7 @@ public class RunTestFragment extends Fragment {
                         result.putString("bundleKey", rawValue);
                         getParentFragmentManager().setFragmentResult("requestKey", result);
                     }
-                }).addOnCanceledListener(()-> mRanOnce = true)
-        ;
-
+                }).addOnCanceledListener(()-> mRanOnce = true);
     }
 
     @Override
