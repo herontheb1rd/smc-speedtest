@@ -21,11 +21,11 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerInfo(JNIEnv *env, jo
     sp.setInsecure(true);
 
     if (!sp.ipInfo(ipInfo)){
-        //TODO: figure out how to throw an error without making app crash
+        return 0;
     }else {
         auto serverList = sp.serverList();
         if (serverList.empty()) {
-
+            return 0;
         } else {
             serverInfo = sp.bestServer(10, [](bool success) {});
         }
@@ -33,8 +33,8 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerInfo(JNIEnv *env, jo
 
     //allocates the server info to the heap to be accessed later
     //we're returning the memory address of a copy of the stored server info to java as a long
-    ServerInfo *serverCpy = (ServerInfo *)malloc(sizeof(ServerInfo));
-    memcpy(serverCpy, &serverInfo, sizeof(ServerInfo));
+    ServerInfo *serverCpy = (ServerInfo *)malloc(sizeof(serverInfo));
+    memcpy(serverCpy, &serverInfo, sizeof(serverInfo));
     unsigned long long serverPtr = (unsigned long long)serverCpy;
 
     return serverPtr;
@@ -100,6 +100,31 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, j
     }
     return latency;
 }
+
+
+//https://stackoverflow.com/questions/11621449/send-c-string-to-java-via-jni
+extern "C"
+JNIEXPORT jbyteArray JNICALL
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerURLBytes(JNIEnv *env, jclass thiz, jlong serverPtr) {
+    std::string url = "";
+
+    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    ServerInfo serverInfo = *((ServerInfo *)serverPtr);
+
+    sp.setInsecure(true);
+
+    if(sp.setServer(serverInfo)) {
+        url = serverInfo.url.c_str();
+    }
+
+    int byteCount = url.length();
+    jbyte* pNativeString = (jbyte*)(url.c_str());
+    jbyteArray bytes = env->NewByteArray(byteCount);
+    env->SetByteArrayRegion(bytes, 0, byteCount, pNativeString);
+
+    return bytes;
+}
+
 
 extern "C"
 JNIEXPORT void JNICALL

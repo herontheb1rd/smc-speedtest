@@ -168,7 +168,7 @@ public class RunTestFragment extends Fragment {
             if(currentNetwork == null)
                 return false;
             NetworkCapabilities caps = cm.getNetworkCapabilities(currentNetwork);
-            return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI);
+            return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
         }else{
             if(cm.getActiveNetworkInfo() != null){
                 return cm.getActiveNetworkInfo().isConnectedOrConnecting();

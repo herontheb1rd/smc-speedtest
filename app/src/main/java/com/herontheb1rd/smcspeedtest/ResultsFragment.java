@@ -43,6 +43,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -107,43 +108,88 @@ public class ResultsFragment extends Fragment {
             String place = bundle.getString("bundleKey");
 
             Executor executor = Executors.newSingleThreadExecutor();
-            ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(5));
+            ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(8));
 
             ListenableFuture<Long> serverInfoFuture = pool.submit(() -> {
+                Log.i("test", "getting server info");
                 long serverInfo = getServerInfo();
-                updateProgress("Server info acquired", 10);
+
+                if(serverInfo == 0) {
+                    updateProgress("Failed to get server info, returning.", 0);
+                    Log.i("test", "failed to get server info");
+                }else {
+                    updateProgress("Server info acquired", 10);
+                    Log.i("test", Long.toString(serverInfo));
+                }
                 return serverInfo;
             });
 
             AsyncFunction<Long, NetPerf> asyncNetPerf = serverPtr -> {
                 ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
+                    if(serverPtr == 0) {
+                        Log.i("test", "failed to connect to server");
+                        return -1d;
+                    }
+
+                    Log.i("test", "computing download speed");
                     double dlspeed = computeDlspeed(serverPtr);
+                    Log.i("test", Double.toString(dlspeed));
                     updateProgress("Download speed computed", 30);
-                    displayResult(R.id.downloadResultTV, String.format("%.1f", dlspeed));
                     return dlspeed;
                 });
 
                 ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
+                    if(serverPtr == 0) {
+                        Log.i("test", "failed to connect to server");
+                        return -1d;
+                    }
+
+                    Log.i("test", "computing upload speed");
                     double ulspeed = computeUlspeed(serverPtr);
+                    Log.i("test", Double.toString(ulspeed));
                     updateProgress("Upload speed computed", 30);
-                    displayResult(R.id.uploadResultTV, String.format("%.1f", ulspeed));
                     return ulspeed;
                 });
 
                 ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
+                    if(serverPtr == 0) {
+                        Log.i("test", "failed to connect to server");
+                        return -1;
+                    }
+
+                    Log.i("test", "computing latency");
                     int latency = computeLatency(serverPtr);
+                    Log.i("test", Integer.toString(latency));
                     updateProgress("Latency computed", 20);
-                    displayResult(R.id.latencyResultTV, Integer.toString(latency));
                     return latency;
                 });
 
-                ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
+                ListenableFuture<String> urlFuture = pool.submit(() -> {
+                    if(serverPtr == 0) {
+                        Log.i("test", "failed to connect to server");
+                        return "";
+                    }
+
+                    Log.i("test", "getting server url");
+                    String url = getServerURL(serverPtr);
+                    Log.i("test", url);
+                    return url;
+                });
+
+                ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture, urlFuture)
                         .call(() -> {
                             NetPerf netPerf = new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
-                                    Futures.getDone(latencyFuture));
+                                    Futures.getDone(latencyFuture), Futures.getDone(urlFuture));
+                            Log.i("test", "freeing memory");
                             freeServerPtr(serverPtr);
+
+                            //if dlspeed, ulspeed, or latency fail, it could just be the individual tests
+                            //but if we cant get the url then that means we failed to get the server entirely
+                            if(netPerf.getUrl() == ""){
+                                throw new Exception("Server info could not be acquired");
+                            }
                             return netPerf;
-                        }, pool);
+                        }, executor);
                 return computeNetPerf;
             };
 
@@ -155,14 +201,20 @@ public class ResultsFragment extends Fragment {
                     long time = Calendar.getInstance().getTime().getTime();
                     String phoneBrand = Build.MANUFACTURER;
                     String networkProvider = getNetworkProvider();
+
                     SignalPerf signalPerf = computeSignalPerf();
 
                     updateProgress("Test complete", 10);
+                    displayResult(R.id.downloadResultTV, String.format("%.1f", netPerf.getDlspeed()));
+                    displayResult(R.id.uploadResultTV, String.format("%.1f", netPerf.getUlspeed()));
+                    displayResult(R.id.latencyResultTV, Integer.toString(netPerf.getLatency()));
+
 
                     if(mAuth.getCurrentUser() != null){
                         Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
                         mDatabase.child("results").child(networkProvider).push().setValue(results);
                     }else{
+                        findBetterLocation(networkProvider, place, netPerf);
                         displayResult(R.id.betterLocationTV, "N/A");
                     }
 
@@ -171,11 +223,12 @@ public class ResultsFragment extends Fragment {
 
                 @Override
                 public void onFailure(Throwable t) {
-                    Toast.makeText(getActivity(), "Test failed to run properly. Please try again",
-                            Toast.LENGTH_SHORT).show();
+                    Log.i("test", t.getMessage());
+                    getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Test failed to run properly. Please try again",
+                            Toast.LENGTH_SHORT).show());
                     Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
                 }
-            }, pool);
+            }, executor);
         });
 
         return view;
@@ -329,6 +382,7 @@ public class ResultsFragment extends Fragment {
     }
 
     private void displayResult(int id, String resultStr){
+        if(resultStr == "-1") resultStr = "N/A";
         ((TextView) getView().findViewById(id)).setText(resultStr);
     }
 
@@ -336,5 +390,10 @@ public class ResultsFragment extends Fragment {
     public native double computeDlspeed(long serverPtr);
     public native double computeUlspeed(long serverPtr);
     public native int computeLatency(long serverPtr);
+    private static String getServerURL(long serverPtr)
+    {
+        return new String(getServerURLBytes(serverPtr), Charset.forName("UTF-8"));
+    }
+    private static native byte[] getServerURLBytes(long serverPtr);
     public native void freeServerPtr(long serverPtr);
 }
