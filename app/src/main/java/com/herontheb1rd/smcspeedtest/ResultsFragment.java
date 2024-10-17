@@ -10,14 +10,18 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.Group;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.navigation.Navigation;
 
 
+import android.provider.Settings;
 import android.telephony.CellInfoLte;
 import android.telephony.CellSignalStrengthLte;
+import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -41,6 +45,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
 import java.nio.charset.Charset;
@@ -95,6 +100,25 @@ public class ResultsFragment extends Fragment {
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
+
+        //check if user has data in scoreboard
+        //if not, set default values
+        mDatabase.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String UID = getUID();
+                if(!snapshot.child("scoreboard").child(UID).exists()){
+                    mDatabase.child("username").child(UID).setValue(UID);
+                    mDatabase.child("score").child(UID).setValue(0);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
     }
 
 
@@ -104,6 +128,7 @@ public class ResultsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
 
+        /*
         getParentFragmentManager().setFragmentResultListener("requestKey", this, (requestKey, bundle) -> {
             String place = bundle.getString("bundleKey");
 
@@ -229,11 +254,69 @@ public class ResultsFragment extends Fragment {
                     Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
                 }
             }, executor);
+        });*/
+
+
+        getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
+                String placeName = bundle.getString("bundleKey");
+                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
+                ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
+
+                //speed test takes longer than other processes and causes program to hang
+                //running this in the background to prevent it
+                //then running other processes synchronously
+                Futures.addCallback(netperfFuture, new FutureCallback<NetPerf>() {
+                    @Override
+                    public void onSuccess(NetPerf netPerf) {
+                        SignalPerf signalPerf = computeSignalPerf();
+                        long time = Calendar.getInstance().getTime().getTime();
+                        String networkProvider = getNetworkProvider();
+                        String phoneBrand = Build.MANUFACTURER;
+                        String UID = getUID();
+                        updateProgress("Test finished", 10);
+
+                        Results results = new Results(time, networkProvider, phoneBrand, placeName, netPerf, signalPerf);
+                        displayResult(R.id.downloadResultTV, String.format("%.1f", netPerf.getDlspeed()));
+                        displayResult(R.id.uploadResultTV, String.format("%.1f", netPerf.getUlspeed()));
+                        displayResult(R.id.latencyResultTV, Integer.toString(netPerf.getLatency()));
+
+                        showResults();
+
+                        if (mAuth.getCurrentUser() != null) {
+                            mDatabase.child("results").child(networkProvider).push().setValue(results);
+
+                            mDatabase.child("scoreboard").child(UID).child("score").setValue(ServerValue.increment(1));
+                        } else {
+                            findBetterLocation(networkProvider, placeName, netPerf);
+                            //displayResult(R.id.betterLocationTV, "N/A");
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        //TODO: Write failure handling code
+                    }
+                }, Executors.newSingleThreadExecutor());
+
+
+            }
         });
+
 
         return view;
     }
 
+    private String getUID() {
+        //UID is the phone's Android ID
+        //this removes the need for permissions for READ_PHONE_STATE
+        //and is still unique to each phone
+
+        String UID = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+
+        return UID;
+    }
     private double getMeanPerformance(List<NetPerf> resultList){
         //"performance" is dlspeed + ulspeed - latency
         //there might be better methods but this is a lazy way of implementing it i suppose
@@ -348,22 +431,22 @@ public class ResultsFragment extends Fragment {
 
         TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(getActivity(), "Location access not granted. Skipping signal data collection",
-                    Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(), "Location access not granted. Skipping signal data collection",
+            //        Toast.LENGTH_SHORT).show();
 
             return new SignalPerf(rssi, rsrq, rsrp);
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            Toast.makeText(getActivity(), "Phone model too old to retrieve signal info",
-                    Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(), "Phone model too old to retrieve signal info",
+            //        Toast.LENGTH_SHORT).show();
 
             return new SignalPerf(rssi, rsrq, rsrp);
         }
 
         LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
         if(!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Toast.makeText(getActivity(), "Location turned off. Signal data cannot be retrieved",
-                    Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity(), "Location turned off. Signal data cannot be retrieved",
+            //        Toast.LENGTH_SHORT).show();
 
             return new SignalPerf(rssi, rsrq, rsrp);
         }
@@ -386,6 +469,7 @@ public class ResultsFragment extends Fragment {
         ((TextView) getView().findViewById(id)).setText(resultStr);
     }
 
+    public native NetPerf runSpeedtest();
     public native long getServerInfo();
     public native double computeDlspeed(long serverPtr);
     public native double computeUlspeed(long serverPtr);

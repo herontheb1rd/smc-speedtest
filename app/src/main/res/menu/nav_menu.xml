@@ -10,4 +10,16 @@
         android:enabled="true"
         android:checkable="true"
         android:title="Heat Map" />
+
+    <item
+        android:id="@+id/profileFragment"
+        android:enabled="true"
+        android:checkable="true"
+        android:title="Profile" />
+
+    <item
+        android:id="@+id/scoreboardFragment"
+        android:enabled="true"
+        android:checkable="true"
+        android:title="Scoreboard" />
 </menu>

@@ -198,11 +198,14 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginEnd="20dp"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.45" />
+        app:layout_constraintVertical_bias="0.196"
+        tools:visibility="invisible" />
 
     <TextView
         android:id="@+id/betterLocationLabelTV"
@@ -233,15 +236,212 @@
         android:id="@+id/progressGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="visible"
-        app:constraint_referenced_ids="progressBar, progressTV" />
+        android:visibility="gone"
+        app:constraint_referenced_ids="progressTV, progressBar" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/resultsGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:visibility="invisible"
+        android:visibility="gone"
         app:constraint_referenced_ids="downloadBackgroundView, uploadBackgroundView, latencyBackgroundView, locationBackgroundView, downloadLabelTV, downloadResultTV, downloadUnitTV, uploadLabelTV, uploadResultTV, uploadUnitTV, latencyLabelTV,  latencyResultTV, latencyUnitTV, betterLocationLabelTV,betterLocationTV" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/newProgressGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        app:constraint_referenced_ids="downloadProgressTV, uploadProgressTV, latencyProgressTV, completeProgressTV, progressNumberTV, divider1, divider2, divider3" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/newResultsGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="visible"
+        app:constraint_referenced_ids= "downloadSpeedTV, uploadSpeedTV, latencyTV, suggestionTV, divider4, divider5, divider6" />
+    <TextView
+        android:id="@+id/downloadProgressTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.25"
+        android:fontFamily="@font/inter_medium"
+        android:text="Measuring download speed"
+        android:textSize="22sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.25"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.10" />
+
+    <View
+        android:id="@+id/divider1"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/uploadProgressTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/downloadProgressTV" />
+
+    <TextView
+        android:id="@+id/uploadProgressTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:alpha="0.25"
+        android:fontFamily="@font/inter_medium"
+        android:text="Measuring upload speed"
+        android:textSize="22sp"
+        app:layout_constraintStart_toStartOf="@+id/downloadProgressTV"
+        app:layout_constraintTop_toBottomOf="@+id/downloadProgressTV" />
+
+    <View
+        android:id="@+id/divider2"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/latencyProgressTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/uploadProgressTV" />
+
+    <TextView
+        android:id="@+id/latencyProgressTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:alpha="0.25"
+        android:fontFamily="@font/inter_medium"
+        android:text="Measuring latency"
+        android:textSize="22sp"
+        app:layout_constraintStart_toStartOf="@+id/uploadProgressTV"
+        app:layout_constraintTop_toBottomOf="@+id/uploadProgressTV"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <View
+        android:id="@+id/divider3"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/completeProgressTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/latencyProgressTV" />
+
+    <TextView
+        android:id="@+id/completeProgressTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="Complete"
+        android:fontFamily="@font/inter_medium"
+        android:textSize="22sp"
+        android:textColor="?attr/colorOnSecondary"
+        app:layout_constraintStart_toStartOf="@+id/latencyProgressTV"
+        app:layout_constraintTop_toBottomOf="@+id/latencyProgressTV"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/progressNumberTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text="100%"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="120sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <TextView
+        android:id="@+id/downloadSpeedTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text="100 Mbps"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="72sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.35"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.30" />
+
+    <View
+        android:id="@+id/divider4"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/uploadSpeedTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/downloadSpeedTV" />
+
+    <TextView
+        android:id="@+id/uploadSpeedTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="100 Mbps"
+        android:fontFamily="@font/inter_medium"
+        android:textSize="72sp"
+        android:textColor="?attr/colorOnSecondary"
+        app:layout_constraintStart_toStartOf="@+id/downloadSpeedTV"
+        app:layout_constraintTop_toBottomOf="@+id/downloadSpeedTV" />
+
+    <View
+        android:id="@+id/divider5"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/latencyTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/uploadSpeedTV" />
+
+    <TextView
+        android:id="@+id/latencyTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:text="100 ms"
+        android:fontFamily="@font/inter_medium"
+        android:textSize="72sp"
+        android:textColor="?attr/colorOnSecondary"
+        app:layout_constraintStart_toStartOf="@+id/uploadSpeedTV"
+        app:layout_constraintTop_toBottomOf="@+id/uploadSpeedTV" />
+
+    <View
+        android:id="@+id/divider6"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/suggestionTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/latencyTV" />
+
+    <TextView
+        android:id="@+id/suggestionTV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginEnd="30dp"
+        android:alpha="0.8"
+        android:fontFamily="@font/inter_medium"
+        android:paddingTop="10dp"
+        android:text="The Library (probably) has a better connection"
+        android:textAlignment="gravity"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/latencyTV"
+        app:layout_constraintTop_toBottomOf="@+id/latencyTV" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

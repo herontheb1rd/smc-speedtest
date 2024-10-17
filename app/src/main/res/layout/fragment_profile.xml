@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ProfileFragment">
+
+
+    <TextView
+        android:id="@+id/usernameTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text="Heron"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="60sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.15"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.3" />
+
+    <View
+        android:id="@+id/divider1"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/scoreTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/scoreTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
+        android:fontFamily="@font/inter_medium"
+        android:text="Score"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="@+id/usernameTV"
+        app:layout_constraintTop_toBottomOf="@+id/usernameTV" />
+
+
+    <TextView
+        android:id="@+id/scoreLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text="10"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="72sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.833"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/scoreTV" />
+
+    <View
+        android:id="@+id/divider2"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/rankLabelTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/scoreLabelTV" />
+
+    <TextView
+        android:id="@+id/rankTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:fontFamily="@font/inter_medium"
+        android:text="Rank"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="@+id/scoreTV"
+        app:layout_constraintTop_toBottomOf="@+id/scoreLabelTV" />
+
+    <TextView
+        android:id="@+id/rankLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text="1"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="72sp"
+        app:layout_constraintEnd_toEndOf="@+id/scoreLabelTV"
+        app:layout_constraintTop_toTopOf="@+id/rankTV" />
+</androidx.constraintlayout.widget.ConstraintLayout>

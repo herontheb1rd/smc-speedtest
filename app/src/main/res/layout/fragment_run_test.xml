@@ -30,7 +30,7 @@
         app:layout_constraintVertical_bias="0.495" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/descTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Scan a QR Code to begin measuring.\nMake sure your mobile data is on."
@@ -43,6 +43,86 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/runTestB"
         app:layout_constraintVertical_bias="0.05" />
+
+    <com.journeyapps.barcodescanner.DecoratedBarcodeView
+        android:id="@+id/barcode_scanner"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/connectedTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/runTestGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:constraint_referenced_ids="runTestB, descTV"/>
+
+    <TextView
+        android:id="@+id/connectedTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text="Connected to server"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.15"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.75" />
+
+
+    <View
+        android:id="@+id/divider1"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/locationTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/connectedTV" />
+
+    <TextView
+        android:id="@+id/locationTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text="Turn on your location"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        android:alpha="0.2"
+        app:layout_constraintStart_toStartOf="@+id/connectedTV"
+        app:layout_constraintTop_toBottomOf="@+id/connectedTV" />
+
+    <View
+        android:id="@+id/divider2"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/dataTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/locationTV" />
+    <TextView
+        android:id="@+id/dataTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text="Turn on your mobile data"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        android:alpha="0.2"
+        app:layout_constraintStart_toStartOf="@+id/locationTV"
+        app:layout_constraintTop_toBottomOf="@+id/locationTV" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -28,5 +28,15 @@
         android:name="com.herontheb1rd.smcspeedtest.HeatMapFragment"
         android:label="Heat Map"
         tools:layout="@layout/fragment_heat_map" />
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.herontheb1rd.smcspeedtest.ProfileFragment"
+        android:label="fragment_profile"
+        tools:layout="@layout/fragment_profile" />
+    <fragment
+        android:id="@+id/scoreboardFragment"
+        android:name="com.herontheb1rd.smcspeedtest.ScoreboardFragment"
+        android:label="fragment_scoreboard"
+        tools:layout="@layout/fragment_scoreboard" />
 
 </navigation>
