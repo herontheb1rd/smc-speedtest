@@ -7,11 +7,6 @@
 #include <jni.h>
 #include <string>
 
-//main.cpp
-//Code by Heron Nalasa
-
-
-//TODO: add error handling if test failed
 extern "C"
 JNIEXPORT jobject JNICALL
 Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, jobject thiz) {
@@ -76,36 +71,6 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_runSpeedtest(JNIEnv *env, job
     jobject resultsObj = env->NewObject(c, cid, dlspeed, ulspeed, latency);
 
     return resultsObj;
-}
-
-extern "C"
-JNIEXPORT jlong JNICALL
-Java_com_herontheb1rd_smcspeedtest_ResultsFragment_getServerInfo(JNIEnv *env, jobject thiz) {
-    signal(SIGPIPE, SIG_IGN);
-    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
-    IPInfo ipInfo;
-    ServerInfo serverInfo;
-
-    sp.setInsecure(true);
-
-    if (!sp.ipInfo(ipInfo)){
-        return 0;
-    }else {
-        auto serverList = sp.serverList();
-        if (serverList.empty()) {
-            return 0;
-        } else {
-            serverInfo = sp.bestServer(10, [](bool success) {});
-        }
-    }
-
-    //allocates the server info to the heap to be accessed later
-    //we're returning the memory address of a copy of the stored server info to java as a long
-    ServerInfo *serverCpy = (ServerInfo *)malloc(sizeof(serverInfo));
-    memcpy(serverCpy, &serverInfo, sizeof(serverInfo));
-    unsigned long long serverPtr = (unsigned long long)serverCpy;
-
-    return serverPtr;
 }
 
 extern "C"

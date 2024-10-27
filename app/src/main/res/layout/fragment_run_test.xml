@@ -45,9 +45,13 @@
         app:layout_constraintVertical_bias="0.05" />
 
     <com.journeyapps.barcodescanner.DecoratedBarcodeView
-        android:id="@+id/barcode_scanner"
+        android:id="@+id/barcodeScanner"
         android:layout_width="match_parent"
         android:layout_height="500dp"
+        app:zxing_framing_rect_width="200dp"
+        app:zxing_framing_rect_height="200dp"
+        app:zxing_preview_scaling_strategy="fitXY"
+        app:zxing_use_texture_view="false"
         android:layout_alignParentTop="true"
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
@@ -56,7 +60,7 @@
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.5" />
+        app:layout_constraintVertical_bias="0.4" />
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/runTestGroup"
@@ -65,20 +69,30 @@
         android:visibility="gone"
         app:constraint_referenced_ids="runTestB, descTV"/>
 
+    <View
+        android:id="@+id/divider0"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintBottom_toTopOf="@+id/connectedTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <TextView
         android:id="@+id/connectedTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/inter_medium"
-        android:text="Connected to server"
+        android:text="Connecting to server"
         android:textColor="?attr/colorOnSecondary"
         android:textSize="24sp"
+        android:alpha="0.2"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.15"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.75" />
+        app:layout_constraintVertical_bias="0.80" />
 
 
     <View

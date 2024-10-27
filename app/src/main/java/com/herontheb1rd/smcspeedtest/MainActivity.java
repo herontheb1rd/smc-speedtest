@@ -23,6 +23,7 @@ import com.herontheb1rd.smcspeedtest.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding binding;
+    private ServerInfo mServerInfo;
     AppBarConfiguration appBarConfiguration;
 
 
@@ -50,6 +51,16 @@ public class MainActivity extends AppCompatActivity {
         NavigationView navView = findViewById(R.id.nav_view);
         NavigationUI.setupWithNavController(navView, navController);
 
+        mServerInfo = null;
+
+    }
+
+    public ServerInfo getServerInfo(){
+        return this.mServerInfo;
+    }
+
+    public void setServerInfo(ServerInfo serverInfo){
+        this.mServerInfo = serverInfo;
     }
 
     @Override

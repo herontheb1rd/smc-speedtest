@@ -128,6 +128,9 @@ public class ResultsFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
 
+        ServerInfo serverInfo = getStoredServerInfo();
+        Log.i("testRF", "YO!");
+        Log.i("testRF", serverInfo.name);
         /*
         getParentFragmentManager().setFragmentResultListener("requestKey", this, (requestKey, bundle) -> {
             String place = bundle.getString("bundleKey");
@@ -254,7 +257,7 @@ public class ResultsFragment extends Fragment {
                     Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
                 }
             }, executor);
-        });*/
+        });
 
 
         getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
@@ -296,7 +299,7 @@ public class ResultsFragment extends Fragment {
 
                     @Override
                     public void onFailure(Throwable t) {
-                        //TODO: Write failure handling code
+
                     }
                 }, Executors.newSingleThreadExecutor());
 
@@ -304,8 +307,16 @@ public class ResultsFragment extends Fragment {
             }
         });
 
-
+        */
         return view;
+    }
+
+    private ServerInfo getStoredServerInfo(){
+        return ((MainActivity) getContext()).getServerInfo();
+    }
+
+    private void setStoredServerInfo(ServerInfo serverInfo){
+        ((MainActivity) getContext()).setServerInfo(serverInfo);
     }
 
     private String getUID() {
@@ -470,14 +481,7 @@ public class ResultsFragment extends Fragment {
     }
 
     public native NetPerf runSpeedtest();
-    public native long getServerInfo();
     public native double computeDlspeed(long serverPtr);
     public native double computeUlspeed(long serverPtr);
     public native int computeLatency(long serverPtr);
-    private static String getServerURL(long serverPtr)
-    {
-        return new String(getServerURLBytes(serverPtr), Charset.forName("UTF-8"));
-    }
-    private static native byte[] getServerURLBytes(long serverPtr);
-    public native void freeServerPtr(long serverPtr);
 }
