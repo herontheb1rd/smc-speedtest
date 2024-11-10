@@ -52,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navView, navController);
 
         mServerInfo = null;
-
     }
 
     public ServerInfo getServerInfo(){

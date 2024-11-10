@@ -31,12 +31,12 @@
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.herontheb1rd.smcspeedtest.ProfileFragment"
-        android:label="fragment_profile"
+        android:label="Profile"
         tools:layout="@layout/fragment_profile" />
     <fragment
         android:id="@+id/scoreboardFragment"
         android:name="com.herontheb1rd.smcspeedtest.ScoreboardFragment"
-        android:label="fragment_scoreboard"
+        android:label="Scoreboard"
         tools:layout="@layout/fragment_scoreboard" />
 
 </navigation>

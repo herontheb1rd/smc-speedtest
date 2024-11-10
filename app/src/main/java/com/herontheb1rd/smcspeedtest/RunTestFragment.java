@@ -2,7 +2,11 @@ package com.herontheb1rd.smcspeedtest;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
@@ -18,17 +22,17 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import android.text.InputFilter;
+import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 
 import com.google.zxing.BarcodeFormat;
 import com.journeyapps.barcodescanner.BarcodeCallback;
@@ -41,29 +45,68 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class RunTestFragment extends Fragment {
     SharedPreferences prefs = null;
     private final Set<String> allowedLocations = Sets.newHashSet("Library", "Kiosks", "Canteen", "ABD", "Garden", "Airport");
     private DecoratedBarcodeView barcodeScannerView;
-    private String mScanResult = "";
-    private final int MAX_TRIES = 3;
-    ActivityResultLauncher<String[]> locationPermissionRequest =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {});
+    AtomicBoolean isServerConnected = new AtomicBoolean(false);
+
+    BroadcastReceiver dataLocationReceiver;
+    IntentFilter dataFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
+    IntentFilter locationFilter = new IntentFilter("android.location.PROVIDERS_CHANGED");
+
+
+    ActivityResultLauncher<String[]> permissionRequest =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                Log.i("test - camera", Boolean.toString(checkCameraPermission()));
+                Log.i("test - location", Boolean.toString(checkLocationPermission()));
+                Log.i("test - user", Boolean.toString(checkUserPermission()));
+
+                if(checkPermissions()){
+                    View view = getView();
+                    if(view != null)
+                        updateEverything(view);
+                }
+            });
+
 
     private final BarcodeCallback callback = result -> {
-        if(result.getText() == null) {
+        String scanResult = result.getText();
+        if(scanResult == null) {
             return;
         }
-        mScanResult = result.getText();
+
+        if(!scanResult.equals("") && allowedLocations.contains(scanResult)){
+            successScan();
+            goToResultsFragment(scanResult);
+        }else{
+            invalidScan();
+        }
     };
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        getActivity().registerReceiver(dataLocationReceiver, dataFilter);
+        getActivity().registerReceiver(dataLocationReceiver, locationFilter);
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
+
+        dataLocationReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                View view = getView();
+
+                updateEverything(view);
+            }
+        };
     }
 
     @Override
@@ -76,165 +119,132 @@ public class RunTestFragment extends Fragment {
         Collection<BarcodeFormat> formats = Arrays.asList(BarcodeFormat.QR_CODE, BarcodeFormat.CODE_39);
         barcodeScannerView.getBarcodeView().setDecoderFactory(new DefaultDecoderFactory(formats));
 
-        //used for checking whether we've connected to a server
-        AtomicBoolean isServerConnected = new AtomicBoolean(false);
-        //used to store the connected server info
-        //we could remove this altogether and just store it in the main activity
-        //but i'd like to be redundant
-        AtomicReference<ServerInfo> serverInfo = new AtomicReference<>(null);
-
-        //on start:
-        //  1) send user agreement
-        //  2) ask for location permissions
-        //  3) stop the scan (in case we havent)
-        checkIfAgreed();
-        askLocationPermission();
         stopScan();
+        setUsernameOnFirstLaunch();
+        askPermissions();
+        updateEverything(view);
 
-        //tries to connect to a server for internet testing
-        //if we have a connected server (i.e. we just connected to a server), then we can skip everything
-        //if we haven't, run the following loop:
-        //  1) wait until the user's internet is on
-        //  2) if it is, try to connect to the server
-        //  3) try thrice until successful
-        ListeningExecutorService serverListeningExecService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-        ListenableFuture<Integer> serverInfoFuture = serverListeningExecService.submit(() -> {
-            if(getStoredServerInfo() != null){
-                getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
-                isServerConnected.set(true);
-                serverInfo.set(getStoredServerInfo());
-                return 0;
-            }
-            
-            while (true) {
-                if (isConnected()) {
-                    ServerInfo result;
+        barcodeScannerView.setOnClickListener(new View.OnClickListener(){
 
-                    for (int i = 0; i < MAX_TRIES; i++) {
-                        result = getServerInfo();
-                        if (result.name.equals("ipInfo")) {
-                            getActivity().runOnUiThread(() -> displayIpInfoFailed(view));
-                        } else if (result.name.equals("serverList")) {
-                            getActivity().runOnUiThread(() -> displayServerListFailed(view));
-                        } else {
-                            getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
-                            isServerConnected.set(true);
-                            serverInfo.set(result);
-                            setStoredServerInfo(result);
-                            return 0;
-                        }
-                    }
-
-                    displayServerConnectionFailed(view);
-
-                    return 0;
-                }
+            @Override
+            public void onClick(View view) {
+                if(!checkPermissions())
+                    askPermissions();
             }
         });
-
-        //thread for starting the qr code
-        //checks the following:
-        //  1) checks if the location is on
-        //  2) checks if the data is on
-        //  3) checks if we have connected to a server
-        //if 1, 2, and 3 are good, then we start the QR code
-        //it also updates the display for these three
-        //after the qr code, it transitions to the next screen
-
-        ListeningExecutorService qrListeningExecService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-        ListenableFuture<Integer> qrFuture = qrListeningExecService.submit(() -> {
-            //because we update the display when the location is on/off, its better to only call the display update once
-            boolean readyToRun = false;
-            boolean hadLocOn = false;
-            boolean hadDataOn = false;
-
-            //these are so we only have to run the functions once per loop
-            boolean locationOn, dataOn;
-
-            while(true){
-                locationOn = isLocationOn();
-                dataOn = isConnected();
-
-                //check if location is on/off, then update display
-                if(locationOn){
-                    if(!hadLocOn){
-                        getActivity().runOnUiThread(() -> displayLocationOn(view));
-                        hadLocOn = true;
-                    }
-                }else{
-                    if(hadLocOn){
-                        getActivity().runOnUiThread(() -> displayLocationOff(view));
-                        hadLocOn = false;
-                    }
-                }
-
-                //check if mobile data is on/off, then update display
-                if(dataOn){
-                    if(!hadDataOn){
-                        getActivity().runOnUiThread(() -> displayDataOn(view));
-                        getActivity().runOnUiThread(() ->displayCantConnectServer(view));
-                        hadDataOn = true;
-                    }
-                }else{
-                    if(hadDataOn){
-                        getActivity().runOnUiThread(() -> displayDataOff(view));
-                        hadDataOn = false;
-                    }
-                }
-
-
-                //checks if location, mobile data are on, AND if we connected to a server
-                if(locationOn && dataOn && isServerConnected.get()){
-                    if(!readyToRun) {
-                        readyToRun = true;
-
-                        boolean userAgreed = checkIfAgreed();
-                        boolean locationAgreed = askLocationPermission();
-                        if(userAgreed && locationAgreed) {
-                            getActivity().runOnUiThread(this::startScan);
-                        }else{
-                            if(!userAgreed){
-                                Toast.makeText(getActivity(), "Test won't run unless you agree to user agreement", Toast.LENGTH_LONG).show();
-                            }
-
-                            if(!locationAgreed){
-                                Toast.makeText(getActivity(), "Test won't run unless you allow location permissions", Toast.LENGTH_LONG).show();
-                            }
-
-                            //looks stupid, but its for the user to read
-                            Thread.sleep(1000);
-                        }
-                    }
-                }else{
-                    if(readyToRun){
-                        readyToRun = false;
-                        getActivity().runOnUiThread(this::stopScan);
-                    }
-                }
-
-                if(!mScanResult.equals("")){
-                    if(allowedLocations.contains(mScanResult)){
-                        getActivity().runOnUiThread(this::successScan);
-                        Navigation.findNavController(view).navigate(R.id.action_runTestFragment_to_resultsFragment);
-                        return 0;
-                    }
-
-                    getActivity().runOnUiThread(this::invalidScan);
-
-                    //looks stupid, but its for the user to read
-                    Thread.sleep(1000);
-                    readyToRun = false;
-                    hadLocOn = false;
-                    hadDataOn = false;
-
-                }
-            }
-        });
-
 
         return view;
     }
 
+    public void updateEverything(View view){
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        executor.submit(() -> updateLocationStatus(view));
+        executor.submit(() -> updateDataStatus(view));
+        executor.submit(() -> updateQRStatus(view));
+        executor.submit(() -> tryStartQRScan(view));
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        getActivity().unregisterReceiver(dataLocationReceiver);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        //getActivity().registerReceiver(dataLocationReceiver, locationFilter);
+
+    }
+    @Override
+    public void onPause() {
+        super.onPause();
+        barcodeScannerView.pause();
+        //getActivity().unregisterReceiver(dataLocationReceiver);
+    }
+
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        //getActivity().unregisterReceiver(dataLocationReceiver);
+    }
+
+
+    private void tryStartQRScan(View view){
+        if(view == null){
+            return;
+        }
+
+        if(isConnected() && isLocationOn()){
+            if(getStoredServerInfo() == null){
+                connectToServer(view);
+            }else{
+                getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
+                isServerConnected.set(true);
+            }
+        }else{
+            stopScan();
+            return;
+        }
+
+
+        Boolean permitted = askPermissions();
+        Log.i("test - is permitted", Boolean.toString(permitted));
+        if(permitted){
+            getActivity().runOnUiThread(() -> {
+                barcodeScannerView.setStatusText("Tap here to re-request permissions");
+            });
+        }else if(askPermissions()){
+            checkPermissions();
+            getActivity().runOnUiThread(() -> startScan());
+        }else{
+            checkPermissions();
+        }
+    }
+
+
+    private ServerInfo connectToServer(View view){
+        ServerInfo result;
+
+        int MAX_TRIES = 3;
+        for (int i = 0; i < MAX_TRIES; i++) {
+            result = getServerInfo();
+
+            if(result == null){
+                continue;
+            }
+
+            if (result.error.equals("ipInfo")) {
+                getActivity().runOnUiThread(() -> displayIpInfoFailed(view));
+            } else if (result.error.equals("serverList")) {
+                getActivity().runOnUiThread(() -> displayServerListFailed(view));
+            } else {
+                getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
+                setStoredServerInfo(result);
+                isServerConnected.set(true);
+                return result;
+            }
+        }
+        getActivity().runOnUiThread(() -> displayServerConnectionFailed(view));
+
+        return null;
+    }
+
+
+
+    private boolean askPermissions(){
+        boolean userAgreed = askUserPermission();
+        boolean locationAgreed = askLocationPermission();
+        boolean cameraAgreed = askCameraPermission();
+
+        return userAgreed && locationAgreed && cameraAgreed;
+
+    }
+
+    private boolean checkPermissions(){
+        return checkUserPermission() && checkLocationPermission() && checkCameraPermission();
+    }
 
     private ServerInfo getStoredServerInfo(){
         return ((MainActivity) getContext()).getServerInfo();
@@ -243,16 +253,61 @@ public class RunTestFragment extends Fragment {
     private void setStoredServerInfo(ServerInfo serverInfo){
         ((MainActivity) getContext()).setServerInfo(serverInfo);
     }
-    private boolean checkIfAgreed(){
-        if (!prefs.getBoolean("agreed", true)) {
+    private boolean askUserPermission(){
+        if (!prefs.getBoolean("agreed", false)) {
             new AlertDialog.Builder(getActivity())
                     .setTitle("User Agreement")
                     .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it in our study.\n\nBy pressing Yes you agree to this data being collected. ")
-                    .setPositiveButton(android.R.string.yes, (dialog, which) -> prefs.edit().putBoolean("agreed", true).apply())
+                    .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                        prefs.edit().putBoolean("agreed", true).apply();
+                        if(checkPermissions()){
+                            View view = getView();
+                            if(view != null)
+                                updateEverything(view);
+                        }
+                    })
                     .setNegativeButton(android.R.string.no, null)
                     .show();
         }
-        return prefs.getBoolean("agreed", true);
+        return prefs.getBoolean("agreed", false);
+    }
+
+    private boolean checkUserPermission(){
+        boolean userAgreed = prefs.getBoolean("agreed", false);
+        Log.i("test - user permissions", Boolean.toString(userAgreed));
+        return userAgreed;
+    }
+
+
+    private void setUsernameOnFirstLaunch(){
+        if(!prefs.getBoolean("setUsername", false)){
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext(), R.style.UsernameAlertStyle);
+            builder.setTitle("Set Username");
+            builder.setMessage("\nType in a username. This will be used for the scoreboard. This can be changed later in your Profile.\n\nMaximum of 20 characters");
+            final EditText input = new EditText(getContext());
+            input.setInputType(InputType.TYPE_CLASS_TEXT);
+            input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
+            builder.setView(input);
+
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    String username = input.getText().toString();
+                    prefs.edit().putBoolean("setUsername", true).apply();
+                    prefs.edit().putString("username", username).apply();
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            });
+
+            builder.show();
+        }else{
+
+        }
     }
 
     private boolean isConnected(){
@@ -260,9 +315,11 @@ public class RunTestFragment extends Fragment {
 
         if (android.os.Build.VERSION.SDK_INT >= 29) {
             Network currentNetwork = cm.getActiveNetwork();
-            if(currentNetwork == null)
+            if(currentNetwork == null) {
                 return false;
+            }
             NetworkCapabilities caps = cm.getNetworkCapabilities(currentNetwork);
+            //return caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
             return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
         }else{
             if(cm.getActiveNetworkInfo() != null){
@@ -283,9 +340,9 @@ public class RunTestFragment extends Fragment {
         if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             new AlertDialog.Builder(getActivity())
-                    .setTitle("User Agreement")
+                    .setTitle("Location Permission")
                     .setMessage("This application requires location permissions to get signal data.")
-                    .setPositiveButton(android.R.string.yes, (dialog, which) -> locationPermissionRequest.launch(new String[] {
+                    .setPositiveButton(android.R.string.yes, (dialog, which) -> permissionRequest.launch(new String[] {
                             android.Manifest.permission.ACCESS_FINE_LOCATION,
                             android.Manifest.permission.ACCESS_COARSE_LOCATION
                     }))
@@ -298,23 +355,32 @@ public class RunTestFragment extends Fragment {
                 ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        //barcodeScannerView.resume();
+    private boolean checkLocationPermission(){
+        boolean locationAgreed =  (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
+        Log.i("test - location", Boolean.toString(locationAgreed));
+        return locationAgreed;
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        barcodeScannerView.pause();
+    private boolean askCameraPermission(){
+        if(ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("Camera Permission")
+                    .setMessage("This application requires camera permissions to scan the QR codes.")
+                    .setPositiveButton(android.R.string.yes, (dialog, which) -> permissionRequest.launch(new String[] {
+                            android.Manifest.permission.CAMERA
+                    }))
+                    .setNegativeButton(android.R.string.no, null)
+                    .show();
+        }
+
+        return ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
 
-
-    public void displayCantConnectServer(View view){
-        view.findViewById(R.id.connectedTV).setAlpha(0.2f);
-        TextView connectedTV = view.findViewById(R.id.connectedTV);
-        connectedTV.setText("Can't connect to server");
+    private boolean checkCameraPermission(){
+        boolean cameraAgreed =   ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        Log.i("test - camera", Boolean.toString(cameraAgreed));
+        return cameraAgreed;
     }
 
     public void displayLocationOn(View view){
@@ -362,36 +428,99 @@ public class RunTestFragment extends Fragment {
     public void displayServerConnectionFailed(View view){
         view.findViewById(R.id.connectedTV).setAlpha(0.2f);
         TextView connectedTV = view.findViewById(R.id.connectedTV);
-        connectedTV.setText("Failed to connect to server, try restarting application");
+        connectedTV.setText("Failed to connect to server");
+        Toast.makeText(getActivity(), "Please try restarting the application.",
+                Toast.LENGTH_LONG).show();
     }
 
+    private void updateLocationStatus(View view){
+        if(view == null) {
+            return;
+        }
 
-    public void stopScan() {
-        barcodeScannerView.setStatusText("Test will not run unless location and mobile data are on");
-        barcodeScannerView.pause();
-        //barcodeScannerView.getViewFinder().setVisibility(View.INVISIBLE);
+        boolean locationStatus = isLocationOn();
+        if(locationStatus) {
+            getActivity().runOnUiThread(() -> displayLocationOn(view));
+        }
+        else if(!locationStatus) {
+            getActivity().runOnUiThread(() -> displayLocationOff(view));
+            getActivity().runOnUiThread(this::stopScan);
+        }
     }
 
-    public void displayServerConnecting(){
-        barcodeScannerView.setStatusText("Still connecting to server...");
-        barcodeScannerView.pause();
+    private void updateDataStatus(View view){
+        if(view == null) {
+            return;
+        }
+
+        boolean dataStatus = isConnected();
+        if(dataStatus) {
+            getActivity().runOnUiThread(() -> displayDataOn(view));
+        }
+        else if(!dataStatus) {
+            getActivity().runOnUiThread(() -> displayDataOff(view));
+            getActivity().runOnUiThread(this::stopScan);
+        }
     }
 
+    private void updateQRStatus(View view){
+        if(view == null) {
+            return;
+        }
+
+        boolean locationOn = isLocationOn();
+        boolean dataOn = isConnected();
+        if(locationOn && dataOn && !isServerConnected.get()){
+            getActivity().runOnUiThread(this::displayLocDataOn);
+        }else if((!locationOn || !dataOn) && !isServerConnected.get()){
+            getActivity().runOnUiThread(this::displayLocDataOff);
+        }
+    }
 
     public void updateProgress(String progress){
+        View view = getView();
+        if(view == null){
+            return;
+        }
+
+        Log.i("test", progress);
         getActivity().runOnUiThread(() -> {
-            Log.i("test", progress);
             TextView connectedTV = getView().findViewById(R.id.connectedTV);
             connectedTV.setAlpha(0.2f);
             connectedTV.setText(progress);
         });
     }
+
     
     public void startScan() {
         barcodeScannerView.setStatusText("Scan QR code to begin the test");
         barcodeScannerView.resume();
         barcodeScannerView.getViewFinder().setVisibility(View.VISIBLE);
-        barcodeScannerView.decodeSingle(callback);
+        barcodeScannerView.decodeContinuous(callback);
+    }
+
+    public void stopScan() {
+        if(checkPermissions()){
+            barcodeScannerView.setStatusText("Test will not run unless location and mobile data are on");
+        }else{
+            barcodeScannerView.setStatusText("Permissions needed for application to function properly. Tap here to request permissions again.");
+        }
+        barcodeScannerView.pause();
+        barcodeScannerView.getViewFinder().setVisibility(View.INVISIBLE);
+    }
+
+    public void invalidScan(){
+        barcodeScannerView.setStatusText("Scan failed, invalid QR code. Try to scan again.");
+        //barcodeScannerView.pause();
+        //barcodeScannerView.getViewFinder().setVisibility(View.INVISIBLE);
+    }
+
+    public void displayLocDataOn(){
+        barcodeScannerView.setStatusText("Connecting to server...");
+    }
+
+    public void displayLocDataOff(){
+        barcodeScannerView.setStatusText("Test will not run unless location and mobile data are on");
     }
 
     public void successScan(){
@@ -400,12 +529,14 @@ public class RunTestFragment extends Fragment {
         barcodeScannerView.getViewFinder().setVisibility(View.INVISIBLE);
     }
 
-    public void invalidScan(){
-        mScanResult = "";
-        barcodeScannerView.setStatusText("Scan failed, invalid QR code. Retrying...");
-        barcodeScannerView.pause();
-        //barcodeScannerView.getViewFinder().setVisibility(View.INVISIBLE);
+    public void goToResultsFragment(String scanResult){
+        Bundle qrResult = new Bundle();
+        qrResult.putString("bundleKey", scanResult);
+        getParentFragmentManager().setFragmentResult("requestKey", qrResult);
+        isServerConnected.set(false);
+        Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
     }
+
 
     public native ServerInfo getServerInfo();
 }

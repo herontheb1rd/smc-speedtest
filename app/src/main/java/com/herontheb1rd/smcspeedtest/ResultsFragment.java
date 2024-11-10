@@ -3,13 +3,17 @@
 
 package com.herontheb1rd.smcspeedtest;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.Manifest;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.Group;
 import androidx.core.app.ActivityCompat;
@@ -66,6 +70,8 @@ public class ResultsFragment extends Fragment {
         System.loadLibrary("smcspeedtest");
     }
 
+    SharedPreferences prefs = null;
+
     private final List<String> qrLocations = Arrays.asList("Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden");
 
 
@@ -80,14 +86,21 @@ public class ResultsFragment extends Fragment {
     private DatabaseReference mDatabase;
     private FirebaseAuth mAuth;
 
+    private boolean downloadFlag;
+    private boolean uploadFlag;
+    private boolean latencyFlag;
+    private OnBackPressedCallback callback;
 
-    public ResultsFragment() {
+    public ResultsFragment(){
 
     }
+
 
     @Override
     public void onStart() {
         super.onStart();
+
+        prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
 
         mDatabase = FirebaseDatabase.getInstance(
                 "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -108,8 +121,8 @@ public class ResultsFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String UID = getUID();
                 if(!snapshot.child("scoreboard").child(UID).exists()){
-                    mDatabase.child("username").child(UID).setValue(UID);
-                    mDatabase.child("score").child(UID).setValue(0);
+                    mDatabase.child("scoreboard").child(UID).child("username").setValue(UID);
+                    mDatabase.child("scoreboard").child(UID).child("score").setValue(0);
                 }
             }
 
@@ -119,195 +132,110 @@ public class ResultsFragment extends Fragment {
             }
         });
 
-    }
+         callback = new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                Toast.makeText(getActivity(), "Test still running.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        };
+        requireActivity().getOnBackPressedDispatcher().addCallback(this, callback);
 
+
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        downloadFlag = false;
+        uploadFlag = false;
+        latencyFlag = false;
+
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
 
         ServerInfo serverInfo = getStoredServerInfo();
-        Log.i("testRF", "YO!");
-        Log.i("testRF", serverInfo.name);
-        /*
+
         getParentFragmentManager().setFragmentResultListener("requestKey", this, (requestKey, bundle) -> {
             String place = bundle.getString("bundleKey");
 
-            Executor executor = Executors.newSingleThreadExecutor();
             ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(8));
 
-            ListenableFuture<Long> serverInfoFuture = pool.submit(() -> {
-                Log.i("test", "getting server info");
-                long serverInfo = getServerInfo();
-
-                if(serverInfo == 0) {
-                    updateProgress("Failed to get server info, returning.", 0);
-                    Log.i("test", "failed to get server info");
-                }else {
-                    updateProgress("Server info acquired", 10);
-                    Log.i("test", Long.toString(serverInfo));
-                }
-                return serverInfo;
+            ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
+                double dlspeed = 20d;
+                Thread.sleep(5000);
+                //double dlspeed = computeDlspeed(serverInfo);
+                displayResult(view, R.id.downloadSpeedTV, String.format("%.1f", dlspeed));
+                view.findViewById(R.id.downloadSpeedTV).setVisibility(View.VISIBLE);
+                view.findViewById(R.id.downloadPB).setVisibility(View.INVISIBLE);
+                downloadFlag = true;
+                return dlspeed;
             });
 
-            AsyncFunction<Long, NetPerf> asyncNetPerf = serverPtr -> {
-                ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
-                    if(serverPtr == 0) {
-                        Log.i("test", "failed to connect to server");
-                        return -1d;
-                    }
+            ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
+                double ulspeed = 20d;
+                Thread.sleep(4000);
+                //double ulspeed = computeUlspeed(serverInfo);
+                displayResult(view, R.id.uploadSpeedTV, String.format("%.1f", ulspeed));
+                view.findViewById(R.id.uploadSpeedTV).setVisibility(View.VISIBLE);
+                view.findViewById(R.id.uploadPB).setVisibility(View.INVISIBLE);
+                uploadFlag = true;
+                return ulspeed;
+            });
 
-                    Log.i("test", "computing download speed");
-                    double dlspeed = computeDlspeed(serverPtr);
-                    Log.i("test", Double.toString(dlspeed));
-                    updateProgress("Download speed computed", 30);
-                    return dlspeed;
-                });
+            ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
+                int latency = 20;
+                Thread.sleep(3000);
+                //int latency = computeLatency(serverInfo);
+                displayResult(view, R.id.latencyTV, Integer.toString(latency));
+                view.findViewById(R.id.latencyTV).setVisibility(View.VISIBLE);
+                view.findViewById(R.id.latencyPB).setVisibility(View.INVISIBLE);
+                latencyFlag = true;
+                return latency;
+            });
 
-                ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
-                    if(serverPtr == 0) {
-                        Log.i("test", "failed to connect to server");
-                        return -1d;
-                    }
 
-                    Log.i("test", "computing upload speed");
-                    double ulspeed = computeUlspeed(serverPtr);
-                    Log.i("test", Double.toString(ulspeed));
-                    updateProgress("Upload speed computed", 30);
-                    return ulspeed;
-                });
+            //kind of redundant to add waitingDisplayFuture here, but it doesn't hurt
+            ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
+                    .call(() -> new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
+                            Futures.getDone(latencyFuture)), pool);
 
-                ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
-                    if(serverPtr == 0) {
-                        Log.i("test", "failed to connect to server");
-                        return -1;
-                    }
-
-                    Log.i("test", "computing latency");
-                    int latency = computeLatency(serverPtr);
-                    Log.i("test", Integer.toString(latency));
-                    updateProgress("Latency computed", 20);
-                    return latency;
-                });
-
-                ListenableFuture<String> urlFuture = pool.submit(() -> {
-                    if(serverPtr == 0) {
-                        Log.i("test", "failed to connect to server");
-                        return "";
-                    }
-
-                    Log.i("test", "getting server url");
-                    String url = getServerURL(serverPtr);
-                    Log.i("test", url);
-                    return url;
-                });
-
-                ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture, urlFuture)
-                        .call(() -> {
-                            NetPerf netPerf = new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
-                                    Futures.getDone(latencyFuture), Futures.getDone(urlFuture));
-                            Log.i("test", "freeing memory");
-                            freeServerPtr(serverPtr);
-
-                            //if dlspeed, ulspeed, or latency fail, it could just be the individual tests
-                            //but if we cant get the url then that means we failed to get the server entirely
-                            if(netPerf.getUrl() == ""){
-                                throw new Exception("Server info could not be acquired");
-                            }
-                            return netPerf;
-                        }, executor);
-                return computeNetPerf;
-            };
-
-            ListenableFuture<NetPerf> netPerfFuture = Futures.transformAsync(serverInfoFuture, asyncNetPerf, pool);
-
-            Futures.addCallback(netPerfFuture, new FutureCallback<NetPerf>() {
+            Futures.addCallback(computeNetPerf, new FutureCallback<NetPerf>() {
                 @Override
                 public void onSuccess(NetPerf netPerf) {
+
                     long time = Calendar.getInstance().getTime().getTime();
                     String phoneBrand = Build.MANUFACTURER;
                     String networkProvider = getNetworkProvider();
-
+                    String UID = getUID();
                     SignalPerf signalPerf = computeSignalPerf();
-
-                    updateProgress("Test complete", 10);
-                    displayResult(R.id.downloadResultTV, String.format("%.1f", netPerf.getDlspeed()));
-                    displayResult(R.id.uploadResultTV, String.format("%.1f", netPerf.getUlspeed()));
-                    displayResult(R.id.latencyResultTV, Integer.toString(netPerf.getLatency()));
 
 
                     if(mAuth.getCurrentUser() != null){
                         Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
                         mDatabase.child("results").child(networkProvider).push().setValue(results);
+                        mDatabase.child("scoreboard").child(UID).child("username").setValue(prefs.getString("username", getUID()));
+
+
+                        mDatabase.child("scoreboard").child(UID).child("score").setValue(ServerValue.increment(1));
+                        findBetterLocation(view, networkProvider, place, netPerf);
                     }else{
-                        findBetterLocation(networkProvider, place, netPerf);
-                        displayResult(R.id.betterLocationTV, "N/A");
+                        getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Could not upload results to database",
+                                Toast.LENGTH_SHORT).show());
                     }
 
-                    showResults();
+                    callback.setEnabled(false);
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
-                    Log.i("test", t.getMessage());
-                    getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Test failed to run properly. Please try again",
-                            Toast.LENGTH_SHORT).show());
-                    Navigation.findNavController(getView()).navigate(R.id.action_resultsFragment_to_runTestFragment);
+
                 }
-            }, executor);
+            }, pool);
+
+
         });
 
-
-        getParentFragmentManager().setFragmentResultListener("requestKey", this, new FragmentResultListener() {
-            @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle bundle) {
-                String placeName = bundle.getString("bundleKey");
-                ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10));
-                ListenableFuture<NetPerf> netperfFuture = pool.submit(() -> runSpeedtest());
-
-                //speed test takes longer than other processes and causes program to hang
-                //running this in the background to prevent it
-                //then running other processes synchronously
-                Futures.addCallback(netperfFuture, new FutureCallback<NetPerf>() {
-                    @Override
-                    public void onSuccess(NetPerf netPerf) {
-                        SignalPerf signalPerf = computeSignalPerf();
-                        long time = Calendar.getInstance().getTime().getTime();
-                        String networkProvider = getNetworkProvider();
-                        String phoneBrand = Build.MANUFACTURER;
-                        String UID = getUID();
-                        updateProgress("Test finished", 10);
-
-                        Results results = new Results(time, networkProvider, phoneBrand, placeName, netPerf, signalPerf);
-                        displayResult(R.id.downloadResultTV, String.format("%.1f", netPerf.getDlspeed()));
-                        displayResult(R.id.uploadResultTV, String.format("%.1f", netPerf.getUlspeed()));
-                        displayResult(R.id.latencyResultTV, Integer.toString(netPerf.getLatency()));
-
-                        showResults();
-
-                        if (mAuth.getCurrentUser() != null) {
-                            mDatabase.child("results").child(networkProvider).push().setValue(results);
-
-                            mDatabase.child("scoreboard").child(UID).child("score").setValue(ServerValue.increment(1));
-                        } else {
-                            findBetterLocation(networkProvider, placeName, netPerf);
-                            //displayResult(R.id.betterLocationTV, "N/A");
-                        }
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-
-                    }
-                }, Executors.newSingleThreadExecutor());
-
-
-            }
-        });
-
-        */
         return view;
     }
 
@@ -323,13 +251,10 @@ public class ResultsFragment extends Fragment {
         //UID is the phone's Android ID
         //this removes the need for permissions for READ_PHONE_STATE
         //and is still unique to each phone
-
-        String UID = Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-
-        return UID;
+        return Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
     private double getMeanPerformance(List<NetPerf> resultList){
-        //"performance" is dlspeed + ulspeed - latency
+        //"performance" is dlspeed * ulspeed / latency
         //there might be better methods but this is a lazy way of implementing it i suppose
         //because out goal is higher dlspeed and ulspeed but lower latency
 
@@ -366,7 +291,7 @@ public class ResultsFragment extends Fragment {
 
         return betterLocation;
     }
-    private void findBetterLocation(String networkProvider, String currentLocation, NetPerf netPerf){
+    private void findBetterLocation(View view, String networkProvider, String currentLocation, NetPerf netPerf){
         Map<String, List<NetPerf>> locationResultsDict = new HashMap<>();
         Map<String, Double> locationPerformance = new HashMap<>();
 
@@ -376,8 +301,9 @@ public class ResultsFragment extends Fragment {
         }
 
         //get results from database
-        long twoHoursAgo = Calendar.getInstance().getTime().getTime() - (2*3600*1000);
-        Query resultsQuery = mDatabase.child("results").child(networkProvider).orderByChild("time").startAt(twoHoursAgo);
+        int hours = 24;
+        long timeLimit = Calendar.getInstance().getTime().getTime() - (hours*3600*1000);
+        Query resultsQuery = mDatabase.child("results").child(networkProvider).orderByChild("time").startAt(timeLimit);
         resultsQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -392,11 +318,13 @@ public class ResultsFragment extends Fragment {
                 }
 
                 String betterLocation = compareLocations(locationPerformance, netPerf);
-                if (betterLocation.equals(currentLocation)) {
-                    betterLocation = "None";
+                if (betterLocation.equals("None")) {
+                    betterLocation = "This location has (probably) the best connection available";
+                }else{
+                    betterLocation = "The " + betterLocation + " (probably) has a better connection";
                 }
 
-                displayResult(R.id.betterLocationTV, betterLocation);
+                displayResult(view, R.id.suggestionTV, betterLocation);
             }
 
             @Override
@@ -406,23 +334,6 @@ public class ResultsFragment extends Fragment {
         });
     }
 
-
-    private void updateProgress(String progressText, int progressIncrement) {
-        TextView progressTV = (TextView) getView().findViewById(R.id.progressTV);
-        ProgressBar progressBar = (ProgressBar) getView().findViewById(R.id.progressBar);
-
-        progressTV.post(() -> progressTV.setText(progressText));
-        progressBar.incrementProgressBy(progressIncrement);
-    }
-
-    private void showResults(){
-        Group progressGroup = (Group) getView().findViewById(R.id.progressGroup);
-        Group resultsGroup = (Group) getView().findViewById(R.id.resultsGroup);
-        getActivity().runOnUiThread(() -> {
-            progressGroup.setVisibility(View.INVISIBLE);
-            resultsGroup.setVisibility(View.VISIBLE);
-        });
-    }
 
     public String getNetworkProvider() {
         TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
@@ -442,23 +353,14 @@ public class ResultsFragment extends Fragment {
 
         TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            //Toast.makeText(getActivity(), "Location access not granted. Skipping signal data collection",
-            //        Toast.LENGTH_SHORT).show();
 
             return new SignalPerf(rssi, rsrq, rsrp);
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            //Toast.makeText(getActivity(), "Phone model too old to retrieve signal info",
-            //        Toast.LENGTH_SHORT).show();
-
             return new SignalPerf(rssi, rsrq, rsrp);
         }
-
         LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
         if(!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            //Toast.makeText(getActivity(), "Location turned off. Signal data cannot be retrieved",
-            //        Toast.LENGTH_SHORT).show();
-
             return new SignalPerf(rssi, rsrq, rsrp);
         }
 
@@ -475,13 +377,17 @@ public class ResultsFragment extends Fragment {
         return new SignalPerf(rssi, rsrq, rsrp);
     }
 
-    private void displayResult(int id, String resultStr){
-        if(resultStr == "-1") resultStr = "N/A";
-        ((TextView) getView().findViewById(id)).setText(resultStr);
+    private void displayResult(View view, int id, String resultStr){
+        getActivity().runOnUiThread(() -> {
+            ((TextView) view.findViewById(id)).setText(resultStr);
+        });
     }
 
-    public native NetPerf runSpeedtest();
-    public native double computeDlspeed(long serverPtr);
-    public native double computeUlspeed(long serverPtr);
-    public native int computeLatency(long serverPtr);
+    public void cppLogger(String debugString){
+        Log.i("test", debugString);
+    }
+
+    public native double computeDlspeed(ServerInfo serverInfo);
+    public native double computeUlspeed(ServerInfo serverInfo);
+    public native int computeLatency(ServerInfo serverInfo);
 }

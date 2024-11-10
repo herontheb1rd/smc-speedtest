@@ -7,129 +7,297 @@
     tools:context=".ScoreboardFragment">
 
 
-    <TextView
-        android:id="@+id/textView11"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        android:text="TextView"
-        tools:layout_editor_absoluteX="268dp"
-        tools:layout_editor_absoluteY="451dp" />
 
     <TextView
         android:id="@+id/firstNameTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="16dp"
+        android:text="N/A"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/firstScoreTV"
+        app:layout_constraintHorizontal_bias="0.10"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.2" />
+
+    <TextView
+        android:id="@+id/firstScoreTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:text="First"
+        android:text=""
         android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        tools:layout_editor_absoluteY="225dp" />
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.9"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/firstNameTV" />
+
+    <View
+        android:id="@+id/divider1"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/secondNameTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/firstNameTV" />
 
     <TextView
         android:id="@+id/secondNameTV"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:text="Second"
+        android:text="N/A"
         android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        tools:layout_editor_absoluteY="269dp" />
+        android:textSize="28sp"
+        app:layout_constraintStart_toStartOf="@+id/firstNameTV"
+        app:layout_constraintTop_toBottomOf="@+id/firstNameTV" />
 
     <TextView
-        android:id="@+id/textView10"
+        android:id="@+id/secondScoreTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:text="TextView"
+        android:text=""
         android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="@+id/firstScoreTV"
+        app:layout_constraintTop_toTopOf="@+id/secondNameTV" />
+
+    <View
+        android:id="@+id/divider2"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/thirdNameTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/secondNameTV" />
+
+    <TextView
+        android:id="@+id/thirdNameTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="N/A"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintStart_toStartOf="@+id/secondNameTV"
+        app:layout_constraintTop_toBottomOf="@+id/secondNameTV" />
+
+    <TextView
+        android:id="@+id/thirdScoreTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="@+id/secondScoreTV"
+        app:layout_constraintTop_toTopOf="@+id/thirdNameTV" />
+
+    <View
+        android:id="@+id/divider3"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/fourthNameTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/thirdNameTV" />
+
+    <TextView
+        android:id="@+id/fourthNameTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="N/A"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintStart_toStartOf="@+id/thirdNameTV"
+        app:layout_constraintTop_toBottomOf="@+id/thirdNameTV" />
+
+    <TextView
+        android:id="@+id/fourthScoreTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="@+id/thirdScoreTV"
+        app:layout_constraintTop_toTopOf="@+id/fourthNameTV" />
+
+    <View
+        android:id="@+id/divider4"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/fifthNameTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fourthNameTV" />
+
+    <TextView
+        android:id="@+id/fifthNameTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="N/A"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintStart_toStartOf="@+id/fourthNameTV"
+        app:layout_constraintTop_toBottomOf="@+id/fourthNameTV" />
+
+    <TextView
+        android:id="@+id/fifthScoreTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="@+id/fourthScoreTV"
+        app:layout_constraintTop_toTopOf="@+id/fifthNameTV" />
+
+    <View
+        android:id="@+id/divider5"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/sixthNameTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fifthNameTV" />
+
+    <TextView
+        android:id="@+id/sixthNameTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="N/A"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintStart_toStartOf="@+id/fifthNameTV"
+        app:layout_constraintTop_toBottomOf="@+id/fifthNameTV" />
+
+    <TextView
+        android:id="@+id/sixthScoreTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="@+id/fifthScoreTV"
+        app:layout_constraintTop_toTopOf="@+id/sixthNameTV" />
+
+    <View
+        android:id="@+id/divider6"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/seventhNameTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sixthNameTV" />
+
+    <TextView
+        android:id="@+id/seventhNameTV"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="N/A"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintStart_toStartOf="@+id/sixthNameTV"
+        app:layout_constraintTop_toBottomOf="@+id/sixthNameTV" />
+
+    <TextView
+        android:id="@+id/seventhScoreTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="28sp"
+        app:layout_constraintEnd_toEndOf="@+id/sixthScoreTV"
+        app:layout_constraintTop_toTopOf="@+id/seventhNameTV" />
+
+    <View
+        android:id="@+id/divider7"
+        style="@style/Divider"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/seventhNameTV" />
+
+    <TextView
+        android:id="@+id/yourRankLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        android:text="You are currently rank "
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/seventhNameTV"
+        app:layout_constraintTop_toBottomOf="@+id/seventhNameTV"
+        app:layout_constraintVertical_bias="0.20" />
+
+    <TextView
+        android:id="@+id/yourRankTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text=""
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="@+id/yourRankLabelTV"
+        app:layout_constraintStart_toEndOf="@+id/yourRankLabelTV" />
+
+    <TextView
+        android:id="@+id/loadingLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Loading information..."
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.499"
-        tools:layout_editor_absoluteX="46dp" />
+        app:layout_constraintVertical_bias="0.50" />
 
-
-
-    <TextView
-        android:id="@+id/textView5"
+    <ProgressBar
+        android:id="@+id/loadingPB"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        android:text="TextView"
-        tools:layout_editor_absoluteX="266dp"
-        tools:layout_editor_absoluteY="271dp" />
+        android:layout_marginBottom="8dp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/loadingLabelTV"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <TextView
-        android:id="@+id/textView6"
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/contentGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:text="TextView"
-        android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        app:layout_constraintStart_toStartOf="@+id/textView8"
-        tools:layout_editor_absoluteY="311dp" />
+        android:visibility="visible"
+        app:constraint_referenced_ids="firstNameTV, firstScoreTV,
+                                        secondNameTV, secondScoreTV, divider1,
+                                        thirdNameTV, thirdScoreTV, divider2,
+                                        fourthNameTV, fourthScoreTV, divider3,
+                                        fifthNameTV, fifthScoreTV, divider4,
+                                        sixthNameTV, sixthScoreTV, divider5,
+                                        seventhNameTV, seventhScoreTV, divider6,
+                                        yourRankLabelTV, yourRankTV, divider7" />
 
-    <TextView
-        android:id="@+id/textView7"
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/loadingGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        android:text="TextView"
-        tools:layout_editor_absoluteX="272dp"
-        tools:layout_editor_absoluteY="317dp" />
+        android:visibility="invisible"
+        app:constraint_referenced_ids="loadingLabelTV, loadingPB" />
 
-    <TextView
-        android:id="@+id/textView8"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:text="TextView"
-        android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        app:layout_constraintStart_toStartOf="@+id/textView10"
-        tools:layout_editor_absoluteY="365dp" />
-
-    <TextView
-        android:id="@+id/textView9"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        android:text="TextView"
-        tools:layout_editor_absoluteX="265dp"
-        tools:layout_editor_absoluteY="378dp" />
-
-    <TextView
-        android:id="@+id/textView15"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:text="TextView"
-        android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        app:layout_constraintStart_toStartOf="@+id/textView16"
-        tools:layout_editor_absoluteY="148dp" />
-
-
-
-    <TextView
-        android:id="@+id/textView17"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/inter_medium"
-        android:textColor="?attr/colorOnSecondary"
-        android:textSize="34sp"
-        android:text="TextView"
-        tools:layout_editor_absoluteX="280dp"
-        tools:layout_editor_absoluteY="221dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

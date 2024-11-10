@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,14 +44,16 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener, OnMapReadyCallback {
     private DatabaseReference mDatabase;
     private FirebaseAuth mAuth;
+    private GoogleMap mGoogleMap;
+
 
     private ArrayList<Results> mResults = new ArrayList<>();
     private final Map<String, LatLng[]> locationDict = new HashMap<String, LatLng[]>() {{
@@ -67,7 +70,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         put("Canteen", new LatLng( 7.08314, 125.50790));
         put("Kiosk", new LatLng( 7.08350, 125.50799));
         put("Airport", new LatLng( 7.08440, 125.50852));
-        put("ABD", new LatLng(7.08161, 125.508311));
+        put("ABD", new LatLng(7.083146, 125.508311));
         put("Garden", new LatLng(7.084942, 125.508449));
     }};
 
@@ -143,46 +146,24 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     @Override
     public void onMapReady(GoogleMap googleMap) {
         googleMap.getUiSettings().setMapToolbarEnabled(false);
-
-        initPolygons(googleMap);
-        initMarkers(googleMap);
+        mGoogleMap = googleMap;
+        Toast.makeText(getActivity(), "Retrieving previous results from database...",
+                Toast.LENGTH_LONG).show();
     }
 
-    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {getFirebaseResults(metric);}
+    public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {
+        mGoogleMap.clear();
+        initPolygons(mGoogleMap);
+        getFirebaseResults(metric);
+    }
     public void onNothingSelected(AdapterView<?> parent){resetHeatMap();}
 
-    public BitmapDescriptor addTextOnMap(final LatLng location, final String text) {
-        final int fontSize = 12;
-        final int padding = 8;
-
-        final TextView textView = new TextView(getContext());
-        textView.setText(text);
-        textView.setTextSize(fontSize);
-
-        final Paint paintText = textView.getPaint();
-
-        final Rect boundsText = new Rect();
-        paintText.getTextBounds(text, 0, textView.length(), boundsText);
-        paintText.setTextAlign(Paint.Align.CENTER);
-
-        final Bitmap.Config conf = Bitmap.Config.ARGB_8888;
-        final Bitmap bmpText = Bitmap.createBitmap(boundsText.width() + 2
-                * 8, boundsText.height() + 2 * padding, conf);
-
-        final Canvas canvasText = new Canvas(bmpText);
-        paintText.setColor(Color.BLACK);
-
-        canvasText.drawText(text, canvasText.getWidth() / 2,
-                canvasText.getHeight() - padding - boundsText.bottom, paintText);
-
-        return BitmapDescriptorFactory.fromBitmap(bmpText);
-    }
 
     private void getFirebaseResults(int metric){
         if(mAuth.getCurrentUser() != null){
             //get results from database
             long twoHoursAgo = Calendar.getInstance().getTime().getTime() - (2*3600*1000);
-            Query resultsRef = mDatabase.child("results").child(getNetworkProvider()).orderByChild("time").startAt(twoHoursAgo);
+            Query resultsRef = mDatabase.child("results").child(getNetworkProvider());//.orderByChild("time").startAt(twoHoursAgo);
             resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
@@ -205,15 +186,20 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         return (int) ((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
     }
 
-    private double getMeanResult(List<Double> doubleList){
-        if(!doubleList.isEmpty()){
-            double sum = 0.0;
-            for (Double d : doubleList) {
-                sum += d;
-            }
-            return sum / doubleList.size();
+    //median, instead of mean, so the data doesn't get as skewed
+    //https://www.ookla.com/articles/guide-to-speedtest-metrics
+    private double getMedianResult(List<Double> doubleList){
+        if(doubleList.isEmpty()){
+            return 0.0;
         }
-        return 0.0;
+
+        Collections.sort(doubleList);
+        int numResults = doubleList.size();
+        if(numResults % 2 == 0){
+            return doubleList.get(numResults / 2 - 1) + doubleList.get(numResults / 2);
+        }else{
+            return doubleList.get(numResults / 2);
+        }
     }
 
 
@@ -227,22 +213,30 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         }
     }
 
-    private void initMarkers(GoogleMap map) {
-        for (String s : qrDict.keySet()) {
-            MarkerOptions m = new MarkerOptions().position(qrDict.get(s));
-            mMarkerDict.put(s, m);
-        }
-    }
+    private void displayMedianResults(Map<String, Double> locationMedianMap, int metric){
+        if(mGoogleMap == null)
+            return;
 
-    private void displayMeanResults(Map<String, Double> locationMeanMap){
-        for(String l: qrDict.keySet()){
-            addTextOnMap(qrDict.get(l), Double.toString(locationMeanMap.get(l)));
+        for(String s: qrDict.keySet()){
+            MarkerOptions m = new MarkerOptions().position(qrDict.get(s));
+            double curMedianResult = locationMedianMap.get(s);
+            if(curMedianResult <= 0.0d){
+                //m.icon(addTextOnMap("N/A"));
+                m.title("N/A");
+            }else{
+                String displayValue = (metric != 2) ? String.format("%.1f", curMedianResult) : String.format("%.0f", curMedianResult);
+                //m.icon(addTextOnMap(displayValue));
+                m.title(displayValue);
+            }
+
+            mMarkerDict.put(s, m);
+            mGoogleMap.addMarker(m);
         }
     }
 
     private void updateHeatMap(int metric){
+        Map<String, Double> locationMedianMap = new HashMap<>();
         Map<String, List<Double>> locationResultsMap = new HashMap<>();
-        Map<String, Double> locationMeanMap = new HashMap<>();
 
         //initialize hash map
         for(String placeName: locationDict.keySet()){
@@ -278,19 +272,19 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         for(String placeName: locationDict.keySet()){
             List<Double> curLocationResults = locationResultsMap.get(placeName);
             if(curLocationResults.size() != 0){
-                double meanResult = getMeanResult(locationResultsMap.get(placeName));
-                locationMeanMap.put(placeName, meanResult);
+                double meanResult = getMedianResult(locationResultsMap.get(placeName));
+                locationMedianMap.put(placeName, meanResult);
 
                 if(meanResult > maxResult) maxResult = meanResult;
                 if(meanResult < minResult) minResult = meanResult;
             }else{
-                locationMeanMap.put(placeName, 0.0);
+                locationMedianMap.put(placeName, 0.0);
             }
         }
 
         //apply colors
         for(String placeName: locationDict.keySet()){
-            double curMean = locationMeanMap.get(placeName);
+            double curMean = locationMedianMap.get(placeName);
             if(curMean == 0.0){
                 //sets fill color to nothing and stroke color to gray
                 mPolygonDict.get(placeName).setFillColor(Color.LTGRAY);
@@ -311,7 +305,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         }
 
         //display mean results
-        displayMeanResults(locationMeanMap);
+        displayMedianResults(locationMedianMap, metric);
     }
 
     private void resetHeatMap(){

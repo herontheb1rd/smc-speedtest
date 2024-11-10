@@ -1,64 +1,174 @@
 package com.herontheb1rd.smcspeedtest;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
 
+import android.provider.Settings;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ProfileFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
+
+
 public class ProfileFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+    SharedPreferences prefs = null;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
-    public ProfileFragment() {
-        // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment ProfileFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ProfileFragment newInstance(String param1, String param2) {
-        ProfileFragment fragment = new ProfileFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    private DatabaseReference mDatabase;
+    private FirebaseAuth mAuth;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+
+        mDatabase = FirebaseDatabase.getInstance(
+                "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
+        ).getReference();
+        mAuth = FirebaseAuth.getInstance();
+        mAuth.signInAnonymously()
+                .addOnCompleteListener(getActivity(), task -> {
+                    if (!task.isSuccessful()) {
+                        Toast.makeText(getActivity(), "Firebase authentication failed. Can't upload results",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
+
+        View view = inflater.inflate(R.layout.fragment_profile, container, false);
+
+        displayLoading(view);
+        getNameAndScore(view);
+        getAndDisplayRank(view);
+
+        Button changeNameButton = (Button) view.findViewById(R.id.changeNameB);
+        changeNameButton.setOnClickListener( new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.UsernameAlertStyle);
+                builder.setTitle("Set Username");
+
+                final EditText input = new EditText(getContext());
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
+                builder.setMessage("\nMaximum of 20 characters");
+                builder.setView(input);
+
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String username = input.getText().toString();
+                        changeUsername(view, username);
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.show();
+            }
+        });
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_profile, container, false);
+        return view;
+    }
+
+    private void getNameAndScore(View view){
+        if(mAuth.getCurrentUser() != null) {
+            Query resultsRef = mDatabase.child("scoreboard").child(getUID());
+            resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    ((TextView) view.findViewById(R.id.usernameTV)).setText(prefs.getString("username", dataSnapshot.child("username").getValue().toString()));
+                    ((TextView) view.findViewById(R.id.scoreTV)).setText(dataSnapshot.child("score").getValue().toString());
+
+                    displayContent(view);
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+
+                }
+            });
+        }
+
+    }
+    private void getAndDisplayRank(View view){
+        Query scoreboardQuery = mDatabase.child("scoreboard").orderByChild("score");
+        scoreboardQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                int rank = (int)dataSnapshot.getChildrenCount();
+                for (DataSnapshot scoreboardSnapshot : dataSnapshot.getChildren()) {
+                    if(scoreboardSnapshot.getKey().equals(getUID()))
+                        break;
+                    rank--;
+                }
+                ((TextView) view.findViewById(R.id.rankTV)).setText("You are rank " + Integer.toString(rank));
+
+                displayContent(view);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+    private void changeUsername(View view, String username){
+        if(mAuth.getCurrentUser() != null){
+            mDatabase.child("scoreboard").child(getUID()).child("username").setValue(username);
+            prefs.edit().putString("username", username).apply();
+            ((TextView) view.findViewById(R.id.usernameTV)).setText(username);
+        }else{
+            getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Could not upload results to database",
+                    Toast.LENGTH_SHORT).show());
+        }
+    }
+    private String getUID() {
+        //UID is the phone's Android ID
+        //this removes the need for permissions for READ_PHONE_STATE
+        //and is still unique to each phone
+        if(getContext() != null) {
+            return Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+        }
+
+        return "";
+    }
+
+    private void displayLoading(View view){
+        view.findViewById(R.id.loadingGroup).setVisibility(View.VISIBLE);
+        view.findViewById(R.id.contentGroup).setVisibility(View.INVISIBLE);
+    }
+
+    private void displayContent(View view){
+        view.findViewById(R.id.loadingGroup).setVisibility(View.INVISIBLE);
+        view.findViewById(R.id.contentGroup).setVisibility(View.VISIBLE);
     }
 }
