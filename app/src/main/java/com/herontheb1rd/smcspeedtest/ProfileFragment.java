@@ -155,11 +155,8 @@ public class ProfileFragment extends Fragment {
         //UID is the phone's Android ID
         //this removes the need for permissions for READ_PHONE_STATE
         //and is still unique to each phone
-        if(getContext() != null) {
-            return Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-        }
-
-        return "";
+        String UID = prefs.getString("UID", "");
+        return UID;
     }
 
     private void displayLoading(View view){

@@ -2,6 +2,7 @@ package com.herontheb1rd.smcspeedtest;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,6 +23,7 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 
+import android.provider.Settings;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.util.Log;
@@ -51,6 +53,7 @@ public class RunTestFragment extends Fragment {
     private final Set<String> allowedLocations = Sets.newHashSet("Library", "Kiosks", "Canteen", "ABD", "Garden", "Airport");
     private DecoratedBarcodeView barcodeScannerView;
     AtomicBoolean isServerConnected = new AtomicBoolean(false);
+    AtomicBoolean isServerConnecting = new AtomicBoolean(false);
 
     BroadcastReceiver dataLocationReceiver;
     IntentFilter dataFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
@@ -59,10 +62,6 @@ public class RunTestFragment extends Fragment {
 
     ActivityResultLauncher<String[]> permissionRequest =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                Log.i("test - camera", Boolean.toString(checkCameraPermission()));
-                Log.i("test - location", Boolean.toString(checkLocationPermission()));
-                Log.i("test - user", Boolean.toString(checkUserPermission()));
-
                 if(checkPermissions()){
                     View view = getView();
                     if(view != null)
@@ -99,6 +98,7 @@ public class RunTestFragment extends Fragment {
 
         prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
 
+        setUID(getActivity().getApplicationContext());
         dataLocationReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -125,7 +125,6 @@ public class RunTestFragment extends Fragment {
         updateEverything(view);
 
         barcodeScannerView.setOnClickListener(new View.OnClickListener(){
-
             @Override
             public void onClick(View view) {
                 if(!checkPermissions())
@@ -177,29 +176,25 @@ public class RunTestFragment extends Fragment {
         }
 
         if(isConnected() && isLocationOn()){
-            if(getStoredServerInfo() == null){
-                connectToServer(view);
-            }else{
+            if(!isServerConnected.get() && !isServerConnecting.get()){
+                isServerConnecting.set(true);
+                ExecutorService executor = Executors.newFixedThreadPool(8);
+                executor.submit(() -> {
+                    connectToServer(view);
+                    if(checkPermissions() && isServerConnected.get()){
+                        getActivity().runOnUiThread(() -> startScan());
+                    }
+                });
+            }else if(isServerConnected.get() && isServerConnecting.get()){
                 getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
-                isServerConnected.set(true);
             }
         }else{
             stopScan();
             return;
         }
 
-
-        Boolean permitted = askPermissions();
-        Log.i("test - is permitted", Boolean.toString(permitted));
-        if(permitted){
-            getActivity().runOnUiThread(() -> {
-                barcodeScannerView.setStatusText("Tap here to re-request permissions");
-            });
-        }else if(askPermissions()){
-            checkPermissions();
+        if(checkPermissions() && isServerConnected.get()){
             getActivity().runOnUiThread(() -> startScan());
-        }else{
-            checkPermissions();
         }
     }
 
@@ -211,20 +206,19 @@ public class RunTestFragment extends Fragment {
         for (int i = 0; i < MAX_TRIES; i++) {
             result = getServerInfo();
 
-            if(result == null){
-                continue;
-            }
+            Log.i("test", result.error);
 
-            if (result.error.equals("ipInfo")) {
+            if (result.error.contains("ipInfo")) {
                 getActivity().runOnUiThread(() -> displayIpInfoFailed(view));
-            } else if (result.error.equals("serverList")) {
+            } else if (result.error.contains("serverList")) {
                 getActivity().runOnUiThread(() -> displayServerListFailed(view));
-            } else {
+            } else if(result.error.equals("")){
                 getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
                 setStoredServerInfo(result);
                 isServerConnected.set(true);
                 return result;
             }
+            Log.i("test", Integer.toString(i));
         }
         getActivity().runOnUiThread(() -> displayServerConnectionFailed(view));
 
@@ -274,7 +268,6 @@ public class RunTestFragment extends Fragment {
 
     private boolean checkUserPermission(){
         boolean userAgreed = prefs.getBoolean("agreed", false);
-        Log.i("test - user permissions", Boolean.toString(userAgreed));
         return userAgreed;
     }
 
@@ -305,8 +298,6 @@ public class RunTestFragment extends Fragment {
             });
 
             builder.show();
-        }else{
-
         }
     }
 
@@ -323,7 +314,8 @@ public class RunTestFragment extends Fragment {
             return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
         }else{
             if(cm.getActiveNetworkInfo() != null){
-                return cm.getActiveNetworkInfo().isConnectedOrConnecting();
+                //return cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_MOBILE;
+                return cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_MOBILE || cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_WIFI;
             }else{
                 return false;
             }
@@ -358,7 +350,6 @@ public class RunTestFragment extends Fragment {
     private boolean checkLocationPermission(){
         boolean locationAgreed =  (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
-        Log.i("test - location", Boolean.toString(locationAgreed));
         return locationAgreed;
     }
 
@@ -378,8 +369,7 @@ public class RunTestFragment extends Fragment {
     }
 
     private boolean checkCameraPermission(){
-        boolean cameraAgreed =   ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-        Log.i("test - camera", Boolean.toString(cameraAgreed));
+        boolean cameraAgreed = ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
         return cameraAgreed;
     }
 
@@ -493,6 +483,7 @@ public class RunTestFragment extends Fragment {
 
     
     public void startScan() {
+        Log.i("test", "starting scan");
         barcodeScannerView.setStatusText("Scan QR code to begin the test");
         barcodeScannerView.resume();
         barcodeScannerView.getViewFinder().setVisibility(View.VISIBLE);
@@ -534,7 +525,17 @@ public class RunTestFragment extends Fragment {
         qrResult.putString("bundleKey", scanResult);
         getParentFragmentManager().setFragmentResult("requestKey", qrResult);
         isServerConnected.set(false);
+        isServerConnecting.set(false);
         Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
+    }
+
+    private void setUID(Context context){
+        //this should run at least once
+        //after we dont have to get the UID programmatically ever again
+        //which avoids getContext() errors when it returns null
+        if(prefs.getString("UID", "").equals("")){
+            prefs.edit().putString("UID", Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID)).apply();
+        }
     }
 
 

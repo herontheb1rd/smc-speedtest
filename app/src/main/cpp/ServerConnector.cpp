@@ -26,6 +26,8 @@ Java_com_herontheb1rd_smcspeedtest_RunTestFragment_getServerInfo(JNIEnv *env, jo
     if (!sp.ipInfo(info)) {
         testError = 1;
     }else{
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF(info.ip_address.c_str()));
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Retrieving server list..."));
         auto serverList = sp.serverList();
 
         if (serverList.empty()) {
@@ -33,7 +35,6 @@ Java_com_herontheb1rd_smcspeedtest_RunTestFragment_getServerInfo(JNIEnv *env, jo
         } else {
             env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Finding best server..."));
             serverInfo = serverList[0];
-
         }
     }
 
@@ -46,10 +47,16 @@ Java_com_herontheb1rd_smcspeedtest_RunTestFragment_getServerInfo(JNIEnv *env, jo
     }else if(testError == 2) {
         env->SetObjectField(serverInfoObj, env->GetFieldID(c, "error", "Ljava/lang/String;"), env->NewStringUTF("serverList"));
     } else {
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF(serverInfo.host.c_str()));
+        env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF(std::to_string(serverInfo.id).c_str()));
+        env->SetObjectField(serverInfoObj, env->GetFieldID(c, "error", "Ljava/lang/String;"), env->NewStringUTF(""));
         env->SetObjectField(serverInfoObj, env->GetFieldID(c, "host", "Ljava/lang/String;"),
                             env->NewStringUTF(serverInfo.host.c_str()));
         env->SetIntField(serverInfoObj, env->GetFieldID(c, "id", "I"), serverInfo.id);
     }
+
+
+
 
     return serverInfoObj;
 }

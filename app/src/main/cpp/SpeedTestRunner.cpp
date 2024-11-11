@@ -143,53 +143,99 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, j
     int latency = -1;
 
     signal(SIGPIPE, SIG_IGN);
+
     auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
-    sp.setInsecure(true);
     IPInfo info;
     ServerInfo serverInfo;
     ServerInfo javaServerInfo = convertObjToStruct(env, jServerInfo);
 
+    sp.setInsecure(true);
+
+
     jmethodID cppLogger = env->GetMethodID(env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment"), "cppLogger", "(Ljava/lang/String;)V");
 
-    if(!sp.ipInfo(info)){
+    int MAX_TRIES = 10;
+    for(int i = 0; i < MAX_TRIES; i++){
         env->CallVoidMethod(thiz, cppLogger,
-                            env->NewStringUTF("Latency - Failed to get IP Info"));
-        latency = -1;
-    }else {
+                            env->NewStringUTF("Latency - Run"));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF(std::to_string(i).c_str()));
+        if(!sp.ipInfo(info)){
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("Latency - Failed to get IP Info"));
+            latency = -1;
+            continue;
+        }
+
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("IP"));
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF(info.ip_address.c_str()));
+
         auto serverList = sp.serverList();
 
         if(serverList.empty()){
-            env->CallVoidMethod(thiz, cppLogger,
-                                env->NewStringUTF("Latency - Failed to get server list"));
-            latency = -1;
+                env->CallVoidMethod(thiz, cppLogger,
+                                    env->NewStringUTF("Latency - Failed to get server list"));
+                latency = -1;
+                continue;
         }else {
-/*
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("Latency - Didn't fail"));
+
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("Latency - Java Host"));
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF(javaServerInfo.host.c_str()));
+
             serverInfo.host.append(javaServerInfo.host.c_str());
+
             sp.setServer(serverInfo);
 
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("Latency - Host"));
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF(serverInfo.host.c_str()));
+
             for (auto &s : serverList) {
+                env->CallVoidMethod(thiz, cppLogger,
+                                    env->NewStringUTF("Latency - FL Host"));
+                env->CallVoidMethod(thiz, cppLogger,
+                                    env->NewStringUTF(s.host.c_str()));
+                env->CallVoidMethod(thiz, cppLogger,
+                                    env->NewStringUTF("Latency - FL ID"));
+                env->CallVoidMethod(thiz, cppLogger,
+                                    env->NewStringUTF(std::to_string(s.id).c_str()));
                 if (s.host == serverInfo.host)
                     serverInfo.id = s.id;
             }
 
-            latency = sp.latency();
-            */
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("Latency - ID"));
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF(std::to_string(serverInfo.id).c_str()));
 
 
-            if (sp.setServer(javaServerInfo)) {
+            //serverInfo = sp.bestServer(10, [](bool success){});
+
+            if(sp.setServer(serverInfo)) {
                 env->CallVoidMethod(thiz, cppLogger,
-                                    env->NewStringUTF(
-                                            "Latency - Connected to server successfully"));
-
-                latency = sp.latency();
-            } else {
+                                    env->NewStringUTF(std::to_string(sp.latency()).c_str()));
+                latency = -4;
+            }else{
                 env->CallVoidMethod(thiz, cppLogger,
-                                    env->NewStringUTF("Latency - Failed to connect to server"));
+                                    env->NewStringUTF("testasdfas"));
+                latency = -3;
             }
-
-
         }
+
     }
+
+    if(latency != -1){
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF(std::to_string(sp.latency()).c_str()));
+    }
+
     return latency;
 }
 

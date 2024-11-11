@@ -184,16 +184,13 @@ public class ResultsFragment extends Fragment {
             });
 
             ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
-                int latency = 20;
-                Thread.sleep(3000);
-                //int latency = computeLatency(serverInfo);
+                int latency = computeLatency(serverInfo);
                 displayResult(view, R.id.latencyTV, Integer.toString(latency));
                 view.findViewById(R.id.latencyTV).setVisibility(View.VISIBLE);
                 view.findViewById(R.id.latencyPB).setVisibility(View.INVISIBLE);
                 latencyFlag = true;
                 return latency;
             });
-
 
             //kind of redundant to add waitingDisplayFuture here, but it doesn't hurt
             ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
@@ -251,7 +248,10 @@ public class ResultsFragment extends Fragment {
         //UID is the phone's Android ID
         //this removes the need for permissions for READ_PHONE_STATE
         //and is still unique to each phone
-        return Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+
+        String UID = prefs.getString("UID", "");
+        return UID;
+
     }
     private double getMeanPerformance(List<NetPerf> resultList){
         //"performance" is dlspeed * ulspeed / latency
@@ -318,7 +318,7 @@ public class ResultsFragment extends Fragment {
                 }
 
                 String betterLocation = compareLocations(locationPerformance, netPerf);
-                if (betterLocation.equals("None")) {
+                if (betterLocation.equals("None") || betterLocation.contains(currentLocation)) {
                     betterLocation = "This location has (probably) the best connection available";
                 }else{
                     betterLocation = "The " + betterLocation + " (probably) has a better connection";

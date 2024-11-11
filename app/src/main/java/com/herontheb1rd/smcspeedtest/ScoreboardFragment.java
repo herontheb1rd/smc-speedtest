@@ -1,5 +1,9 @@
 package com.herontheb1rd.smcspeedtest;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -20,7 +24,8 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 public class ScoreboardFragment extends Fragment {
-    
+
+    SharedPreferences prefs = null;
     private TextView[] nameTVS = new TextView[7];
     private TextView[] scoreTVS = new TextView[7];
     private DatabaseReference mDatabase;
@@ -49,6 +54,8 @@ public class ScoreboardFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_scoreboard, container, false);
 
+        prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
+
         displayLoading(view);
         initTVArrays(view);
 
@@ -57,14 +64,16 @@ public class ScoreboardFragment extends Fragment {
             resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    int curRank = 0;
+                    int curRank = 6;
+                    curRank -= 7 - dataSnapshot.getChildrenCount();
+
                     for (DataSnapshot scoreboardSnapshot : dataSnapshot.getChildren()) {
                         Player curPlayer = scoreboardSnapshot.getValue(Player.class);
 
                         nameTVS[curRank].setText(curPlayer.username);
                         scoreTVS[curRank].setText(Integer.toString(curPlayer.score));
 
-                        curRank++;
+                        curRank--;
                     }
                     displayContent(view);
                 }
@@ -136,10 +145,8 @@ public class ScoreboardFragment extends Fragment {
         //UID is the phone's Android ID
         //this removes the need for permissions for READ_PHONE_STATE
         //and is still unique to each phone
-        if(getContext() != null) {
-            return Settings.Secure.getString(getContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-        }
-        return "";
-    }
 
+        String UID = prefs.getString("UID", "");
+        return UID;
+    }
 }
