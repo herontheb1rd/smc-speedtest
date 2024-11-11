@@ -160,11 +160,11 @@ public class ResultsFragment extends Fragment {
             String place = bundle.getString("bundleKey");
 
             ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(8));
-
+/*
             ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
-                double dlspeed = 20d;
-                Thread.sleep(5000);
-                //double dlspeed = computeDlspeed(serverInfo);
+                //double dlspeed = 20d;
+                //Thread.sleep(5000);
+                double dlspeed = computeDlspeed(serverInfo);
                 displayResult(view, R.id.downloadSpeedTV, String.format("%.1f", dlspeed));
                 view.findViewById(R.id.downloadSpeedTV).setVisibility(View.VISIBLE);
                 view.findViewById(R.id.downloadPB).setVisibility(View.INVISIBLE);
@@ -173,9 +173,9 @@ public class ResultsFragment extends Fragment {
             });
 
             ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
-                double ulspeed = 20d;
-                Thread.sleep(4000);
-                //double ulspeed = computeUlspeed(serverInfo);
+                //double ulspeed = 20d;
+                //Thread.sleep(4000);
+                double ulspeed = computeUlspeed(serverInfo);
                 displayResult(view, R.id.uploadSpeedTV, String.format("%.1f", ulspeed));
                 view.findViewById(R.id.uploadSpeedTV).setVisibility(View.VISIBLE);
                 view.findViewById(R.id.uploadPB).setVisibility(View.INVISIBLE);
@@ -196,7 +196,10 @@ public class ResultsFragment extends Fragment {
             ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
                     .call(() -> new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
                             Futures.getDone(latencyFuture)), pool);
-
+*/
+            ListenableFuture<NetPerf> computeNetPerf = pool.submit(() -> {
+                return computeNetPerf();
+            });
             Futures.addCallback(computeNetPerf, new FutureCallback<NetPerf>() {
                 @Override
                 public void onSuccess(NetPerf netPerf) {
@@ -207,6 +210,17 @@ public class ResultsFragment extends Fragment {
                     String UID = getUID();
                     SignalPerf signalPerf = computeSignalPerf();
 
+                    displayResult(view, R.id.downloadSpeedTV, String.format("%.1f", netPerf.getDlspeed()));
+                    view.findViewById(R.id.downloadSpeedTV).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.downloadPB).setVisibility(View.INVISIBLE);
+
+                    displayResult(view, R.id.uploadSpeedTV, String.format("%.1f", netPerf.getUlspeed()));
+                    view.findViewById(R.id.uploadSpeedTV).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.uploadPB).setVisibility(View.INVISIBLE);
+
+                    displayResult(view, R.id.latencyTV, Integer.toString(netPerf.getLatency()));
+                    view.findViewById(R.id.latencyTV).setVisibility(View.VISIBLE);
+                    view.findViewById(R.id.latencyPB).setVisibility(View.INVISIBLE);
 
                     if(mAuth.getCurrentUser() != null){
                         Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
@@ -390,4 +404,5 @@ public class ResultsFragment extends Fragment {
     public native double computeDlspeed(ServerInfo serverInfo);
     public native double computeUlspeed(ServerInfo serverInfo);
     public native int computeLatency(ServerInfo serverInfo);
+    public native NetPerf computeNetPerf();
 }

@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RunTestFragment extends Fragment {
     SharedPreferences prefs = null;
-    private final Set<String> allowedLocations = Sets.newHashSet("Library", "Kiosks", "Canteen", "ABD", "Garden", "Airport");
+    private final Set<String> allowedLocations = Sets.newHashSet("Library", "Kiosk", "Canteen", "ABD", "Garden", "Airport");
     private DecoratedBarcodeView barcodeScannerView;
     AtomicBoolean isServerConnected = new AtomicBoolean(false);
     AtomicBoolean isServerConnecting = new AtomicBoolean(false);
@@ -176,7 +176,11 @@ public class RunTestFragment extends Fragment {
         }
 
         if(isConnected() && isLocationOn()){
-            if(!isServerConnected.get() && !isServerConnecting.get()){
+            if(getStoredServerInfo() != null){
+                Log.i("test", "we've done this before");
+                getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
+                isServerConnected.set(true);
+            }else if(!isServerConnected.get() && !isServerConnecting.get()){
                 isServerConnecting.set(true);
                 ExecutorService executor = Executors.newFixedThreadPool(8);
                 executor.submit(() -> {

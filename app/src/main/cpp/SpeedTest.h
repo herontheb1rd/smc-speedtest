@@ -29,7 +29,7 @@ typedef void (*progressFn)(bool success);
 
 class SpeedTest {
 public:
-    explicit SpeedTest(float minServerVersion);
+    explicit SpeedTest(std::string minServerVersion);
     ~SpeedTest();
     CURLcode httpGet(const std::string& url, std::stringstream& os, CURL *handler = nullptr, long timeout = 30);
     CURLcode httpPost(const std::string& url, const std::string& postdata, std::stringstream& os, CURL *handler = nullptr, long timeout = 30);
@@ -38,7 +38,7 @@ public:
     static std::vector<std::string> splitString(const std::string& instr, char separator);
     bool ipInfo(IPInfo& info);
     const std::vector<ServerInfo>& serverList();
-    const ServerInfo bestServer(int sample_size = 5, std::function<void(bool)> cb = nullptr);
+    const ServerInfo bestServer(int sample_size = 10, std::function<void(bool)> cb = nullptr);
     bool setServer(ServerInfo& server);
     void setInsecure(bool insecure = false);
     const long &latency();
@@ -46,6 +46,7 @@ public:
     bool uploadSpeed(const ServerInfo& server, const TestConfig& config, double& result, std::function<void(bool)> cb = nullptr);
     bool jitter(const ServerInfo& server, long& result, int sample = 40);
     bool share(const ServerInfo& server, std::string& image_url);
+    bool version_ok(std::string client, std::string min_ver);
 private:
     bool fetchServers(const std::string& url,  std::vector<ServerInfo>& target, int &http_code);
     bool testLatency(SpeedTestClient& client, int sample_size, long& latency);
@@ -64,7 +65,7 @@ private:
     long mLatency;
     double mUploadSpeed;
     double mDownloadSpeed;
-    float mMinSupportedServer;
+    std::string mMinSupportedServer;
     bool strict_ssl_verify;
 };
 

@@ -11,7 +11,7 @@ extern "C"
 JNIEXPORT jobject JNICALL
 Java_com_herontheb1rd_smcspeedtest_RunTestFragment_getServerInfo(JNIEnv *env, jobject thiz) {
     signal(SIGPIPE, SIG_IGN);
-    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    auto sp = SpeedTest(std::to_string(SPEED_TEST_MIN_SERVER_VERSION));
     IPInfo info;
     ServerInfo serverInfo;
 
@@ -34,6 +34,7 @@ Java_com_herontheb1rd_smcspeedtest_RunTestFragment_getServerInfo(JNIEnv *env, jo
             testError = 2;
         } else {
             env->CallVoidMethod(thiz, updateProgress, env->NewStringUTF("Finding best server..."));
+            //serverInfo = sp.bestServer(10, [](bool success) {});
             serverInfo = serverList[0];
         }
     }

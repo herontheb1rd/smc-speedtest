@@ -8,7 +8,7 @@
 
 SpeedTestClient::SpeedTestClient(const ServerInfo &serverInfo): mServerInfo(serverInfo),
                                                                                   mSocketFd(0),
-                                                                                  mServerVersion(-1.0){}
+                                                                                  mServerVersion("0"){}
 SpeedTestClient::~SpeedTestClient() {
     close();
 }
@@ -217,7 +217,7 @@ bool SpeedTestClient::mkSocket() {
 }
 
 
-float SpeedTestClient::version() {
+std::string SpeedTestClient::version() {
     return mServerVersion;
 }
 

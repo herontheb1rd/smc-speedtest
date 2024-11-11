@@ -10,7 +10,7 @@
 #include "json.h"
 
 
-SpeedTest::SpeedTest(float minServerVersion):
+SpeedTest::SpeedTest(std::string minServerVersion):
         mLatency(0),
         mUploadSpeed(0),
         mDownloadSpeed(0) {
@@ -72,16 +72,34 @@ const ServerInfo SpeedTest::bestServer(const int sample_size, std::function<void
     return best;
 }
 
+bool SpeedTest::version_ok (std::string client, std::string min_ver) {
+    unsigned maj = 0, min = 0, bug = 0;
+    unsigned maj2 = 0, min2 = 0, bug2 = 0;
+    sscanf(client.c_str(), "%u.%u.%u", &maj, &min, &bug);
+    sscanf(min_ver.c_str(), "%u.%u.%u", &maj2, &min2, &bug2);
+    if (maj < maj2) return false;
+    if (maj > maj2) return true;
+    if (min < min2) return false;
+    if (min > min2) return true;
+    if (bug < bug2) return false;
+    if (bug > bug2) return true;
+    return true;
+}
+
 bool SpeedTest::setServer(ServerInfo& server){
     SpeedTestClient client = SpeedTestClient(server);
-    if (client.connect() && client.version() >= mMinSupportedServer){
+    /*
+    if (client.connect() && (version_ok(client.version(), mMinSupportedServer))){
         if (!testLatency(client, SPEED_TEST_LATENCY_SAMPLE_SIZE, mLatency)){
             return false;
         }
-    } else {
+    }
+    if(!version_ok(client.version(), mMinSupportedServer)){
         client.close();
         return false;
     }
+    client.close();*/
+    testLatency(client, SPEED_TEST_LATENCY_SAMPLE_SIZE, mLatency);
     client.close();
     return true;
 

@@ -45,28 +45,72 @@ JNIEXPORT jdouble JNICALL
 Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeDlspeed(JNIEnv *env, jobject thiz, jobject jServerInfo) {
     double dlspeed = -1;
 
-    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    signal(SIGPIPE, SIG_IGN);
+    auto sp = SpeedTest(std::to_string(SPEED_TEST_MIN_SERVER_VERSION));
     sp.setInsecure(true);
-
-    ServerInfo serverInfo = convertObjToStruct(env, jServerInfo);
+    IPInfo info;
+    ServerInfo serverInfo;
+    ServerInfo javaServerInfo = convertObjToStruct(env, jServerInfo);
 
     jmethodID cppLogger = env->GetMethodID(env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment"), "cppLogger", "(Ljava/lang/String;)V");
 
-    if(sp.setServer(serverInfo)) {
-        env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Download - Connected to server successfully"));
+    signal(SIGPIPE, SIG_IGN);
 
-        double preSpeed = 20.0;
-        TestConfig uploadConfig;
-        TestConfig downloadConfig;
-        testConfigSelector(preSpeed, uploadConfig, downloadConfig);
+    int MAX_TRIES = 1;
+    for (int i = 0; i < MAX_TRIES; i++) {
 
-        env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Download - Getting download speed"));
-        sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {});
-        env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Download - Got download speed"));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF("dl - Run"));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF(std::to_string(i).c_str()));
+        if (!sp.ipInfo(info)) {
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("dl - Failed to get IP Info"));
+            dlspeed = -1;
+            continue;
+        }
 
-    }else{
-        env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Download - Failed to connect to server"));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF("IP"));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF(info.ip_address.c_str()));
+
+        auto serverList = sp.serverList();
+
+        if (serverList.empty()) {
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("dl - Failed to get server list"));
+            dlspeed = -1;
+            continue;
+        } else {
+
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("dl - Didn't fail"));
+
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("dl - Java Host"));
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF(javaServerInfo.host.c_str()));
+
+            serverInfo.host.append(javaServerInfo.host.c_str());
+
+            if(!sp.setServer(serverInfo)) {
+                env->CallVoidMethod(thiz, cppLogger,
+                                    env->NewStringUTF("Set server failed"));
+                continue;
+            }
+
+            double preSpeed = 20.0;
+            TestConfig uploadConfig;
+            TestConfig downloadConfig;
+            testConfigSelector(preSpeed, uploadConfig, downloadConfig);
+
+            env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("dlspeed - Getting ddl speed"));
+            sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {});
+            env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("dl - Got dl speed"));
+        }
     }
+
     return dlspeed;
 }
 
@@ -77,7 +121,7 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, j
     double ulspeed = -1;
 
     signal(SIGPIPE, SIG_IGN);
-    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    auto sp = SpeedTest(std::to_string(SPEED_TEST_MIN_SERVER_VERSION));
     sp.setInsecure(true);
     IPInfo info;
     ServerInfo serverInfo;
@@ -85,52 +129,61 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeUlspeed(JNIEnv *env, j
 
     jmethodID cppLogger = env->GetMethodID(env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment"), "cppLogger", "(Ljava/lang/String;)V");
 
-    if(!sp.ipInfo(info)){
+    signal(SIGPIPE, SIG_IGN);
+
+    int MAX_TRIES = 1;
+    for (int i = 0; i < MAX_TRIES; i++) {
+
         env->CallVoidMethod(thiz, cppLogger,
-                            env->NewStringUTF("Upload - Failed to get IP Info"));
-        ulspeed = -1;
-    }else {
+                            env->NewStringUTF("ulspeed - Run"));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF(std::to_string(i).c_str()));
+        if (!sp.ipInfo(info)) {
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("ulspeed - Failed to get IP Info"));
+            ulspeed = -1;
+            continue;
+        }
+
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF("IP"));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF(info.ip_address.c_str()));
+
         auto serverList = sp.serverList();
 
-        if(serverList.empty()){
+        if (serverList.empty()) {
             env->CallVoidMethod(thiz, cppLogger,
-                                env->NewStringUTF("Upload - Failed to get server list"));
+                                env->NewStringUTF("ulspeed - Failed to get server list"));
             ulspeed = -1;
-        }else {
-            env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Upload - Host of server:"));
-            env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF(javaServerInfo.host.c_str()));
+            continue;
+        } else {
 
-            int i = 0;
-            env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Upload - Server list:"));
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("ulspeed - Didn't fail"));
+
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("ulspeed - Java Host"));
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF(javaServerInfo.host.c_str()));
 
             serverInfo.host.append(javaServerInfo.host.c_str());
-            sp.setServer(serverInfo);
 
-            for (auto &s : serverList) {
-                if (s.host == serverInfo.host)
-                    serverInfo.id = s.id;
-            }
-
-            if (sp.setServer(serverInfo)) {
+            if(!sp.setServer(serverInfo)) {
                 env->CallVoidMethod(thiz, cppLogger,
-                                    env->NewStringUTF(
-                                            "Upload - Connected to server successfully"));
-
-                double preSpeed = 20.0;
-                TestConfig uploadConfig;
-                TestConfig downloadConfig;
-                testConfigSelector(preSpeed, uploadConfig, downloadConfig);
-
-                env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Upload - Getting upload speed"));
-                sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {});
-                env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Upload - Got upload speed"));
-
-            } else {
-                env->CallVoidMethod(thiz, cppLogger,
-                                    env->NewStringUTF("Upload - Failed to connect to server"));
+                                    env->NewStringUTF("Set server failed"));
+                continue;
             }
 
 
+            double preSpeed = 20.0;
+            TestConfig uploadConfig;
+            TestConfig downloadConfig;
+            testConfigSelector(preSpeed, uploadConfig, downloadConfig);
+
+            env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Upload - Getting upload speed"));
+            sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {});
+            env->CallVoidMethod(thiz, cppLogger, env->NewStringUTF("Upload - Got upload speed"));
         }
     }
 
@@ -144,42 +197,45 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, j
 
     signal(SIGPIPE, SIG_IGN);
 
-    auto sp = SpeedTest(SPEED_TEST_MIN_SERVER_VERSION);
+    auto sp = SpeedTest(std::to_string(SPEED_TEST_MIN_SERVER_VERSION));
     IPInfo info;
     ServerInfo serverInfo;
     ServerInfo javaServerInfo = convertObjToStruct(env, jServerInfo);
 
     sp.setInsecure(true);
 
+    jmethodID cppLogger = env->GetMethodID(
+            env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment"), "cppLogger",
+            "(Ljava/lang/String;)V");
 
-    jmethodID cppLogger = env->GetMethodID(env->FindClass("com/herontheb1rd/smcspeedtest/ResultsFragment"), "cppLogger", "(Ljava/lang/String;)V");
+    int MAX_TRIES = 1;
+    for (int i = 0; i < MAX_TRIES; i++) {
 
-    int MAX_TRIES = 10;
-    for(int i = 0; i < MAX_TRIES; i++){
         env->CallVoidMethod(thiz, cppLogger,
                             env->NewStringUTF("Latency - Run"));
         env->CallVoidMethod(thiz, cppLogger,
                             env->NewStringUTF(std::to_string(i).c_str()));
-        if(!sp.ipInfo(info)){
+        if (!sp.ipInfo(info)) {
             env->CallVoidMethod(thiz, cppLogger,
                                 env->NewStringUTF("Latency - Failed to get IP Info"));
             latency = -1;
             continue;
         }
 
-            env->CallVoidMethod(thiz, cppLogger,
-                                env->NewStringUTF("IP"));
-            env->CallVoidMethod(thiz, cppLogger,
-                                env->NewStringUTF(info.ip_address.c_str()));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF("IP"));
+        env->CallVoidMethod(thiz, cppLogger,
+                            env->NewStringUTF(info.ip_address.c_str()));
 
         auto serverList = sp.serverList();
 
-        if(serverList.empty()){
-                env->CallVoidMethod(thiz, cppLogger,
-                                    env->NewStringUTF("Latency - Failed to get server list"));
-                latency = -1;
-                continue;
-        }else {
+        if (serverList.empty()) {
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("Latency - Failed to get server list"));
+            latency = -1;
+            continue;
+        } else {
+
             env->CallVoidMethod(thiz, cppLogger,
                                 env->NewStringUTF("Latency - Didn't fail"));
 
@@ -190,7 +246,17 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, j
 
             serverInfo.host.append(javaServerInfo.host.c_str());
 
-            sp.setServer(serverInfo);
+            if(!sp.setServer(serverInfo)) {
+                env->CallVoidMethod(thiz, cppLogger,
+                                    env->NewStringUTF("Set server failed"));
+                continue;
+            }
+
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("Set server success"));
+
+            env->CallVoidMethod(thiz, cppLogger,
+                                env->NewStringUTF("Latency - Host"));
 
             env->CallVoidMethod(thiz, cppLogger,
                                 env->NewStringUTF("Latency - Host"));
@@ -216,27 +282,55 @@ Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeLatency(JNIEnv *env, j
                                 env->NewStringUTF(std::to_string(serverInfo.id).c_str()));
 
 
-            //serverInfo = sp.bestServer(10, [](bool success){});
-
-            if(sp.setServer(serverInfo)) {
-                env->CallVoidMethod(thiz, cppLogger,
-                                    env->NewStringUTF(std::to_string(sp.latency()).c_str()));
-                latency = -4;
-            }else{
-                env->CallVoidMethod(thiz, cppLogger,
-                                    env->NewStringUTF("testasdfas"));
-                latency = -3;
-            }
+            latency = sp.latency();
         }
-
     }
-
-    if(latency != -1){
-        env->CallVoidMethod(thiz, cppLogger,
-                            env->NewStringUTF(std::to_string(sp.latency()).c_str()));
-    }
-
     return latency;
 }
 
 
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_com_herontheb1rd_smcspeedtest_ResultsFragment_computeNetPerf(JNIEnv *env, jobject thiz) {
+    double dlspeed = -1;
+    double ulspeed = -1;
+    long latency = -1;
+    //for setting the text
+
+    signal(SIGPIPE, SIG_IGN);
+    auto sp = SpeedTest(std::to_string(SPEED_TEST_MIN_SERVER_VERSION));
+    IPInfo info;
+    ServerInfo serverInfo;
+
+    sp.setInsecure(true);
+    if (!sp.ipInfo(info)){
+        //env->ThrowNew(env->FindClass("java/lang/Exception"), "Cannot retrieve network info");
+    }else {
+        auto serverList = sp.serverList();
+        if (serverList.empty()) {
+            //env->ThrowNew(env->FindClass("java/lang/Exception"), "Server list is empty");
+        } else {
+            serverInfo = sp.bestServer(10, [](bool success) {});
+            //get latency
+            latency = sp.latency();
+            //skip the pretest, saving a minute or so
+            //uses the broadband config found in TestConfigTemplate.h
+            double preSpeed = 20.0;
+            TestConfig uploadConfig;
+            TestConfig downloadConfig;
+            testConfigSelector(preSpeed, uploadConfig, downloadConfig);
+            //get upload and download speed
+            if (!sp.downloadSpeed(serverInfo, downloadConfig, dlspeed, [](bool success) {})) {
+                //env->ThrowNew(env->FindClass("java/lang/Exception"), "Failed to compute download speed");
+            }
+            if (!sp.uploadSpeed(serverInfo, uploadConfig, ulspeed, [](bool success) {})) {
+                //env->ThrowNew(env->FindClass("java/lang/Exception"), "Failed to compute upload speed");
+            }
+        }
+    }
+    jclass c = env->FindClass("com/herontheb1rd/smcspeedtest/NetPerf");
+    jmethodID cid = env->GetMethodID(c, "<init>", "(DDI)V");
+    jobject resultsObj = env->NewObject(c, cid, dlspeed, ulspeed, latency);
+    return resultsObj;
+}
