@@ -3,13 +3,12 @@ package com.herontheb1rd.smcspeedtest;
 import static android.content.Context.MODE_PRIVATE;
 
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import android.provider.Settings;
 import android.text.InputFilter;
 import android.text.InputType;
 import android.view.LayoutInflater;
@@ -27,6 +26,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.Objects;
 
 
 public class ProfileFragment extends Fragment {
@@ -64,36 +65,24 @@ public class ProfileFragment extends Fragment {
         getNameAndScore(view);
         getAndDisplayRank(view);
 
-        Button changeNameButton = (Button) view.findViewById(R.id.changeNameB);
-        changeNameButton.setOnClickListener( new View.OnClickListener() {
+        Button changeNameButton = view.findViewById(R.id.changeNameB);
+        changeNameButton.setOnClickListener(v -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.UsernameAlertStyle);
+            builder.setTitle("Set Username");
 
-            @Override
-            public void onClick(View v) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.UsernameAlertStyle);
-                builder.setTitle("Set Username");
+            final EditText input = new EditText(getContext());
+            input.setInputType(InputType.TYPE_CLASS_TEXT);
+            input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
+            builder.setMessage("\nMaximum of 20 characters");
+            builder.setView(input);
 
-                final EditText input = new EditText(getContext());
-                input.setInputType(InputType.TYPE_CLASS_TEXT);
-                input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
-                builder.setMessage("\nMaximum of 20 characters");
-                builder.setView(input);
+            builder.setPositiveButton("OK", (dialog, which) -> {
+                String username = input.getText().toString();
+                changeUsername(view, username);
+            });
+            builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String username = input.getText().toString();
-                        changeUsername(view, username);
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-
-                builder.show();
-            }
+            builder.show();
         });
 
         // Inflate the layout for this fragment
@@ -105,14 +94,14 @@ public class ProfileFragment extends Fragment {
             Query resultsRef = mDatabase.child("scoreboard").child(getUID());
             resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     ((TextView) view.findViewById(R.id.usernameTV)).setText(prefs.getString("username", dataSnapshot.child("username").getValue().toString()));
                     ((TextView) view.findViewById(R.id.scoreTV)).setText(dataSnapshot.child("score").getValue().toString());
 
                     displayContent(view);
                 }
                 @Override
-                public void onCancelled(DatabaseError databaseError) {
+                public void onCancelled(@NonNull DatabaseError databaseError) {
 
                 }
             });
@@ -126,11 +115,11 @@ public class ProfileFragment extends Fragment {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 int rank = (int)dataSnapshot.getChildrenCount();
                 for (DataSnapshot scoreboardSnapshot : dataSnapshot.getChildren()) {
-                    if(scoreboardSnapshot.getKey().equals(getUID()))
+                    if(Objects.equals(scoreboardSnapshot.getKey(), getUID()))
                         break;
                     rank--;
                 }
-                ((TextView) view.findViewById(R.id.rankTV)).setText("You are rank " + Integer.toString(rank));
+                ((TextView) view.findViewById(R.id.rankTV)).setText("You are rank " + rank);
 
                 displayContent(view);
             }
@@ -152,11 +141,7 @@ public class ProfileFragment extends Fragment {
         }
     }
     private String getUID() {
-        //UID is the phone's Android ID
-        //this removes the need for permissions for READ_PHONE_STATE
-        //and is still unique to each phone
-        String UID = prefs.getString("UID", "");
-        return UID;
+        return prefs.getString("UID", "");
     }
 
     private void displayLoading(View view){

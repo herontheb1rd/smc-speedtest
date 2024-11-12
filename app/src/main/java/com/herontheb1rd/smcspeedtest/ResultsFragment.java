@@ -15,29 +15,22 @@ import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.Group;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentResultListener;
-import androidx.navigation.Navigation;
 
 
-import android.provider.Settings;
 import android.telephony.CellInfoLte;
 import android.telephony.CellSignalStrengthLte;
-import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,19 +41,13 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.Query;
 import com.google.firebase.database.ServerValue;
 import com.google.firebase.database.ValueEventListener;
 
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class ResultsFragment extends Fragment {
@@ -72,8 +59,7 @@ public class ResultsFragment extends Fragment {
 
     SharedPreferences prefs = null;
 
-    private final List<String> qrLocations = Arrays.asList("Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden");
-
+    //private final List<String> qrLocations = Arrays.asList("Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden");
 
     //codes from https://mcc-mnc.com/
     public final Map<String, String> simOperators = new HashMap<String, String>() {{
@@ -85,10 +71,6 @@ public class ResultsFragment extends Fragment {
 
     private DatabaseReference mDatabase;
     private FirebaseAuth mAuth;
-
-    private boolean downloadFlag;
-    private boolean uploadFlag;
-    private boolean latencyFlag;
     private OnBackPressedCallback callback;
 
     public ResultsFragment(){
@@ -121,7 +103,7 @@ public class ResultsFragment extends Fragment {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String UID = getUID();
                 if(!snapshot.child("scoreboard").child(UID).exists()){
-                    mDatabase.child("scoreboard").child(UID).child("username").setValue(UID);
+                    mDatabase.child("scoreboard").child(UID).child("username").setValue(prefs.getString("username", getUID()));
                     mDatabase.child("scoreboard").child(UID).child("score").setValue(0);
                 }
             }
@@ -141,95 +123,94 @@ public class ResultsFragment extends Fragment {
         };
         requireActivity().getOnBackPressedDispatcher().addCallback(this, callback);
 
+    }
 
+    public void displayDownloadResult(double dlspeed){
+        View view = getView();
+
+        if(view == null)
+            return;
+
+
+        displayResult(view, R.id.downloadSpeedTV, dlspeed != -1d ? String.format("%.1f", dlspeed) : "N/A");
+        view.findViewById(R.id.downloadSpeedTV).setVisibility(View.VISIBLE);
+        view.findViewById(R.id.downloadPB).setVisibility(View.INVISIBLE);
+    }
+
+    public void displayUploadResult(double ulspeed){
+        View view = getView();
+
+        if(view == null)
+            return;
+
+        displayResult(view, R.id.uploadSpeedTV, ulspeed != -1d ? String.format("%.1f", ulspeed) : "N/A");
+        view.findViewById(R.id.uploadSpeedTV).setVisibility(View.VISIBLE);
+        view.findViewById(R.id.uploadPB).setVisibility(View.INVISIBLE);
+    }
+
+    public void displayLatencyResult(int latency){
+        View view = getView();
+
+        if(view == null)
+            return;
+
+        displayResult(view, R.id.latencyTV, latency != -1 ? Integer.toString(latency) : "N/A");
+        view.findViewById(R.id.latencyTV).setVisibility(View.VISIBLE);
+        view.findViewById(R.id.latencyPB).setVisibility(View.INVISIBLE);
+    }
+
+    public void displayProgress(String progress){
+        View view = getView();
+
+        if(view == null)
+            return;
+
+        displayResult(view, R.id.progressTV, progress);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        downloadFlag = false;
-        uploadFlag = false;
-        latencyFlag = false;
 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_results, container, false);
-
-        ServerInfo serverInfo = getStoredServerInfo();
 
         getParentFragmentManager().setFragmentResultListener("requestKey", this, (requestKey, bundle) -> {
             String place = bundle.getString("bundleKey");
 
             ListeningExecutorService pool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(8));
-/*
-            ListenableFuture<Double> dlspeedFuture = pool.submit(() -> {
-                //double dlspeed = 20d;
-                //Thread.sleep(5000);
-                double dlspeed = computeDlspeed(serverInfo);
-                displayResult(view, R.id.downloadSpeedTV, String.format("%.1f", dlspeed));
-                view.findViewById(R.id.downloadSpeedTV).setVisibility(View.VISIBLE);
-                view.findViewById(R.id.downloadPB).setVisibility(View.INVISIBLE);
-                downloadFlag = true;
-                return dlspeed;
+            ListenableFuture<NetPerf> netPerfFuture = pool.submit(() -> {
+                NetPerf netPerf;
+
+                int MAX_TRIES = 3;
+                for(int i = 0; i < MAX_TRIES; i++) {
+                    Log.i("test", "attempt " + MAX_TRIES);
+                    netPerf = computeNetPerf();
+
+                    if(netPerf != null)
+                        return netPerf;
+                }
+
+                throw new Exception("Speed test failed");
             });
 
-            ListenableFuture<Double> ulspeedFuture = pool.submit(() -> {
-                //double ulspeed = 20d;
-                //Thread.sleep(4000);
-                double ulspeed = computeUlspeed(serverInfo);
-                displayResult(view, R.id.uploadSpeedTV, String.format("%.1f", ulspeed));
-                view.findViewById(R.id.uploadSpeedTV).setVisibility(View.VISIBLE);
-                view.findViewById(R.id.uploadPB).setVisibility(View.INVISIBLE);
-                uploadFlag = true;
-                return ulspeed;
-            });
-
-            ListenableFuture<Integer> latencyFuture = pool.submit(() -> {
-                int latency = computeLatency(serverInfo);
-                displayResult(view, R.id.latencyTV, Integer.toString(latency));
-                view.findViewById(R.id.latencyTV).setVisibility(View.VISIBLE);
-                view.findViewById(R.id.latencyPB).setVisibility(View.INVISIBLE);
-                latencyFlag = true;
-                return latency;
-            });
-
-            //kind of redundant to add waitingDisplayFuture here, but it doesn't hurt
-            ListenableFuture<NetPerf> computeNetPerf = Futures.whenAllSucceed(dlspeedFuture, ulspeedFuture, latencyFuture)
-                    .call(() -> new NetPerf(Futures.getDone(dlspeedFuture), Futures.getDone(ulspeedFuture),
-                            Futures.getDone(latencyFuture)), pool);
-*/
-            ListenableFuture<NetPerf> computeNetPerf = pool.submit(() -> {
-                return computeNetPerf();
-            });
-            Futures.addCallback(computeNetPerf, new FutureCallback<NetPerf>() {
+            Futures.addCallback(netPerfFuture, new FutureCallback<NetPerf>() {
                 @Override
                 public void onSuccess(NetPerf netPerf) {
-
                     long time = Calendar.getInstance().getTime().getTime();
                     String phoneBrand = Build.MANUFACTURER;
                     String networkProvider = getNetworkProvider();
                     String UID = getUID();
                     SignalPerf signalPerf = computeSignalPerf();
 
-                    displayResult(view, R.id.downloadSpeedTV, String.format("%.1f", netPerf.getDlspeed()));
-                    view.findViewById(R.id.downloadSpeedTV).setVisibility(View.VISIBLE);
-                    view.findViewById(R.id.downloadPB).setVisibility(View.INVISIBLE);
-
-                    displayResult(view, R.id.uploadSpeedTV, String.format("%.1f", netPerf.getUlspeed()));
-                    view.findViewById(R.id.uploadSpeedTV).setVisibility(View.VISIBLE);
-                    view.findViewById(R.id.uploadPB).setVisibility(View.INVISIBLE);
-
-                    displayResult(view, R.id.latencyTV, Integer.toString(netPerf.getLatency()));
-                    view.findViewById(R.id.latencyTV).setVisibility(View.VISIBLE);
-                    view.findViewById(R.id.latencyPB).setVisibility(View.INVISIBLE);
-
                     if(mAuth.getCurrentUser() != null){
                         Results results = new Results(time, phoneBrand, networkProvider, place, netPerf, signalPerf);
                         mDatabase.child("results").child(networkProvider).push().setValue(results);
+
                         mDatabase.child("scoreboard").child(UID).child("username").setValue(prefs.getString("username", getUID()));
-
-
                         mDatabase.child("scoreboard").child(UID).child("score").setValue(ServerValue.increment(1));
-                        findBetterLocation(view, networkProvider, place, netPerf);
+
+                        //findBetterLocation(view, networkProvider, place, netPerf);
                     }else{
                         getActivity().runOnUiThread(() -> Toast.makeText(getActivity(), "Could not upload results to database",
                                 Toast.LENGTH_SHORT).show());
@@ -240,33 +221,79 @@ public class ResultsFragment extends Fragment {
 
                 @Override
                 public void onFailure(Throwable t) {
-
+                    displayDownloadResult(-1d);
+                    displayUploadResult(-1d);
+                    displayLatencyResult(-1);
+                    displayProgress("Speed test failed. Please retry");
                 }
             }, pool);
-
-
         });
 
         return view;
     }
 
-    private ServerInfo getStoredServerInfo(){
-        return ((MainActivity) getContext()).getServerInfo();
-    }
-
-    private void setStoredServerInfo(ServerInfo serverInfo){
-        ((MainActivity) getContext()).setServerInfo(serverInfo);
-    }
-
     private String getUID() {
-        //UID is the phone's Android ID
-        //this removes the need for permissions for READ_PHONE_STATE
-        //and is still unique to each phone
-
-        String UID = prefs.getString("UID", "");
-        return UID;
-
+        return prefs.getString("UID", "");
     }
+
+    public String getNetworkProvider() {
+        TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
+            TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
+            return simOperators.get(dataTM.getSimOperator());
+        }else {
+            return simOperators.get(tm.getSimOperator());
+        }
+    }
+
+    private SignalPerf computeSignalPerf(){
+        int rssi = 1;
+        int rsrp = 1;
+        int rsrq = 1;
+
+        TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            return new SignalPerf(rssi, rsrq, rsrp);
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return new SignalPerf(rssi, rsrq, rsrp);
+        }
+        LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
+        if(!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            return new SignalPerf(rssi, rsrq, rsrp);
+        }
+
+        int dataSubId = SubscriptionManager.getActiveDataSubscriptionId();
+        TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
+
+        CellInfoLte cellinfolte = (CellInfoLte) dataTM.getAllCellInfo().get(0);
+        CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
+
+        rssi = cellSignalStrengthLte.getRssi();
+        rsrp = cellSignalStrengthLte.getRsrp();
+        rsrq = cellSignalStrengthLte.getRsrq();
+
+        return new SignalPerf(rssi, rsrq, rsrp);
+    }
+
+    private void displayResult(View view, int id, String resultStr){
+        getActivity().runOnUiThread(() -> ((TextView) view.findViewById(id)).setText(resultStr));
+    }
+
+    public void cppLogger(String debugString){
+        Log.i("test", debugString);
+    }
+
+    public native NetPerf computeNetPerf();
+
+    /*
+    * Might reimplement this with more users, but for now it doesn't really do much
+    * It might actually hurt getting results, and
+    * we don't have enough data for it to be very useful
+    * If we had more users, then it might have a usecase
+    * Keeping it here anyway
     private double getMeanPerformance(List<NetPerf> resultList){
         //"performance" is dlspeed * ulspeed / latency
         //there might be better methods but this is a lazy way of implementing it i suppose
@@ -346,63 +373,5 @@ public class ResultsFragment extends Fragment {
 
             }
         });
-    }
-
-
-    public String getNetworkProvider() {
-        TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
-            TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
-            return simOperators.get(dataTM.getSimOperator());
-        }else {
-            return simOperators.get(tm.getSimOperator());
-        }
-    }
-
-    private SignalPerf computeSignalPerf(){
-        int rssi = 1;
-        int rsrp = 1;
-        int rsrq = 1;
-
-        TelephonyManager tm = (TelephonyManager) getActivity().getSystemService(Context.TELEPHONY_SERVICE);
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-            return new SignalPerf(rssi, rsrq, rsrp);
-        }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            return new SignalPerf(rssi, rsrq, rsrp);
-        }
-        LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
-        if(!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            return new SignalPerf(rssi, rsrq, rsrp);
-        }
-
-        int dataSubId = SubscriptionManager.getActiveDataSubscriptionId();
-        TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
-
-        CellInfoLte cellinfolte = (CellInfoLte) dataTM.getAllCellInfo().get(0);
-        CellSignalStrengthLte cellSignalStrengthLte = cellinfolte.getCellSignalStrength();
-
-        rssi = cellSignalStrengthLte.getRssi();
-        rsrp = cellSignalStrengthLte.getRsrp();
-        rsrq = cellSignalStrengthLte.getRsrq();
-
-        return new SignalPerf(rssi, rsrq, rsrp);
-    }
-
-    private void displayResult(View view, int id, String resultStr){
-        getActivity().runOnUiThread(() -> {
-            ((TextView) view.findViewById(id)).setText(resultStr);
-        });
-    }
-
-    public void cppLogger(String debugString){
-        Log.i("test", debugString);
-    }
-
-    public native double computeDlspeed(ServerInfo serverInfo);
-    public native double computeUlspeed(ServerInfo serverInfo);
-    public native int computeLatency(ServerInfo serverInfo);
-    public native NetPerf computeNetPerf();
+    }*/
 }

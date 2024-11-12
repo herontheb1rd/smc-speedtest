@@ -106,13 +106,13 @@
         style="@style/Divider"
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
-        app:layout_constraintBottom_toTopOf="@+id/suggestionTV"
+        app:layout_constraintBottom_toTopOf="@+id/progressTV"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/latencyTV" />
 
     <TextView
-        android:id="@+id/suggestionTV"
+        android:id="@+id/progressTV"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="30dp"

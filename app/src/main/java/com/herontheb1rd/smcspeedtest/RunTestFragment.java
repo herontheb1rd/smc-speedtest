@@ -2,10 +2,8 @@ package com.herontheb1rd.smcspeedtest;
 
 import static android.content.Context.MODE_PRIVATE;
 
-import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -32,7 +30,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.common.collect.Sets;
 
@@ -46,15 +43,11 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RunTestFragment extends Fragment {
     SharedPreferences prefs = null;
-    private final Set<String> allowedLocations = Sets.newHashSet("Library", "Kiosk", "Canteen", "ABD", "Garden", "Airport");
+    private final Set<String> allowedLocations = Sets.newHashSet("Library", "Kiosks", "Canteen", "ABD", "Garden", "Airport");
     private DecoratedBarcodeView barcodeScannerView;
-    AtomicBoolean isServerConnected = new AtomicBoolean(false);
-    AtomicBoolean isServerConnecting = new AtomicBoolean(false);
-
     BroadcastReceiver dataLocationReceiver;
     IntentFilter dataFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
     IntentFilter locationFilter = new IntentFilter("android.location.PROVIDERS_CHANGED");
@@ -62,10 +55,16 @@ public class RunTestFragment extends Fragment {
 
     ActivityResultLauncher<String[]> permissionRequest =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                View view = getView();
+
+                if(view == null)
+                    return;
+
                 if(checkPermissions()){
-                    View view = getView();
-                    if(view != null)
-                        updateEverything(view);
+                    updateEverything(view);
+                    displayPermissionsAccepted(view);
+                }else{
+                    displayPermissionsUnaccepted(view);
                 }
             });
 
@@ -76,7 +75,7 @@ public class RunTestFragment extends Fragment {
             return;
         }
 
-        if(!scanResult.equals("") && allowedLocations.contains(scanResult)){
+        if(!scanResult.isEmpty() && allowedLocations.contains(scanResult)){
             successScan();
             goToResultsFragment(scanResult);
         }else{
@@ -87,6 +86,7 @@ public class RunTestFragment extends Fragment {
     @Override
     public void onStart(){
         super.onStart();
+
         getActivity().registerReceiver(dataLocationReceiver, dataFilter);
         getActivity().registerReceiver(dataLocationReceiver, locationFilter);
     }
@@ -124,12 +124,9 @@ public class RunTestFragment extends Fragment {
         askPermissions();
         updateEverything(view);
 
-        barcodeScannerView.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view) {
-                if(!checkPermissions())
-                    askPermissions();
-            }
+        barcodeScannerView.setOnClickListener(view1 -> {
+            if(!checkPermissions())
+                askPermissions();
         });
 
         return view;
@@ -150,108 +147,43 @@ public class RunTestFragment extends Fragment {
     }
 
     @Override
-    public void onResume(){
-        super.onResume();
-        //getActivity().registerReceiver(dataLocationReceiver, locationFilter);
-
-    }
-    @Override
     public void onPause() {
         super.onPause();
         barcodeScannerView.pause();
-        //getActivity().unregisterReceiver(dataLocationReceiver);
     }
-
-
-    @Override
-    public void onDestroy(){
-        super.onDestroy();
-        //getActivity().unregisterReceiver(dataLocationReceiver);
-    }
-
 
     private void tryStartQRScan(View view){
         if(view == null){
             return;
         }
 
+        boolean permitted = checkPermissions();
+
+        if(!permitted){
+            getActivity().runOnUiThread(() -> displayPermissionsUnaccepted(view));
+        }else{
+            getActivity().runOnUiThread(() -> displayPermissionsAccepted(view));
+        }
+
         if(isConnected() && isLocationOn()){
-            if(getStoredServerInfo() != null){
-                Log.i("test", "we've done this before");
-                getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
-                isServerConnected.set(true);
-            }else if(!isServerConnected.get() && !isServerConnecting.get()){
-                isServerConnecting.set(true);
-                ExecutorService executor = Executors.newFixedThreadPool(8);
-                executor.submit(() -> {
-                    connectToServer(view);
-                    if(checkPermissions() && isServerConnected.get()){
-                        getActivity().runOnUiThread(() -> startScan());
-                    }
-                });
-            }else if(isServerConnected.get() && isServerConnecting.get()){
-                getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
+            if(permitted){
+                getActivity().runOnUiThread(this::startScan);
             }
         }else{
             stopScan();
-            return;
-        }
-
-        if(checkPermissions() && isServerConnected.get()){
-            getActivity().runOnUiThread(() -> startScan());
         }
     }
 
-
-    private ServerInfo connectToServer(View view){
-        ServerInfo result;
-
-        int MAX_TRIES = 3;
-        for (int i = 0; i < MAX_TRIES; i++) {
-            result = getServerInfo();
-
-            Log.i("test", result.error);
-
-            if (result.error.contains("ipInfo")) {
-                getActivity().runOnUiThread(() -> displayIpInfoFailed(view));
-            } else if (result.error.contains("serverList")) {
-                getActivity().runOnUiThread(() -> displayServerListFailed(view));
-            } else if(result.error.equals("")){
-                getActivity().runOnUiThread(() -> displayServerInfoSuccess(view));
-                setStoredServerInfo(result);
-                isServerConnected.set(true);
-                return result;
-            }
-            Log.i("test", Integer.toString(i));
-        }
-        getActivity().runOnUiThread(() -> displayServerConnectionFailed(view));
-
-        return null;
-    }
-
-
-
-    private boolean askPermissions(){
-        boolean userAgreed = askUserPermission();
-        boolean locationAgreed = askLocationPermission();
-        boolean cameraAgreed = askCameraPermission();
-
-        return userAgreed && locationAgreed && cameraAgreed;
-
+    private void askPermissions(){
+        askUserPermission();
+        askLocationPermission();
+        askCameraPermission();
     }
 
     private boolean checkPermissions(){
         return checkUserPermission() && checkLocationPermission() && checkCameraPermission();
     }
-
-    private ServerInfo getStoredServerInfo(){
-        return ((MainActivity) getContext()).getServerInfo();
-    }
-
-    private void setStoredServerInfo(ServerInfo serverInfo){
-        ((MainActivity) getContext()).setServerInfo(serverInfo);
-    }
-    private boolean askUserPermission(){
+    private void askUserPermission(){
         if (!prefs.getBoolean("agreed", false)) {
             new AlertDialog.Builder(getActivity())
                     .setTitle("User Agreement")
@@ -267,12 +199,10 @@ public class RunTestFragment extends Fragment {
                     .setNegativeButton(android.R.string.no, null)
                     .show();
         }
-        return prefs.getBoolean("agreed", false);
     }
 
     private boolean checkUserPermission(){
-        boolean userAgreed = prefs.getBoolean("agreed", false);
-        return userAgreed;
+        return prefs.getBoolean("agreed", false);
     }
 
 
@@ -286,20 +216,12 @@ public class RunTestFragment extends Fragment {
             input.setFilters(new InputFilter[]{new InputFilter.LengthFilter(20)});
             builder.setView(input);
 
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    String username = input.getText().toString();
-                    prefs.edit().putBoolean("setUsername", true).apply();
-                    prefs.edit().putString("username", username).apply();
-                }
+            builder.setPositiveButton("OK", (dialog, which) -> {
+                String username = input.getText().toString();
+                prefs.edit().putBoolean("setUsername", true).apply();
+                prefs.edit().putString("username", username).apply();
             });
-            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.cancel();
-                }
-            });
+            builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
             builder.show();
         }
@@ -332,7 +254,7 @@ public class RunTestFragment extends Fragment {
         return lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
-    private boolean askLocationPermission(){
+    private void askLocationPermission(){
         if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
             new AlertDialog.Builder(getActivity())
@@ -345,19 +267,14 @@ public class RunTestFragment extends Fragment {
                     .setNegativeButton(android.R.string.no, null)
                     .show();
         }
+    }
 
-        //check again, and return true if user allowed it
+    private boolean checkLocationPermission(){
         return (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
                 ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
     }
 
-    private boolean checkLocationPermission(){
-        boolean locationAgreed =  (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
-        return locationAgreed;
-    }
-
-    private boolean askCameraPermission(){
+    private void askCameraPermission(){
         if(ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
             new AlertDialog.Builder(getActivity())
                     .setTitle("Camera Permission")
@@ -368,13 +285,10 @@ public class RunTestFragment extends Fragment {
                     .setNegativeButton(android.R.string.no, null)
                     .show();
         }
-
-        return ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
 
     private boolean checkCameraPermission(){
-        boolean cameraAgreed = ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
-        return cameraAgreed;
+        return ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
 
     public void displayLocationOn(View view){
@@ -401,30 +315,16 @@ public class RunTestFragment extends Fragment {
         dataTV.setText("Turn on your mobile data");
     }
 
-    public void displayIpInfoFailed(View view){
-        view.findViewById(R.id.connectedTV).setAlpha(0.2f);
-        TextView connectedTV = view.findViewById(R.id.connectedTV);
-        connectedTV.setText("Failed to get IP info, retrying...");
+    public void displayPermissionsAccepted(View view){
+        view.findViewById(R.id.permissionsTV).setAlpha(1f);
+        TextView permissionsTV = view.findViewById(R.id.permissionsTV);
+        permissionsTV.setText("Permissions accepted");
     }
 
-    public void displayServerListFailed(View view){
-        view.findViewById(R.id.connectedTV).setAlpha(0.2f);
-        TextView connectedTV = view.findViewById(R.id.connectedTV);
-        connectedTV.setText("Failed to get server list, retrying...");
-    }
-
-    public void displayServerInfoSuccess(View view){
-        view.findViewById(R.id.connectedTV).setAlpha(1);
-        TextView connectedTV = view.findViewById(R.id.connectedTV);
-        connectedTV.setText("Connected to server");
-    }
-
-    public void displayServerConnectionFailed(View view){
-        view.findViewById(R.id.connectedTV).setAlpha(0.2f);
-        TextView connectedTV = view.findViewById(R.id.connectedTV);
-        connectedTV.setText("Failed to connect to server");
-        Toast.makeText(getActivity(), "Please try restarting the application.",
-                Toast.LENGTH_LONG).show();
+    public void displayPermissionsUnaccepted(View view){
+        view.findViewById(R.id.permissionsTV).setAlpha(0.2f);
+        TextView permissionsTV = view.findViewById(R.id.permissionsTV);
+        permissionsTV.setText("Accept permissions to start");
     }
 
     private void updateLocationStatus(View view){
@@ -432,11 +332,10 @@ public class RunTestFragment extends Fragment {
             return;
         }
 
-        boolean locationStatus = isLocationOn();
-        if(locationStatus) {
+        if(isLocationOn()) {
             getActivity().runOnUiThread(() -> displayLocationOn(view));
         }
-        else if(!locationStatus) {
+        else{
             getActivity().runOnUiThread(() -> displayLocationOff(view));
             getActivity().runOnUiThread(this::stopScan);
         }
@@ -446,12 +345,10 @@ public class RunTestFragment extends Fragment {
         if(view == null) {
             return;
         }
-
-        boolean dataStatus = isConnected();
-        if(dataStatus) {
+        if(isConnected()) {
             getActivity().runOnUiThread(() -> displayDataOn(view));
         }
-        else if(!dataStatus) {
+        else{
             getActivity().runOnUiThread(() -> displayDataOff(view));
             getActivity().runOnUiThread(this::stopScan);
         }
@@ -464,30 +361,14 @@ public class RunTestFragment extends Fragment {
 
         boolean locationOn = isLocationOn();
         boolean dataOn = isConnected();
-        if(locationOn && dataOn && !isServerConnected.get()){
-            getActivity().runOnUiThread(this::displayLocDataOn);
-        }else if((!locationOn || !dataOn) && !isServerConnected.get()){
+        if(!locationOn || !dataOn){
             getActivity().runOnUiThread(this::displayLocDataOff);
         }
     }
 
-    public void updateProgress(String progress){
-        View view = getView();
-        if(view == null){
-            return;
-        }
-
-        Log.i("test", progress);
-        getActivity().runOnUiThread(() -> {
-            TextView connectedTV = getView().findViewById(R.id.connectedTV);
-            connectedTV.setAlpha(0.2f);
-            connectedTV.setText(progress);
-        });
-    }
 
     
     public void startScan() {
-        Log.i("test", "starting scan");
         barcodeScannerView.setStatusText("Scan QR code to begin the test");
         barcodeScannerView.resume();
         barcodeScannerView.getViewFinder().setVisibility(View.VISIBLE);
@@ -506,12 +387,6 @@ public class RunTestFragment extends Fragment {
 
     public void invalidScan(){
         barcodeScannerView.setStatusText("Scan failed, invalid QR code. Try to scan again.");
-        //barcodeScannerView.pause();
-        //barcodeScannerView.getViewFinder().setVisibility(View.INVISIBLE);
-    }
-
-    public void displayLocDataOn(){
-        barcodeScannerView.setStatusText("Connecting to server...");
     }
 
     public void displayLocDataOff(){
@@ -528,8 +403,6 @@ public class RunTestFragment extends Fragment {
         Bundle qrResult = new Bundle();
         qrResult.putString("bundleKey", scanResult);
         getParentFragmentManager().setFragmentResult("requestKey", qrResult);
-        isServerConnected.set(false);
-        isServerConnecting.set(false);
         Navigation.findNavController(getView()).navigate(R.id.action_runTestFragment_to_resultsFragment);
     }
 
@@ -537,12 +410,11 @@ public class RunTestFragment extends Fragment {
         //this should run at least once
         //after we dont have to get the UID programmatically ever again
         //which avoids getContext() errors when it returns null
-        if(prefs.getString("UID", "").equals("")){
+        if(prefs.getString("UID", "").isEmpty()){
             prefs.edit().putString("UID", Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID)).apply();
         }
     }
 
 
-    public native ServerInfo getServerInfo();
 }
 

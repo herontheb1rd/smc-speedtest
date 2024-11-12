@@ -4,13 +4,10 @@
 package com.herontheb1rd.smcspeedtest;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import android.telephony.SubscriptionManager;
@@ -22,14 +19,11 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polygon;
@@ -80,10 +74,8 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     //converted to rgba and then to hex
     private final int[] colorGradient = {0xff66ff00, 0xff93ff00, 0xffc1ff00, 0xffeeff00, 0xfff4e300, 0xfff9c600, 0xffffaa00, 0xffff7100, 0xffff3900, 0xffff0000};
 
-    private Map<String, Polygon> mPolygonDict = new HashMap<>();
-    private Map<String, MarkerOptions> mMarkerDict = new HashMap<>();
-
-    private static String mNetworkProvider;
+    private final Map<String, Polygon> mPolygonDict = new HashMap<>();
+    private final Map<String, MarkerOptions> mMarkerDict = new HashMap<>();
 
     public final Map<String, String> simOperators = new HashMap<String, String>() {{
         put("51566", "DITO");
@@ -124,14 +116,12 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_heat_map, container, false);
 
-        mNetworkProvider = getNetworkProvider();
-
         SupportMapFragment mapFragment = (SupportMapFragment) this.getChildFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         //initialize spinner
-        Spinner spinner = (Spinner)view.findViewById(R.id.metricSpinner);
+        Spinner spinner = view.findViewById(R.id.metricSpinner);
         String[] metricOptions = {"Download Speed", "Upload Speed", "Latency"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
                 android.R.layout.simple_spinner_item,
@@ -162,18 +152,17 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     private void getFirebaseResults(int metric){
         if(mAuth.getCurrentUser() != null){
             //get results from database
-            long twoHoursAgo = Calendar.getInstance().getTime().getTime() - (2*3600*1000);
-            Query resultsRef = mDatabase.child("results").child(getNetworkProvider());//.orderByChild("time").startAt(twoHoursAgo);
+            Query resultsRef = mDatabase.child("results").child(getNetworkProvider());
             resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     for(DataSnapshot networkSnapshot : dataSnapshot.getChildren()){
                         mResults.add(networkSnapshot.getValue(Results.class));
                     }
                     updateHeatMap(metric);
                 }
                 @Override
-                public void onCancelled(DatabaseError databaseError) {
+                public void onCancelled(@NonNull DatabaseError databaseError) {
 
                 }
             });
@@ -240,7 +229,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
         //initialize hash map
         for(String placeName: locationDict.keySet()){
-            locationResultsMap.put(placeName, new ArrayList<Double>());
+            locationResultsMap.put(placeName, new ArrayList<>());
         }
 
         //place values in hash map
@@ -255,7 +244,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                     intensity = curResult.getNetPerf().getUlspeed();
                     break;
                 case 2:
-                    intensity = Double.valueOf(curResult.getNetPerf().getLatency());
+                    intensity = (double) curResult.getNetPerf().getLatency();
                     break;
             }
             //skip if values are invalid
@@ -271,12 +260,12 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         //also get min and max mean
         for(String placeName: locationDict.keySet()){
             List<Double> curLocationResults = locationResultsMap.get(placeName);
-            if(curLocationResults.size() != 0){
-                double meanResult = getMedianResult(locationResultsMap.get(placeName));
-                locationMedianMap.put(placeName, meanResult);
+            if(!curLocationResults.isEmpty()){
+                double medianResult = getMedianResult(locationResultsMap.get(placeName));
+                locationMedianMap.put(placeName, medianResult);
 
-                if(meanResult > maxResult) maxResult = meanResult;
-                if(meanResult < minResult) minResult = meanResult;
+                if(medianResult > maxResult) maxResult = medianResult;
+                if(medianResult < minResult) minResult = medianResult;
             }else{
                 locationMedianMap.put(placeName, 0.0);
             }

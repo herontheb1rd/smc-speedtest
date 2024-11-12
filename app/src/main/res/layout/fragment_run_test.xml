@@ -18,7 +18,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
-        app:layout_constraintBottom_toTopOf="@+id/connectedTV"
+        app:layout_constraintBottom_toTopOf="@+id/permissionsTV"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
@@ -31,18 +31,18 @@
         style="@style/Divider"
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
-        app:layout_constraintBottom_toTopOf="@+id/connectedTV"
+        app:layout_constraintBottom_toTopOf="@+id/permissionsTV"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/connectedTV"
+        android:id="@+id/permissionsTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:alpha="0.2"
         android:fontFamily="@font/inter_medium"
-        android:text="Can't connect to server"
+        android:text="Accept permissions to start"
         android:textColor="?attr/colorOnSecondary"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -50,7 +50,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.80" />
+        app:layout_constraintVertical_bias="0.8" />
 
 
     <View
@@ -61,7 +61,7 @@
         app:layout_constraintBottom_toTopOf="@+id/locationTV"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/connectedTV" />
+        app:layout_constraintTop_toBottomOf="@+id/permissionsTV" />
 
     <TextView
         android:id="@+id/locationTV"
@@ -72,8 +72,8 @@
         android:textColor="?attr/colorOnSecondary"
         android:textSize="24sp"
         android:alpha="0.2"
-        app:layout_constraintStart_toStartOf="@+id/connectedTV"
-        app:layout_constraintTop_toBottomOf="@+id/connectedTV" />
+        app:layout_constraintStart_toStartOf="@+id/permissionsTV"
+        app:layout_constraintTop_toBottomOf="@+id/permissionsTV" />
 
     <View
         android:id="@+id/divider2"

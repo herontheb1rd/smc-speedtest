@@ -2,13 +2,12 @@ package com.herontheb1rd.smcspeedtest;
 
 import static android.content.Context.MODE_PRIVATE;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,11 +22,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Objects;
+
 public class ScoreboardFragment extends Fragment {
 
     SharedPreferences prefs = null;
-    private TextView[] nameTVS = new TextView[7];
-    private TextView[] scoreTVS = new TextView[7];
+    private final TextView[] nameTVS = new TextView[7];
+    private final TextView[] scoreTVS = new TextView[7];
     private DatabaseReference mDatabase;
     private FirebaseAuth mAuth;
 
@@ -63,13 +64,13 @@ public class ScoreboardFragment extends Fragment {
             Query resultsRef = mDatabase.child("scoreboard").orderByChild("score").limitToLast(7);
             resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    int curRank = 6;
-                    curRank -= 7 - dataSnapshot.getChildrenCount();
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    int curRank = (int) (dataSnapshot.getChildrenCount() - 1);
 
                     for (DataSnapshot scoreboardSnapshot : dataSnapshot.getChildren()) {
                         Player curPlayer = scoreboardSnapshot.getValue(Player.class);
 
+                        assert curPlayer != null;
                         nameTVS[curRank].setText(curPlayer.username);
                         scoreTVS[curRank].setText(Integer.toString(curPlayer.score));
 
@@ -79,7 +80,7 @@ public class ScoreboardFragment extends Fragment {
                 }
 
                 @Override
-                public void onCancelled(DatabaseError databaseError) {
+                public void onCancelled(@NonNull DatabaseError databaseError) {
 
                 }
             });
@@ -122,10 +123,10 @@ public class ScoreboardFragment extends Fragment {
         Query scoreboardQuery = mDatabase.child("scoreboard").orderByChild("score");
         scoreboardQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 int rank = (int)dataSnapshot.getChildrenCount();
                 for (DataSnapshot scoreboardSnapshot : dataSnapshot.getChildren()) {
-                    if(scoreboardSnapshot.getKey().equals(getUID()))
+                    if(Objects.equals(scoreboardSnapshot.getKey(), getUID()))
                         break;
                     rank--;
                 }
@@ -135,18 +136,13 @@ public class ScoreboardFragment extends Fragment {
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(@NonNull DatabaseError databaseError) {
 
             }
         });
     }
 
     private String getUID() {
-        //UID is the phone's Android ID
-        //this removes the need for permissions for READ_PHONE_STATE
-        //and is still unique to each phone
-
-        String UID = prefs.getString("UID", "");
-        return UID;
+        return prefs.getString("UID", "");
     }
 }
