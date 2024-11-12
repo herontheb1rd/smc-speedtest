@@ -25,7 +25,7 @@ public:
     bool ping(long &millisec);
     bool upload(long size, long chunk_size, long &millisec);
     bool download(long size, long chunk_size, long &millisec);
-    std::string version();
+    float version();
     const std::pair<std::string, int> hostport();
     void close();
 
@@ -34,7 +34,7 @@ private:
     bool mkSocket();
     ServerInfo mServerInfo;
     int mSocketFd;
-    std::string mServerVersion;
+    float mServerVersion;
     static bool readLine(int& fd, std::string& buffer);
     static bool writeLine(int& fd, const std::string& buffer);
 };
