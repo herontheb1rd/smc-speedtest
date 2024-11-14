@@ -91,13 +91,19 @@ public class ProfileFragment extends Fragment {
 
     private void getNameAndScore(View view){
         if(mAuth.getCurrentUser() != null) {
-            Query resultsRef = mDatabase.child("scoreboard").child(getUID());
+            Query resultsRef = mDatabase.child("scoreboard");
             resultsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    ((TextView) view.findViewById(R.id.usernameTV)).setText(prefs.getString("username", dataSnapshot.child("username").getValue().toString()));
-                    ((TextView) view.findViewById(R.id.scoreTV)).setText(dataSnapshot.child("score").getValue().toString());
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    String UID = getUID();
 
+                    if(!snapshot.child(UID).exists()){
+                        mDatabase.child("scoreboard").child(UID).child("username").setValue(prefs.getString("username", getUID()));
+                        mDatabase.child("scoreboard").child(UID).child("score").setValue(0);
+                    }else {
+                        ((TextView) view.findViewById(R.id.usernameTV)).setText(prefs.getString("username", snapshot.child("username").getValue().toString()));
+                        ((TextView) view.findViewById(R.id.scoreTV)).setText(snapshot.child("score").getValue().toString());
+                    }
                     displayContent(view);
                 }
                 @Override

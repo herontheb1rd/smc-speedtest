@@ -51,6 +51,8 @@ public class RunTestFragment extends Fragment {
     BroadcastReceiver dataLocationReceiver;
     IntentFilter dataFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
     IntentFilter locationFilter = new IntentFilter("android.location.PROVIDERS_CHANGED");
+    public Context mContext;
+    public boolean isInputtingUsername = false;
 
 
     ActivityResultLauncher<String[]> permissionRequest =
@@ -87,8 +89,8 @@ public class RunTestFragment extends Fragment {
     public void onStart(){
         super.onStart();
 
-        getActivity().registerReceiver(dataLocationReceiver, dataFilter);
-        getActivity().registerReceiver(dataLocationReceiver, locationFilter);
+        mContext.registerReceiver(dataLocationReceiver, dataFilter);
+        mContext.registerReceiver(dataLocationReceiver, locationFilter);
     }
 
 
@@ -96,14 +98,14 @@ public class RunTestFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
+        isInputtingUsername = false;
+        prefs = mContext.getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
 
-        setUID(getActivity().getApplicationContext());
+        setUID(mContext);
         dataLocationReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 View view = getView();
-
                 updateEverything(view);
             }
         };
@@ -141,9 +143,21 @@ public class RunTestFragment extends Fragment {
     }
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(getContext());
+        mContext = context;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mContext = null;
+    }
+
+    @Override
     public void onStop(){
         super.onStop();
-        getActivity().unregisterReceiver(dataLocationReceiver);
+        mContext.unregisterReceiver(dataLocationReceiver);
     }
 
     @Override
@@ -185,7 +199,7 @@ public class RunTestFragment extends Fragment {
     }
     private void askUserPermission(){
         if (!prefs.getBoolean("agreed", false)) {
-            new AlertDialog.Builder(getActivity())
+            new AlertDialog.Builder(mContext)
                     .setTitle("User Agreement")
                     .setMessage("This application will record your phone brand, and the location you scanned your QR code in. We will not release this data publicly, but we will use it in our study.\n\nBy pressing Yes you agree to this data being collected. ")
                     .setPositiveButton(android.R.string.yes, (dialog, which) -> {
@@ -220,15 +234,20 @@ public class RunTestFragment extends Fragment {
                 String username = input.getText().toString();
                 prefs.edit().putBoolean("setUsername", true).apply();
                 prefs.edit().putString("username", username).apply();
+                isInputtingUsername = false;
             });
-            builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+            builder.setNegativeButton("Cancel", (dialog, which) -> {
+                dialog.cancel();
+                isInputtingUsername = false;
+            });
 
+            isInputtingUsername = true;
             builder.show();
         }
     }
 
     private boolean isConnected(){
-        ConnectivityManager cm = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         if (android.os.Build.VERSION.SDK_INT >= 29) {
             Network currentNetwork = cm.getActiveNetwork();
@@ -236,8 +255,12 @@ public class RunTestFragment extends Fragment {
                 return false;
             }
             NetworkCapabilities caps = cm.getNetworkCapabilities(currentNetwork);
-            //return caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
-            return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
+
+            if(caps == null)
+                return false;
+
+            return caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
+            //return caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) || caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR);
         }else{
             if(cm.getActiveNetworkInfo() != null){
                 //return cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_MOBILE;
@@ -250,14 +273,14 @@ public class RunTestFragment extends Fragment {
 
     private boolean isLocationOn(){
         askLocationPermission();
-        LocationManager lm = (LocationManager)getContext().getSystemService(Context.LOCATION_SERVICE);
+        LocationManager lm = (LocationManager)mContext.getSystemService(Context.LOCATION_SERVICE);
         return lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
     private void askLocationPermission(){
-        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
-            new AlertDialog.Builder(getActivity())
+        if (ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
+            new AlertDialog.Builder(mContext)
                     .setTitle("Location Permission")
                     .setMessage("This application requires location permissions to get signal data.")
                     .setPositiveButton(android.R.string.yes, (dialog, which) -> permissionRequest.launch(new String[] {
@@ -270,13 +293,13 @@ public class RunTestFragment extends Fragment {
     }
 
     private boolean checkLocationPermission(){
-        return (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
+        return (ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED);
     }
 
     private void askCameraPermission(){
-        if(ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
-            new AlertDialog.Builder(getActivity())
+        if(ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
+            new AlertDialog.Builder(mContext)
                     .setTitle("Camera Permission")
                     .setMessage("This application requires camera permissions to scan the QR codes.")
                     .setPositiveButton(android.R.string.yes, (dialog, which) -> permissionRequest.launch(new String[] {
@@ -288,7 +311,7 @@ public class RunTestFragment extends Fragment {
     }
 
     private boolean checkCameraPermission(){
-        return ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
+        return ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED;
     }
 
     public void displayLocationOn(View view){
@@ -324,7 +347,7 @@ public class RunTestFragment extends Fragment {
     public void displayPermissionsUnaccepted(View view){
         view.findViewById(R.id.permissionsTV).setAlpha(0.2f);
         TextView permissionsTV = view.findViewById(R.id.permissionsTV);
-        permissionsTV.setText("Accept permissions to start");
+        permissionsTV.setText("Accept permissions");
     }
 
     private void updateLocationStatus(View view){

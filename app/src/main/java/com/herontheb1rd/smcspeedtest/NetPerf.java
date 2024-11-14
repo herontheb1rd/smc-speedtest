@@ -17,7 +17,9 @@ public class NetPerf {
         return latency;
     }
 
-
+    public void setDlspeed(double dlspeed){ this.dlspeed = dlspeed;}
+    public void setUlspeed(double ulspeed){ this.ulspeed = ulspeed;}
+    public void setLatency(int latency){this.latency = latency;}
     public NetPerf(){
 
     }

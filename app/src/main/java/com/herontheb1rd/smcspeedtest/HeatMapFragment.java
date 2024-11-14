@@ -42,6 +42,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelectedListener, OnMapReadyCallback {
     private DatabaseReference mDatabase;
@@ -53,7 +55,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     private final Map<String, LatLng[]> locationDict = new HashMap<String, LatLng[]>() {{
         put("Library", new LatLng[]{new LatLng(7.08438, 125.50793), new LatLng(7.08438, 125.50808), new LatLng(7.08411, 125.50808), new LatLng(7.08411, 125.50793)});
         put("Canteen", new LatLng[]{new LatLng(7.08328, 125.50782), new LatLng(7.08328, 125.50799), new LatLng(7.08300, 125.50799), new LatLng(7.08300, 125.50781)});
-        put("Kiosk", new LatLng[]{new LatLng(7.08333, 125.50791), new LatLng(7.08371, 125.50791), new LatLng(7.08371, 125.50802), new LatLng(7.08333, 125.50802)});
+        put("Kiosks", new LatLng[]{new LatLng(7.08333, 125.50791), new LatLng(7.08371, 125.50791), new LatLng(7.08371, 125.50802), new LatLng(7.08333, 125.50802)});
         put("Airport", new LatLng[]{new LatLng(7.08426, 125.50839), new LatLng(7.08456, 125.50839), new LatLng(7.08455, 125.50862), new LatLng(7.08427, 125.50862)});
         put("ABD", new LatLng[]{new LatLng(7.083256, 125.508210), new LatLng(7.083074, 125.508213), new LatLng(7.083077, 125.508327), new LatLng(7.083108, 125.508328), new LatLng(7.083109, 125.508419), new LatLng(7.083230, 125.508416), new LatLng(7.083228, 125.508328), new LatLng(7.083259, 125.508326)});
         put("Garden", new LatLng[]{new LatLng(7.08512, 125.50841), new LatLng(7.08511, 125.50860), new LatLng(7.08467, 125.50860), new LatLng(7.08468, 125.50840)});
@@ -62,7 +64,7 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     private final Map<String, LatLng> qrDict = new HashMap<String, LatLng>(){{
         put("Library", new LatLng(7.08424, 125.50799));
         put("Canteen", new LatLng( 7.08314, 125.50790));
-        put("Kiosk", new LatLng( 7.08350, 125.50799));
+        put("Kiosks", new LatLng( 7.08350, 125.50799));
         put("Airport", new LatLng( 7.08440, 125.50852));
         put("ABD", new LatLng(7.083146, 125.508311));
         put("Garden", new LatLng(7.084942, 125.508449));
@@ -118,11 +120,13 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
 
         SupportMapFragment mapFragment = (SupportMapFragment) this.getChildFragmentManager()
                 .findFragmentById(R.id.map);
+
         mapFragment.getMapAsync(this);
 
         //initialize spinner
         Spinner spinner = view.findViewById(R.id.metricSpinner);
         String[] metricOptions = {"Download Speed", "Upload Speed", "Latency"};
+
         ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(),
                 android.R.layout.simple_spinner_item,
                 metricOptions);
@@ -137,8 +141,6 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
     public void onMapReady(GoogleMap googleMap) {
         googleMap.getUiSettings().setMapToolbarEnabled(false);
         mGoogleMap = googleMap;
-        Toast.makeText(getActivity(), "Retrieving previous results from database...",
-                Toast.LENGTH_LONG).show();
     }
 
     public void onItemSelected(AdapterView<?> parent, View view, int metric, long id) {
@@ -236,6 +238,10 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
         for (Results curResult : mResults) {
             double intensity = 0;
             String placeName = curResult.getPlace();
+
+            if(placeName == null)
+                continue;
+
             switch (metric) {
                 case 0:
                     intensity = curResult.getNetPerf().getDlspeed();
@@ -248,7 +254,8 @@ public class HeatMapFragment extends Fragment implements AdapterView.OnItemSelec
                     break;
             }
             //skip if values are invalid
-            if (intensity == -1) continue;
+            if (intensity == -1)
+                continue;
 
             locationResultsMap.get(placeName).add(intensity);
         }
