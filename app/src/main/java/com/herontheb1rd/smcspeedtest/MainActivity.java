@@ -22,11 +22,6 @@ public class MainActivity extends AppCompatActivity {
     AppBarConfiguration appBarConfiguration;
 
 
-    // Used to load the 'smcspeedtest' library
-    static {
-        System.loadLibrary("smcspeedtest");
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

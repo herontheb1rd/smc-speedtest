@@ -26,7 +26,7 @@
         android:alpha="0.4"
         android:text=""
         android:textColor="?attr/colorOnSecondary"
-        android:textSize="72sp"
+        android:textSize="68sp"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -63,7 +63,7 @@
         android:alpha="0.4"
         android:text=""
         android:textColor="?attr/colorOnSecondary"
-        android:textSize="72sp"
+        android:textSize="68sp"
         android:visibility="invisible"
         app:layout_constraintStart_toStartOf="@+id/uploadLabelTV"
         app:layout_constraintTop_toBottomOf="@+id/uploadLabelTV" />
@@ -99,7 +99,7 @@
         android:alpha="0.4"
         android:text=""
         android:textColor="?attr/colorOnSecondary"
-        android:textSize="72sp"
+        android:textSize="68sp"
         android:visibility="invisible"
         app:layout_constraintStart_toStartOf="@+id/uploadSpeedTV"
         app:layout_constraintTop_toBottomOf="@+id/latencyLabelTV" />

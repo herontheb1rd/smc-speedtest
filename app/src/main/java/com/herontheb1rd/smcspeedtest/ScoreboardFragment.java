@@ -130,7 +130,12 @@ public class ScoreboardFragment extends Fragment {
                         break;
                     rank--;
                 }
-                ((TextView) view.findViewById(R.id.yourRankTV)).setText(Integer.toString(rank));
+
+                if(rank == 0)
+                    ((TextView) view.findViewById(R.id.yourRankTV)).setText(Integer.toString(rank));
+                else
+                    ((TextView) view.findViewById(R.id.yourRankTV)).setText("N/A");
+
 
                 displayContent(view);
             }

@@ -46,13 +46,12 @@ import java.util.concurrent.Executors;
 
 public class RunTestFragment extends Fragment {
     SharedPreferences prefs = null;
-    private final Set<String> allowedLocations = Sets.newHashSet("Library", "Kiosks", "Canteen", "ABD", "Garden", "Airport");
+    private final Set<String> allowedLocations = Sets.newHashSet("Library", "Kiosk", "Canteen", "ABD", "Garden", "Airport");
     private DecoratedBarcodeView barcodeScannerView;
     BroadcastReceiver dataLocationReceiver;
     IntentFilter dataFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
     IntentFilter locationFilter = new IntentFilter("android.location.PROVIDERS_CHANGED");
     public Context mContext;
-    public boolean isInputtingUsername = false;
 
 
     ActivityResultLauncher<String[]> permissionRequest =
@@ -98,7 +97,6 @@ public class RunTestFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        isInputtingUsername = false;
         prefs = mContext.getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
 
         setUID(mContext);
@@ -222,6 +220,7 @@ public class RunTestFragment extends Fragment {
 
     private void setUsernameOnFirstLaunch(){
         if(!prefs.getBoolean("setUsername", false)){
+            Log.i("test", "username not set");
             android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(getContext(), R.style.UsernameAlertStyle);
             builder.setTitle("Set Username");
             builder.setMessage("\nType in a username. This will be used for the scoreboard. This can be changed later in your Profile.\n\nMaximum of 20 characters");
@@ -234,14 +233,11 @@ public class RunTestFragment extends Fragment {
                 String username = input.getText().toString();
                 prefs.edit().putBoolean("setUsername", true).apply();
                 prefs.edit().putString("username", username).apply();
-                isInputtingUsername = false;
             });
             builder.setNegativeButton("Cancel", (dialog, which) -> {
                 dialog.cancel();
-                isInputtingUsername = false;
             });
 
-            isInputtingUsername = true;
             builder.show();
         }
     }
@@ -434,6 +430,7 @@ public class RunTestFragment extends Fragment {
         //after we dont have to get the UID programmatically ever again
         //which avoids getContext() errors when it returns null
         if(prefs.getString("UID", "").isEmpty()){
+            Log.i("test", "UID is empty");
             prefs.edit().putString("UID", Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID)).apply();
         }
     }

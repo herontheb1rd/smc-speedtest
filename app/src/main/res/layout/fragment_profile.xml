@@ -8,6 +8,19 @@
 
 
     <TextView
+        android:id="@+id/scoreLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="-32dp"
+        android:alpha="0.8"
+        android:fontFamily="@font/inter_medium"
+        android:text="Score"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/scoreTV"
+        app:layout_constraintBottom_toTopOf="@+id/scoreTV" />
+    <TextView
         android:id="@+id/scoreTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -110,13 +123,13 @@
       android:id="@+id/contentGroup"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:visibility="visible"
-      app:constraint_referenced_ids="scoreTV, rankTV, usernameLabelTV, usernameTV, changeNameB" />
+      android:visibility="invisible"
+      app:constraint_referenced_ids="scoreLabelTV, scoreTV, rankTV, usernameLabelTV, usernameTV, changeNameB" />
 
   <androidx.constraintlayout.widget.Group
       android:id="@+id/loadingGroup"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:visibility="invisible"
+      android:visibility="visible"
       app:constraint_referenced_ids="loadingLabelTV, loadingPB" />
 </androidx.constraintlayout.widget.ConstraintLayout>

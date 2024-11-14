@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 
 import android.text.InputFilter;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,6 +42,8 @@ public class ProfileFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
+
         mDatabase = FirebaseDatabase.getInstance(
                 "https://smc-speedtest-default-rtdb.asia-southeast1.firebasedatabase.app"
         ).getReference();
@@ -51,19 +54,27 @@ public class ProfileFragment extends Fragment {
                         Toast.makeText(getActivity(), "Firebase authentication failed. Can't upload results",
                                 Toast.LENGTH_SHORT).show();
                     }
+
+                    View view = getView();
+
+                    if(view == null) {
+                        Log.i("test", "view is null");
+                        return;
+                    }
+                    getNameAndScore(view);
+                    getAndDisplayRank(view);
                 });
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        prefs = getActivity().getSharedPreferences("com.herontheb1rd.smcspeedtest", MODE_PRIVATE);
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        Log.i("test", prefs.getString("username", "asdf"));
         displayLoading(view);
-        getNameAndScore(view);
-        getAndDisplayRank(view);
+
 
         Button changeNameButton = view.findViewById(R.id.changeNameB);
         changeNameButton.setOnClickListener(v -> {
@@ -96,14 +107,19 @@ public class ProfileFragment extends Fragment {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     String UID = getUID();
-
+                    Log.i("test", "we are here");
                     if(!snapshot.child(UID).exists()){
+                        Log.i("test", "setting value");
                         mDatabase.child("scoreboard").child(UID).child("username").setValue(prefs.getString("username", getUID()));
                         mDatabase.child("scoreboard").child(UID).child("score").setValue(0);
+
+                        ((TextView) view.findViewById(R.id.scoreTV)).setText("0");
                     }else {
-                        ((TextView) view.findViewById(R.id.usernameTV)).setText(prefs.getString("username", snapshot.child("username").getValue().toString()));
-                        ((TextView) view.findViewById(R.id.scoreTV)).setText(snapshot.child("score").getValue().toString());
+                        ((TextView) view.findViewById(R.id.scoreTV)).setText(snapshot.child(UID).child("score").getValue().toString());
                     }
+
+                    ((TextView) view.findViewById(R.id.usernameTV)).setText(prefs.getString("username", UID));
+
                     displayContent(view);
                 }
                 @Override
@@ -119,14 +135,19 @@ public class ProfileFragment extends Fragment {
         scoreboardQuery.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                int rank = (int)dataSnapshot.getChildrenCount();
-                for (DataSnapshot scoreboardSnapshot : dataSnapshot.getChildren()) {
-                    if(Objects.equals(scoreboardSnapshot.getKey(), getUID()))
-                        break;
-                    rank--;
-                }
-                ((TextView) view.findViewById(R.id.rankTV)).setText("You are rank " + rank);
 
+                int rank = (int) dataSnapshot.getChildrenCount();
+
+                if (rank != 0) {
+                    for (DataSnapshot scoreboardSnapshot : dataSnapshot.getChildren()) {
+                        if (Objects.equals(scoreboardSnapshot.getKey(), getUID()))
+                            break;
+                        rank--;
+                    }
+                    ((TextView) view.findViewById(R.id.rankTV)).setText("You are rank " + rank);
+                } else{
+                    ((TextView) view.findViewById(R.id.rankTV)).setText("Run test to get a rank");
+                }
                 displayContent(view);
             }
 

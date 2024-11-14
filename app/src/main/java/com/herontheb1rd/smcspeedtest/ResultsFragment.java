@@ -73,11 +73,6 @@ import fr.bmartel.speedtest.model.SpeedTestError;
 
 public class ResultsFragment extends Fragment {
 
-    // Used to load the 'smcspeedtest' library
-    static {
-        System.loadLibrary("smcspeedtest");
-    }
-
     SharedPreferences prefs = null;
 
     //private final List<String> qrLocations = Arrays.asList("Library", "Canteen", "Kiosk", "Airport", "ABD", "Garden");
@@ -578,11 +573,17 @@ public class ResultsFragment extends Fragment {
 
         TextView downloadTV = view.findViewById(R.id.downloadSpeedTV);
 
-        displayResult(view, R.id.downloadSpeedTV, (dlspeed != -1d && dlspeed != 0d) ? String.format("%.1f", dlspeed).concat(" Mbps") : "N/A");
-        if(isFinal)
+        String displayStr = String.format("%.1f", dlspeed);
+        if(isFinal) {
             downloadTV.setAlpha(1f);
-        else
+            displayStr = displayStr.concat(" Mbps");
+        }
+        else {
             downloadTV.setAlpha(0.4f);
+        }
+
+        displayResult(view, R.id.downloadSpeedTV, (dlspeed != -1d && dlspeed != 0d) ? displayStr: "N/A");
+
         downloadTV.setVisibility(View.VISIBLE);
         view.findViewById(R.id.downloadPB).setVisibility(View.INVISIBLE);
     }
@@ -592,12 +593,16 @@ public class ResultsFragment extends Fragment {
             return;
 
         TextView uploadTV = view.findViewById(R.id.uploadSpeedTV);
-        if(isFinal)
-            uploadTV.setAlpha(1f);
-        else
-            uploadTV.setAlpha(0.4f);
 
-        displayResult(view, R.id.uploadSpeedTV, (ulspeed != -1d && ulspeed != 0d) ? String.format("%.1f", ulspeed).concat(" Mbps") : "N/A");
+        String displayStr = String.format("%.1f", ulspeed);
+        if(isFinal) {
+            uploadTV.setAlpha(1f);
+            displayStr = displayStr.concat(" Mbps");
+        }
+        else {
+            uploadTV.setAlpha(0.4f);
+        }
+        displayResult(view, R.id.uploadSpeedTV, (ulspeed != -1d && ulspeed != 0d) ? displayStr : "N/A");
         uploadTV.setVisibility(View.VISIBLE);
         view.findViewById(R.id.uploadPB).setVisibility(View.INVISIBLE);
     }
@@ -608,12 +613,16 @@ public class ResultsFragment extends Fragment {
 
         TextView latencyTV = view.findViewById(R.id.latencyTV);
 
-        if(isFinal)
+        String displayStr = Integer.toString(latency);
+        if(isFinal) {
             latencyTV.setAlpha(1f);
-        else
+            displayStr = displayStr.concat(" ms");
+        }
+        else {
             latencyTV.setAlpha(0.4f);
+        }
 
-        displayResult(view, R.id.latencyTV, (latency != -1 && latency != 0) ? Integer.toString(latency).concat(" ms") : "N/A");
+        displayResult(view, R.id.latencyTV, (latency != -1 && latency != 0) ? displayStr : "N/A");
         latencyTV.setVisibility(View.VISIBLE);
         view.findViewById(R.id.latencyPB).setVisibility(View.INVISIBLE);
     }
