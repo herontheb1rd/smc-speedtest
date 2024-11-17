@@ -11,7 +11,7 @@
         android:id="@+id/scoreLabelTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="-32dp"
+        android:layout_marginBottom="-16dp"
         android:alpha="0.8"
         android:fontFamily="@font/inter_medium"
         android:text="Score"
@@ -28,7 +28,7 @@
         android:fontFamily="@font/inter_medium"
         android:text=""
         android:textColor="?attr/colorOnSecondary"
-        android:textSize="136sp"
+        android:textSize="84sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -66,7 +66,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/rankTV"
         app:layout_constraintTop_toBottomOf="@+id/rankTV"
-        app:layout_constraintVertical_bias="0.3" />
+        app:layout_constraintVertical_bias="0.2" />
 
 
     <TextView
@@ -87,14 +87,37 @@
         android:id="@+id/changeNameB"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
         android:background="@android:color/transparent"
         android:contentDescription="Edit Text"
         app:icon="@drawable/edit_icon"
         app:layout_constraintBottom_toBottomOf="@+id/usernameTV"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.95"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/usernameTV" />
+
+    <TextView
+        android:id="@+id/uidLabelTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:fontFamily="@font/inter_medium"
+        android:alpha="0.8"
+        android:text="User ID"
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="24sp"
+        app:layout_constraintStart_toStartOf="@+id/usernameTV"
+        app:layout_constraintTop_toBottomOf="@+id/usernameTV" />
+
+    <TextView
+        android:id="@+id/uidTV"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/inter_medium"
+        android:text=""
+        android:textColor="?attr/colorOnSecondary"
+        android:textSize="32sp"
+        app:layout_constraintStart_toStartOf="@+id/uidLabelTV"
+        app:layout_constraintTop_toBottomOf="@+id/uidLabelTV" />
 
   <TextView
       android:id="@+id/loadingLabelTV"
@@ -123,13 +146,15 @@
       android:id="@+id/contentGroup"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:visibility="invisible"
-      app:constraint_referenced_ids="scoreLabelTV, scoreTV, rankTV, usernameLabelTV, usernameTV, changeNameB" />
+      android:visibility="visible"
+      app:constraint_referenced_ids="scoreLabelTV, scoreTV, rankTV, usernameLabelTV, usernameTV, changeNameB, uidLabelTV, uidTV" />
 
   <androidx.constraintlayout.widget.Group
       android:id="@+id/loadingGroup"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:visibility="visible"
+      android:visibility="invisible"
       app:constraint_referenced_ids="loadingLabelTV, loadingPB" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

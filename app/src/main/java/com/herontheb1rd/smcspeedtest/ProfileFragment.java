@@ -75,6 +75,7 @@ public class ProfileFragment extends Fragment {
         Log.i("test", prefs.getString("username", "asdf"));
         displayLoading(view);
 
+        displayUID(view);
 
         Button changeNameButton = view.findViewById(R.id.changeNameB);
         changeNameButton.setOnClickListener(v -> {
@@ -130,6 +131,11 @@ public class ProfileFragment extends Fragment {
         }
 
     }
+
+    private void displayUID(View view){
+        ((TextView) view.findViewById(R.id.uidTV)).setText(getUID());
+    }
+
     private void getAndDisplayRank(View view){
         Query scoreboardQuery = mDatabase.child("scoreboard").orderByChild("score");
         scoreboardQuery.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -167,6 +173,8 @@ public class ProfileFragment extends Fragment {
                     Toast.LENGTH_SHORT).show());
         }
     }
+
+
     private String getUID() {
         return prefs.getString("UID", "");
     }

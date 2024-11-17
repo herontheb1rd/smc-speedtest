@@ -125,18 +125,14 @@ public class ScoreboardFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 int rank = (int)dataSnapshot.getChildrenCount();
+
                 for (DataSnapshot scoreboardSnapshot : dataSnapshot.getChildren()) {
                     if(Objects.equals(scoreboardSnapshot.getKey(), getUID()))
                         break;
                     rank--;
                 }
 
-                if(rank == 0)
-                    ((TextView) view.findViewById(R.id.yourRankTV)).setText(Integer.toString(rank));
-                else
-                    ((TextView) view.findViewById(R.id.yourRankTV)).setText("N/A");
-
-
+                ((TextView) view.findViewById(R.id.yourRankTV)).setText(Integer.toString(rank));
                 displayContent(view);
             }
 

@@ -10,6 +10,7 @@ public class Results {
     private String place;
     private NetPerf netPerf;
     private SignalPerf signalPerf;
+    private String UID;
 
     public long getTime(){
         return time;
@@ -25,17 +26,19 @@ public class Results {
         return netPerf;
     }
     public SignalPerf getSignalPerf() { return signalPerf; }
+    public String getUID(){return UID;};
 
     public Results(){
 
     }
 
-    public Results(long time, String phoneBrand, String networkProvider, String place, NetPerf netPerf, SignalPerf signalPerf){
+    public Results(long time, String phoneBrand, String networkProvider, String place, NetPerf netPerf, SignalPerf signalPerf, String UID){
         this.time = time;
         this.phoneBrand = phoneBrand;
         this.networkProvider = networkProvider;
         this.place = place;
         this.netPerf = netPerf;
         this.signalPerf = signalPerf;
+        this.UID = UID;
     }
 }

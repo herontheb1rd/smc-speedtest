@@ -447,8 +447,8 @@ public class ResultsFragment extends Fragment {
 
             }
         });
-
-        speedTestSocket.startFixedDownload(server.downloadUrl, 100000);
+        speedTestSocket.setSocketTimeout(10000);
+        speedTestSocket.startFixedDownload(server.downloadUrl, 10000);
     }
 
     public void getUploadSpeed(View view, final ServerInfo server, NetPerf netPerf){
@@ -492,7 +492,7 @@ public class ResultsFragment extends Fragment {
 
             }
         });
-
+        speedTestSocket.setSocketTimeout(10000);
         speedTestSocket.startFixedUpload(server.uploadUrl, 1000000, 10000);
     }
 
@@ -506,7 +506,7 @@ public class ResultsFragment extends Fragment {
         SignalPerf signalPerf = computeSignalPerf();
 
         if(mAuth.getCurrentUser() != null){
-            Results results = new Results(time, phoneBrand, networkProvider, mPlace, netPerf, signalPerf);
+            Results results = new Results(time, phoneBrand, networkProvider, mPlace, netPerf, signalPerf, UID);
             mDatabase.child("results").child(networkProvider).push().setValue(results);
 
             mDatabase.child("scoreboard").child(UID).child("username").setValue(prefs.getString("username", getUID()));
@@ -530,9 +530,15 @@ public class ResultsFragment extends Fragment {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
             int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
             TelephonyManager dataTM = tm.createForSubscriptionId(dataSubId);
-            return simOperators.get(dataTM.getSimOperator());
+            return simOperators.getOrDefault(dataTM.getSimOperator(), "Other");
         }else {
-            return simOperators.get(tm.getSimOperator());
+            String simOperator = tm.getSimOperator();
+            if(!simOperators.containsKey(simOperator)){
+                return "Other";
+            }else{
+                return simOperators.get(simOperator);
+
+            }
         }
     }
 
