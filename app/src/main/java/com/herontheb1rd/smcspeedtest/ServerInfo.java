@@ -14,7 +14,6 @@ public class ServerInfo {
         this.rawHost = rawHost;
         this.name = name;
 
-
         latencyUrl = rawHost.substring(0, rawHost.length()-5);
         downloadUrl = rawUrl.substring(0, rawUrl.length()-10).concat("/random2000x2000.jpg");
         uploadUrl = rawUrl;

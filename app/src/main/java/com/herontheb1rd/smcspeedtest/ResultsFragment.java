@@ -53,14 +53,17 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -70,6 +73,7 @@ import fr.bmartel.speedtest.SpeedTestReport;
 import fr.bmartel.speedtest.SpeedTestSocket;
 import fr.bmartel.speedtest.inter.ISpeedTestListener;
 import fr.bmartel.speedtest.model.SpeedTestError;
+import fr.bmartel.speedtest.model.ComputationMethod;
 
 public class ResultsFragment extends Fragment {
 
@@ -338,13 +342,13 @@ public class ResultsFragment extends Fragment {
         return bestServer;
     }
 
-    public long getMedianLatency(long[] latencyResults){
-        Arrays.sort(latencyResults);
-        int arrLen = latencyResults.length;
+    public long getMedianLatency(ArrayList<Long> latencyResults){
+        Collections.sort(latencyResults);
+        int arrLen = latencyResults.size();
         if(arrLen % 2 == 0)
-            return (latencyResults[arrLen/2-1] + latencyResults[arrLen/2])/2;
+            return (latencyResults.get(arrLen / 2 - 1) + latencyResults.get(arrLen / 2))/2;
         else
-            return latencyResults[arrLen/2];
+            return latencyResults.get(arrLen / 2);
     }
 
 
@@ -355,7 +359,7 @@ public class ResultsFragment extends Fragment {
     }
 
     public void getLatency(View view, final Context context, ServerInfo server){
-        int MAX_COUNT = 4;
+        int MAX_COUNT = 8;
 
         final Class<? extends InetAddress> inetClass = Inet4Address.class;
         final InetAddress dest;
@@ -374,11 +378,13 @@ public class ResultsFragment extends Fragment {
                 throw new RuntimeException(e);
             }
 
-        long[] latencyResults = new long[MAX_COUNT];
+        ArrayList<Long> latencyResults = new ArrayList<>();
         Ping ping = new Ping(dest, new Ping.PingListener() {
             @Override
             public void onPing(long timeMs, int index) {
-                latencyResults[index] = timeMs;
+                int MAX_THRESH = 200;
+                if(timeMs < MAX_THRESH)
+                    latencyResults.add(timeMs);
 
                 displayLatencyResult(view, (int) timeMs, false);
                 Log.i("test", Long.toString(timeMs));
@@ -403,6 +409,8 @@ public class ResultsFragment extends Fragment {
                 getDownloadSpeed(view, server, netPerf);
             }
         });
+        ping.setDelayMs(50);
+        ping.setCount(MAX_COUNT);
         ping.setNetwork(network);
         ping.run();
     }
@@ -420,10 +428,9 @@ public class ResultsFragment extends Fragment {
                 double dlspeed = report.getTransferRateBit().doubleValue()/1e6;
                 displayDownloadResult(view, dlspeed, true);
                 netPerf.setDlspeed(dlspeed);
+                Log.i("test", "[COMPLETED] rate in Mbit/s   : " + dlspeed);
 
                 getUploadSpeed(view, server, netPerf);
-
-                Log.i("test", "[COMPLETED] rate in Mbit/s   : " + dlspeed);
             }
 
             @Override
@@ -443,23 +450,43 @@ public class ResultsFragment extends Fragment {
                 double dlspeed = report.getTransferRateBit().doubleValue()/1e6;
                 displayDownloadResult(view, dlspeed, false);
 
+                String percentStr = String.format("%.0f", percent);
+                displayProgress("Computing download speed - " + percentStr + "%");
+
+
                 Log.i("test", "[PROGRESS] rate in Mbit/s   : " + dlspeed);
+                Log.i("test", "progress " + percent);
 
             }
         });
-        speedTestSocket.setSocketTimeout(10000);
         speedTestSocket.startFixedDownload(server.downloadUrl, 10000);
+    }
+
+    public Double getMedianUlspeed(ArrayList<Double> uploadSpeedList){
+        Double medianUlspeed;
+
+        int listSize = uploadSpeedList.size();
+
+        if(listSize % 2 == 0){
+            medianUlspeed = (uploadSpeedList.get(listSize/2-1) + uploadSpeedList.get(listSize/2))/2;
+        }else{
+            medianUlspeed = uploadSpeedList.get(listSize/2);
+        }
+
+        return medianUlspeed;
     }
 
     public void getUploadSpeed(View view, final ServerInfo server, NetPerf netPerf){
         displayProgress(view, "Computing upload speed");
 
         SpeedTestSocket speedTestSocket = new SpeedTestSocket();
+        ArrayList<Double> tempData = new ArrayList<>();
 
         // add a listener to wait for speedtest completion and progress
         speedTestSocket.addSpeedTestListener(new ISpeedTestListener() {
             @Override
             public void onCompletion(SpeedTestReport report) {
+                /*
                 // called when download/upload is complete
                 double ulspeed = report.getTransferRateBit().doubleValue()/1e6;
                 displayUploadResult(view, ulspeed, true);
@@ -468,6 +495,8 @@ public class ResultsFragment extends Fragment {
                 uploadResults(view, netPerf);
 
                 Log.i("test", "[COMPLETED] rate in Mbit/s   : " + ulspeed);
+
+                 */
             }
 
             @Override
@@ -476,8 +505,9 @@ public class ResultsFragment extends Fragment {
                 Log.i("test - ste", speedTestError.name());
                 Log.i("test - em", errorMessage);
 
-                double ulspeed = -1;
-                displayUploadResult(view, ulspeed, false);
+                double ulspeed = getMedianUlspeed(tempData);
+                Log.i("test", "temp " + ulspeed);
+                displayUploadResult(view, ulspeed, true);
                 netPerf.setUlspeed(ulspeed);
 
                 uploadResults(view, netPerf);
@@ -486,14 +516,27 @@ public class ResultsFragment extends Fragment {
             @Override
             public void onProgress(float percent, SpeedTestReport report) {
                 double ulspeed = report.getTransferRateBit().doubleValue()/1e6;
-                displayUploadResult(view, ulspeed, false);
-
+                tempData.add(ulspeed);
+                String percentStr = String.format("%.0f", percent);
+                displayUploadResult(view, ulspeed,false);
+                displayProgress("Computing upload speed - " + percentStr + "%");
                 Log.i("test", "[PROGRESS] rate in Mbit/s   : " + ulspeed);
+                Log.i("test", "progress " + percent);
 
+                if(percent == 100f){
+                    double medianUlspeed = getMedianUlspeed(tempData);
+                    displayUploadResult(view, medianUlspeed, true);
+                    netPerf.setUlspeed(medianUlspeed);
+                    uploadResults(view, netPerf);
+                    Log.i("test", "[CFAKE OMPLETED] rate in Mbit/s   : " + medianUlspeed);
+                }
             }
         });
-        speedTestSocket.setSocketTimeout(10000);
-        speedTestSocket.startFixedUpload(server.uploadUrl, 1000000, 10000);
+
+        Log.i("test", server.uploadUrl);
+        speedTestSocket.setSocketTimeout(5000);
+        speedTestSocket.setUploadChunkSize(1024);
+        speedTestSocket.startFixedUpload(server.uploadUrl, 250000, 10000);
     }
 
     public void uploadResults(View view, NetPerf netPerf){
@@ -504,6 +547,7 @@ public class ResultsFragment extends Fragment {
         String networkProvider = getNetworkProvider();
         String UID = getUID();
         SignalPerf signalPerf = computeSignalPerf();
+
 
         if(mAuth.getCurrentUser() != null){
             Results results = new Results(time, phoneBrand, networkProvider, mPlace, netPerf, signalPerf, UID);
@@ -579,12 +623,13 @@ public class ResultsFragment extends Fragment {
 
         TextView downloadTV = view.findViewById(R.id.downloadSpeedTV);
 
-        String displayStr = String.format("%.1f", dlspeed);
+        String displayStr;
         if(isFinal) {
             downloadTV.setAlpha(1f);
-            displayStr = displayStr.concat(" Mbps");
+            displayStr = String.format("%.1f", dlspeed).concat(" Mbps");
         }
         else {
+            displayStr = String.format("%.3f", dlspeed);
             downloadTV.setAlpha(0.4f);
         }
 
@@ -600,12 +645,13 @@ public class ResultsFragment extends Fragment {
 
         TextView uploadTV = view.findViewById(R.id.uploadSpeedTV);
 
-        String displayStr = String.format("%.1f", ulspeed);
+        String displayStr;
         if(isFinal) {
             uploadTV.setAlpha(1f);
-            displayStr = displayStr.concat(" Mbps");
+            displayStr = String.format("%.1f", ulspeed).concat(" Mbps");
         }
         else {
+            displayStr = String.format("%.3f", ulspeed);
             uploadTV.setAlpha(0.4f);
         }
         displayResult(view, R.id.uploadSpeedTV, (ulspeed != -1d && ulspeed != 0d) ? displayStr : "N/A");

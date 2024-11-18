@@ -40,6 +40,8 @@ import com.journeyapps.barcodescanner.DefaultDecoderFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -321,7 +323,6 @@ public class RunTestFragment extends Fragment {
         TextView locationTv = view.findViewById(R.id.locationTV);
         locationTv.setText("Turn on your location");
     }
-
     public void displayDataOn(View view){
         view.findViewById(R.id.dataTV).setAlpha(1);
         TextView dataTV = view.findViewById(R.id.dataTV);
